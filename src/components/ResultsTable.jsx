@@ -1,66 +1,41 @@
 import React, { useState } from "react";
 import ReactPaginate from "react-paginate";
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
+import { fetchSpaces } from "../Services/spacesService";
 
 const ResultsTable = ({ filters }) => {
   const [page, setPage] = useState(0); // Página actual
   const itemsPerPage = 10; // Número de elementos por página
 
-  // Función para obtener los datos de los espacios
-  const fetchSpaces = async ({ queryKey }) => {
-    const [_, page, filters] = queryKey;
+  // Lista de imágenes aleatorias
+  const images = [
+    "/src/assets/1.webp",
+    "/src/assets/2.webp",
+    "/src/assets/3.webp",
+    "/src/assets/4.webp",
+  ];
 
-    // Obtener el token de autenticación
-    const tokenResponse = await axios.post(
-      "https://api-academusoft-web.ucompensar.edu.co:8093/integrador-rest/servicios/app-acceso/acceso?=",
-      { codigoAplicacion: "ReservaEspacios" },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          "WWW-Authenticate": "Basic UmVzZXJ2YUVzcGFjaW9zOjQ1OThlNzE0MWMyYTk5ODYyM2IzMzYxYmZmODMxYmQ0",
-        },
-      }
-    );
-
-    const token = tokenResponse.data.token;
-
-    // Obtener los datos de los espacios
-    const response = await axios.post(
-      "https://api-academusoft-web.ucompensar.edu.co:8093/integrador-rest/servicios/app-integrador/aplicacion/horarioxRecursoFisico",
-      {
-        tipoRetorno: "DataObject",
-        parametros: {
-          periodoacademico: "20242",
-          espaciofisico: filters.espaciofisico || undefined,
-          tiporecurso: filters.tiporecurso || undefined,
-          clseFechainicio: filters.clseFechainicio || undefined,
-          clseFechafinal: filters.clseFechafinal || undefined,
-          horainicio: filters.horainicio || undefined,
-          horafinal: filters.horafinal || undefined,
-        },
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    // Retornamos los datos de la página actual
-    return response.data.data.slice(page * itemsPerPage, (page + 1) * itemsPerPage);
+  // Función para obtener una imagen aleatoria
+  const getRandomImage = () => {
+    return images[Math.floor(Math.random() * images.length)];
   };
 
   // Usar React Query para manejar las solicitudes
   const { data = [], isLoading, isError } = useQuery({
     queryKey: ["spaces", page, filters], // Cambia cada vez que cambian los filtros o la página
-    queryFn: fetchSpaces,
-    keepPreviousData: true, // Mantiene los datos previos mientras se cargan los nuevos
+    queryFn: () => fetchSpaces(page, filters),
+    keepPreviousData: true, // Mantener los datos previos mientras se cargan nuevos
   });
 
   // Manejar cambio de página
   const handlePageChange = ({ selected }) => {
     setPage(selected);
+  };
+
+  // Acción para el botón "Reservar"
+  const handleReserve = (item) => {
+    console.log("Reservando espacio:", item);
+    alert(`Has reservado el espacio: ${item.espaciofisico}`);
   };
 
   if (isLoading) {
@@ -71,19 +46,27 @@ const ResultsTable = ({ filters }) => {
     return <p>Error al cargar los datos. Por favor, inténtalo de nuevo.</p>;
   }
 
+  // Mostrar mensaje si no hay datos
+  if (data.length === 0) {
+    return <p>No se encontraron resultados para los filtros seleccionados.</p>;
+  }
+
   return (
     <div className="bg-white shadow-md p-6">
+      {/* Tarjetas */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {data.map((item, index) => (
           <div
             key={index}
             className="border rounded-lg overflow-hidden shadow hover:shadow-lg transition duration-300"
           >
+            {/* Imagen aleatoria */}
             <img
-              src="https://ucompensar.edu.co/wp-content/uploads/2021/05/Tecnologia-en-Operaciones-d-ucompensar.jpg"
+              src={getRandomImage()}
               alt="Espacio"
               className="h-48 w-full object-cover"
             />
+            {/* Contenido */}
             <div className="p-4">
               <h3 className="text-lg font-bold text-gray-800">{item.sede}</h3>
               <p className="text-gray-600 text-sm">Ubicación: {item.localidad}</p>
@@ -95,10 +78,19 @@ const ResultsTable = ({ filters }) => {
               <p className="text-gray-600 text-sm">
                 <em>Descripción genérica del espacio disponible.</em>
               </p>
+              {/* Botón Reservar */}
+              <button
+                onClick={() => handleReserve(item)}
+                className="mt-4 w-full bg-orange-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-300"
+              >
+                Reservar
+              </button>
             </div>
           </div>
         ))}
       </div>
+
+      {/* Paginación */}
       <div className="mt-6">
         <ReactPaginate
           pageCount={5} // Ajusta según el total de páginas
@@ -114,5 +106,4 @@ const ResultsTable = ({ filters }) => {
   );
 };
 
-// Exportar el componente como `default`
 export default ResultsTable;
