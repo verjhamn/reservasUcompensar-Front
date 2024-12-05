@@ -5,7 +5,7 @@ import { fetchSpaces } from "../Services/spacesService";
 
 const ResultsTable = ({ filters }) => {
   const [page, setPage] = useState(0); // Página actual
-  const itemsPerPage = 10; // Número de elementos por página
+  const itemsPerPage = 6; // Número de elementos por página
 
   // Lista de imágenes aleatorias
   const images = [
@@ -81,7 +81,7 @@ const ResultsTable = ({ filters }) => {
               {/* Botón Reservar */}
               <button
                 onClick={() => handleReserve(item)}
-                className="mt-4 w-full bg-orange-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-300"
+                className="mt-4 w-full bg-orange-500 text-white py-2 px-4 rounded hover:bg-orange-600 transition duration-300"
               >
                 Reservar
               </button>
