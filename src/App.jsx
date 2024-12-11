@@ -4,6 +4,8 @@ import Footer from "./components/Footer";
 import SearchFilters from "./components/SearchFilters";
 import ResultsTable from "./components/ResultsTable";
 import BigCalendarView from "./components/BigCalendarView";
+import ModernCalendar from "./components/ModernCalendar";
+import ModernCalendar2 from "./components/ModernCalendar2";
 
 function App() {
   const [filters, setFilters] = useState({
@@ -26,17 +28,15 @@ function App() {
           <div className="flex justify-center space-x-4 mb-6">
             <button
               onClick={() => setView("table")}
-              className={`py-2 px-4 rounded ${
-                view === "table" ? "bg-orange-600 text-white" : "bg-gray-300"
-              }`}
+              className={`py-2 px-4 rounded ${view === "table" ? "bg-orange-600 text-white" : "bg-gray-300"
+                }`}
             >
               Reservar
             </button>
             <button
               onClick={() => setView("bigCalendar")}
-              className={`py-2 px-4 rounded ${
-                view === "bigCalendar" ? "bg-orange-600 text-white" : "bg-gray-300"
-              }`}
+              className={`py-2 px-4 rounded ${view === "bigCalendar" ? "bg-orange-600 text-white" : "bg-gray-300"
+                }`}
             >
               Reservas
             </button>
@@ -50,6 +50,8 @@ function App() {
             </>
           )}
           {view === "bigCalendar" && <BigCalendarView />}
+        {/*   {view === "bigCalendar" && <ModernCalendar />}
+          {view === "bigCalendar" && <ModernCalendar2 />} */}
         </div>
       </main>
       <Footer />

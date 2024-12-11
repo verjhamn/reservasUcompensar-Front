@@ -1,7 +1,7 @@
 import axios from "axios";
 import { getAuthToken } from "./authService";
 
-export const fetchSpaces = async (page, filters) => {
+export const fetchSpaces = async (filters = {}) => {
   const url =
     "https://api-academusoft-web.ucompensar.edu.co:8093/integrador-rest/servicios/app-integrador/aplicacion/horarioxRecursoFisico";
 
@@ -9,7 +9,7 @@ export const fetchSpaces = async (page, filters) => {
     // Obtener el token
     const token = await getAuthToken();
 
-    // Hacer la solicitud a la API
+    // Solicitar todos los datos al servidor
     const response = await axios.post(
       url,
       {
@@ -32,19 +32,17 @@ export const fetchSpaces = async (page, filters) => {
     );
 
     // Verificar si la respuesta tiene datos válidos
-    const spaces = response.data?.data; // Obtener la propiedad `data`
+    const spaces = response.data?.data;
 
     if (!Array.isArray(spaces)) {
       console.warn("La API no devolvió un array válido en `data`:", response.data);
-      return []; // Devuelve un array vacío si no es válido
+      return [];
     }
 
-    // Paginación manual
-    const itemsPerPage = 10;
-    return spaces.slice(page * itemsPerPage, (page + 1) * itemsPerPage);
+    // Devuelve todos los datos sin aplicar paginación
+    return spaces;
   } catch (error) {
     console.error("Error al obtener los espacios:", error);
-    throw error; // Maneja el error según sea necesario
+    throw error;
   }
 };
-
