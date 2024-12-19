@@ -4,8 +4,7 @@ import Footer from "./components/Footer";
 import SearchFilters from "./components/SearchFilters";
 import ResultsTable from "./components/ResultsTable";
 import BigCalendarView from "./components/BigCalendarView";
-import ModernCalendar from "./components/ModernCalendar";
-import ModernCalendar2 from "./components/ModernCalendar2";
+import FullCalendarView from "./components/FullCalendarView";
 
 function App() {
   const [filters, setFilters] = useState({
@@ -28,30 +27,45 @@ function App() {
           <div className="flex justify-center space-x-4 mb-6">
             <button
               onClick={() => setView("table")}
-              className={`py-2 px-4 rounded ${view === "table" ? "bg-orange-600 text-white" : "bg-gray-300"
-                }`}
+              className={`py-2 px-4 rounded ${
+                view === "table" ? "bg-turquesa hover:bg-turquesa/90 text-white" : "bg-gray-300"
+              }`}
             >
               Reservar
             </button>
             <button
-              onClick={() => setView("bigCalendar")}
-              className={`py-2 px-4 rounded ${view === "bigCalendar" ? "bg-orange-600 text-white" : "bg-gray-300"
-                }`}
+              onClick={() => setView("Calendario")}
+              className={`py-2 px-4 rounded ${
+                view === "Calendario" ? "bg-turquesa hover:bg-turquesa/90 text-white" : "bg-gray-300"
+              }`}
             >
-              Reservas
+              Calendario
+            </button>
+            <button
+              onClick={() => setView("fullCalendar")}
+              className={`py-2 px-4 rounded ${
+                view === "fullCalendar" ? "bg-turquesa hover:bg-turquesa/90 text-white" : "bg-gray-300"
+              }`}
+            >
+              Admin Calendario
             </button>
           </div>
 
-          {/* Renderizado condicional de la vista seleccionada */}
+          {/* Layout responsivo modificado */}
           {view === "table" && (
-            <>
-              <SearchFilters filters={filters} setFilters={setFilters} />
-              <ResultsTable filters={filters} />
-            </>
+            <div className="flex flex-col lg:flex-row gap-6">
+              {/* Sidebar de filtros */}
+              <div className="w-full lg:w-1/4">
+                <SearchFilters filters={filters} setFilters={setFilters} />
+              </div>
+              {/* Contenido principal */}
+              <div className="w-full lg:flex-1">
+                <ResultsTable filters={filters} />
+              </div>
+            </div>
           )}
-          {view === "bigCalendar" && <BigCalendarView />}
-        {/*   {view === "bigCalendar" && <ModernCalendar />}
-          {view === "bigCalendar" && <ModernCalendar2 />} */}
+          {view === "Calendario" && <BigCalendarView />}
+          {view === "fullCalendar" && <FullCalendarView />}
         </div>
       </main>
       <Footer />

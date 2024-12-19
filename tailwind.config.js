@@ -5,15 +5,17 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-/*     colors: {
-      'color-1': '#e50064', // Color 1
-      'color-2': '#00aab7', // Color 2
-      'color-3': '#757575', // Color 3
-      'color-4': '#f6f7f2', // Color 4
-      'color-5': '#efefef', // Color 5
-      'color-6': '#ea5d0b', // Color 6
-    }, */
-    extend: {},
+    extend: {
+      colors: {
+        'fucsia': '#e50064', // Color Fucsia
+        'turquesa': '#00aab7', // Color Turquesa
+        'gris-medio': '#757575', // Gris Medio
+        'gris-claro': '#f6f7f2', // Gris Claro
+        'gris-sutil': '#efefef', // Gris Sutil
+        'naranja-vibrante': '#ea5d0b', // Naranja Vibrante
+      },
+
+    },
   },
   plugins: [],
 }

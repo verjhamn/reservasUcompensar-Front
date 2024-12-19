@@ -35,16 +35,16 @@ const SearchFilters = ({ filters, setFilters }) => {
   }, []);
 
   return (
-    <div className="bg-white shadow-md p-6 mb-6">
-      <form className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="bg-white shadow-md p-4 md:p-6 rounded-xl">
+      <form className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
         {/* Sede */}
         <div>
-          <label className="block text-gray-700">Sede</label>
+          <label className="block text-gray-700 mb-1">Sede</label>
           <select
             name="sede"
             value={filters.sede || ""}
             onChange={handleChange}
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+            className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
           >
             <option value="">Seleccionar</option>
             {options.sedes.map((sede, index) => (
@@ -57,13 +57,13 @@ const SearchFilters = ({ filters, setFilters }) => {
 
         {/* Capacidad */}
         <div>
-          <label className="block text-gray-700">Capacidad</label>
+          <label className="block text-gray-700 mb-1">Capacidad</label>
           <input
             type="number"
             name="capacidad"
             value={filters.capacidad || ""}
             onChange={handleChange}
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+            className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
             placeholder="Número de personas"
             min="1"
           />
@@ -71,12 +71,12 @@ const SearchFilters = ({ filters, setFilters }) => {
 
         {/* Espacio Físico */}
         <div>
-          <label className="block text-gray-700">Espacio Físico</label>
+          <label className="block text-gray-700 mb-1">Espacio Físico</label>
           <select
             name="espaciofisico"
             value={filters.espaciofisico || ""}
             onChange={handleChange}
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+            className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
           >
             <option value="">Seleccionar</option>
             {options.espaciosFisicos.map((espacio, index) => (
@@ -89,12 +89,12 @@ const SearchFilters = ({ filters, setFilters }) => {
 
         {/* Tipo de Recurso */}
         <div>
-          <label className="block text-gray-700">Tipo de Recurso</label>
+          <label className="block text-gray-700 mb-1">Tipo de Recurso</label>
           <select
             name="tiporecurso"
             value={filters.tiporecurso || ""}
             onChange={handleChange}
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+            className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
           >
             <option value="">Seleccionar</option>
             {options.tiposRecurso.map((tipo, index) => (
@@ -107,49 +107,49 @@ const SearchFilters = ({ filters, setFilters }) => {
 
         {/* Fecha de Inicio */}
         <div>
-          <label className="block text-gray-700">Fecha de Inicio</label>
+          <label className="block text-gray-700 mb-1">Fecha de Inicio</label>
           <input
             type="date"
             name="clseFechainicio"
             value={filters.clseFechainicio || ""}
             onChange={handleChange}
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+            className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
           />
         </div>
 
         {/* Fecha de Finalización */}
         <div>
-          <label className="block text-gray-700">Fecha de Finalización</label>
+          <label className="block text-gray-700 mb-1">Fecha de Finalización</label>
           <input
             type="date"
             name="clseFechafinal"
             value={filters.clseFechafinal || ""}
             onChange={handleChange}
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+            className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
           />
         </div>
 
         {/* Hora de Inicio */}
         <div>
-          <label className="block text-gray-700">Hora de Inicio</label>
+          <label className="block text-gray-700 mb-1">Hora de Inicio</label>
           <input
             type="time"
             name="horainicio"
             value={filters.horainicio || ""}
             onChange={handleChange}
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+            className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
           />
         </div>
 
         {/* Hora de Finalización */}
         <div>
-          <label className="block text-gray-700">Hora de Finalización</label>
+          <label className="block text-gray-700 mb-1">Hora de Finalización</label>
           <input
             type="time"
             name="horafinal"
             value={filters.horafinal || ""}
             onChange={handleChange}
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+            className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
           />
         </div>
       </form>

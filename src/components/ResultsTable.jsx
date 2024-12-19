@@ -2,10 +2,13 @@ import React, { useState } from "react";
 import ReactPaginate from "react-paginate";
 import { useQuery } from "@tanstack/react-query";
 import { fetchSpaces } from "../Services/spacesService";
+import ReservationModal from "./ReservationModal";
 
 const ResultsTable = ({ filters }) => {
-  const [page, setPage] = useState(0); // Página actual
-  const itemsPerPage = 9; // Número de elementos por página
+  const [page, setPage] = useState(0);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedSpace, setSelectedSpace] = useState(null);
+  const itemsPerPage = 9;
 
   const images = [
     "/src/assets/1.webp",
@@ -46,9 +49,9 @@ const ResultsTable = ({ filters }) => {
   }
 
   return (
-    <div className="bg-white shadow-md p-6">
-      {/* Tarjetas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="bg-white shadow-md p-4 md:p-6 rounded-xl">
+      {/* Grid responsivo ajustado */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {paginatedData.map((item, index) => (
           <div
             key={index}
@@ -67,8 +70,11 @@ const ResultsTable = ({ filters }) => {
                 <em>Descripción genérica del espacio disponible.</em>
               </p>
               <button
-                onClick={() => alert(`Has reservado el espacio: ${item.espaciofisico}`)}
-                className="mt-4 w-full bg-orange-500 text-white py-2 px-4 rounded hover:bg-orange-600 transition duration-300"
+                onClick={() => {
+                  setSelectedSpace({ ...item, image: getRandomImage() });
+                  setIsModalOpen(true);
+                }}
+                className="mt-4 w-full bg-turquesa text-white py-2 px-4 rounded hover:bg-turquesa/90 transition duration-300"
               >
                 Reservar
               </button>
@@ -77,18 +83,25 @@ const ResultsTable = ({ filters }) => {
         ))}
       </div>
 
-      {/* Paginación */}
-      <div className="mt-6">
+      {/* Paginación con espaciado responsivo */}
+      <div className="mt-4 md:mt-6">
         <ReactPaginate
-          pageCount={Math.ceil(data.length / itemsPerPage)} // Total de páginas
+          pageCount={Math.ceil(data.length / itemsPerPage)}
           onPageChange={handlePageChange}
-          containerClassName="flex justify-center space-x-2"
+          containerClassName="flex flex-wrap justify-center space-x-2"
           activeClassName="text-blue-500 font-bold"
           previousClassName="text-gray-500 hover:text-blue-500"
           nextClassName="text-gray-500 hover:text-blue-500"
           pageClassName="text-gray-500 hover:text-blue-500"
         />
       </div>
+
+      {/* Modal */}
+      <ReservationModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        spaceData={selectedSpace}
+      />
     </div>
   );
 };
