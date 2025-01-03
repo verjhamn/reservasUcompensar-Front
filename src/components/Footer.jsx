@@ -50,7 +50,7 @@ const Footer = () => {
         <div className="text-center md:text-left">
           {/* Nueva imagen del certificado */}
           <img
-            src="https://ucompensar.edu.co/wp-content/uploads/2024/12/ISO.webp"
+            src="https://ucompensar.edu.co/wp-content/uploads/2024/12/440986.webp"
             alt="Certificación ISO"
             className="h-44 mx-auto md:mx-0"
           />

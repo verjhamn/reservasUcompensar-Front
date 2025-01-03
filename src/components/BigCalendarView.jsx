@@ -3,125 +3,73 @@ import { Calendar, dateFnsLocalizer } from "react-big-calendar";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { format, parse, startOfWeek, getDay } from "date-fns";
 import es from "date-fns/locale/es";
-import { generateRandomEvents } from '../services/eventGenerator';
+import { generateRandomEvents } from "../services/eventGenerator";
 
 // Configuración de localización en español
-const locales = {
-  es: es,
-};
+const locales = { es: es };
 const localizer = dateFnsLocalizer({
   format,
   parse,
-  startOfWeek: () => startOfWeek(new Date(), { weekStartsOn: 1 }),
+  startOfWeek: () => startOfWeek(new Date(), { weekStartsOn: 1 }), // La semana comienza el lunes
   getDay,
   locales,
 });
 
-const BigCalendarView = () => {
+const MobileCalendarView = () => {
   const [events, setEvents] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [allEvents, setAllEvents] = useState([]);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [filteredEvents, setFilteredEvents] = useState([]);
 
   useEffect(() => {
     const generatedEvents = generateRandomEvents();
     setEvents(generatedEvents);
-    setAllEvents(generatedEvents);
   }, []);
 
-  // Función para manejar la búsqueda
-  const handleSearch = (e) => {
-    const term = e.target.value.toLowerCase();
-    setSearchTerm(term);
+  useEffect(() => {
+    const filtered = events.filter((event) =>
+      format(new Date(event.start), "yyyy-MM-dd") ===
+      format(selectedDate, "yyyy-MM-dd")
+    );
+    setFilteredEvents(filtered);
+  }, [selectedDate, events]);
 
-    if (term.trim() === '') {
-      setEvents(allEvents); // Si la búsqueda está vacía, mostramos todos los eventos
-    } else {
-      // Filtrar eventos según el término
-      const filteredEvents = allEvents.filter(
-        (event) =>
-          event.title.toLowerCase().includes(term) ||
-          (event.desc && event.desc.toLowerCase().includes(term))
-      );
-      setEvents(filteredEvents);
+  const handleEdit = (eventId) => {
+    alert(`Editar reserva con ID: ${eventId}`);
+  };
+
+  const handleCancel = (eventId) => {
+    if (window.confirm("¿Estás seguro de que deseas cancelar esta reserva?")) {
+      setEvents((prevEvents) => prevEvents.filter((event) => event.id !== eventId));
+      alert("Reserva cancelada con éxito.");
     }
   };
 
-  // Convertir las fechas ISO a objetos Date
-  const formattedEvents = events.map(event => ({
-    ...event,
-    start: new Date(event.start),
-    end: new Date(event.end)
-  }));
-
-  const eventStyleGetter = (event, start, end, isSelected, view) => {
-    // Si estamos en vista agenda, retornamos null para usar el estilo predeterminado
-    if (view === 'agenda') return {};
-
-    // Estilo base común para todos los eventos
-    const baseStyle = {
-      backgroundColor: "#00aab7", // turquesa
-      color: "#f6f7f2", // gris-claro
-      borderRadius: "4px",
-      border: "none",
-      fontSize: "0.875rem",
-      fontWeight: "500",
-      boxShadow: "0 1px 2px rgba(0, 0, 0, 0.1)",
-    };
-
-    // Estilos específicos para la vista mensual
-    const monthViewStyle = {
-      ...baseStyle,
-      padding: "2px 5px",
-      marginBottom: "2px",
-      height: "auto",
-      minHeight: "25px",
-      display: "flex",
-      alignItems: "center",
-    };
-
-    // Estilos específicos para las vistas de semana y día
-    const timeViewStyle = {
-      ...baseStyle,
-      padding: "4px 8px",
-      height: "100%",
-      marginLeft: "2px",
-      marginRight: "2px",
-      border: "1px solid #3182ce",
-      display: "flex",
-      flexDirection: "column",
-      justifyContent: "center",
-    };
-
-    // Determinar si estamos en vista de mes
-    const isMonthView = view === 'month';
-
-    return {
-      style: isMonthView ? monthViewStyle : timeViewStyle
-    };
+  // Estilo personalizado para el día seleccionado
+  const dayPropGetter = (date) => {
+    if (format(date, "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd")) {
+      return {
+        style: {
+          backgroundColor: "#00aab7",
+          color: "#fff",
+          /* borderRadius: "50%", */
+        },
+      };
+    }
+    return {};
   };
 
   return (
-    <div className="p-8 bg-gris-sutil rounded-xl shadow-lg">
-      {/* Título y buscador */}
-      <div className="bg-turquesa text-gris-claro p-4 rounded-t-xl mb-4 flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Calendario de Reservas</h2>
-        <input
-          type="text"
-          placeholder="Buscar eventos..."
-          value={searchTerm}
-          onChange={handleSearch}
-          className="p-2 rounded bg-white text-gris-medio shadow-md focus:outline-none focus:ring-2 focus:ring-fucsia"
-        />
-      </div>
-
-      {/* Calendario */}
-      <div className="bg-white rounded-lg overflow-hidden shadow-md">
+    <div className="p-4 bg-gris-sutil rounded-lg shadow-lg">
+      {/* Selector de fecha (calendario reducido) */}
+      <div className="bg-white rounded-lg shadow-md mb-4">
         <Calendar
           localizer={localizer}
-          events={formattedEvents}
-          startAccessor="start"
-          endAccessor="end"
-          style={{ height: 600, padding: "1rem" }}
+          events={[]} // Sin mostrar eventos en el calendario
+          date={selectedDate}
+          onNavigate={(date) => setSelectedDate(date)} // Cambiar la fecha seleccionada
+          views={["month"]}
+          style={{ height: 300 }}
+          dayPropGetter={dayPropGetter}
           messages={{
             next: "Siguiente",
             previous: "Anterior",
@@ -135,60 +83,60 @@ const BigCalendarView = () => {
             event: "Evento",
             noEventsInRange: "No hay eventos en este rango.",
           }}
-          eventPropGetter={eventStyleGetter}
           formats={{
-            monthHeaderFormat: 'MMMM yyyy',
-            dayHeaderFormat: 'cccc dd',
-            dayRangeHeaderFormat: ({ start, end }) =>
-              `${format(start, 'dd MMM')} - ${format(end, 'dd MMM')}`,
-            agendaDateFormat: 'dd/MM/yyyy',
-            agendaTimeFormat: 'HH:mm',
-            agendaTimeRangeFormat: ({ start, end }) =>
-              `${format(start, 'HH:mm')} - ${format(end, 'HH:mm')}`,
+            monthHeaderFormat: "MMMM yyyy", // Nombre del mes y año en español
+            weekdayFormat: (date) => format(date, "EE", { locale: es }).toUpperCase(), // Días abreviados (LU, MA...)
+            dayFormat: "d", // Día del mes
           }}
-          components={{
-            event: (props) => {
-              // Si estamos en vista agenda, retornamos null para usar el componente predeterminado
-              if (props.view === 'agenda') return null;
-
-              return (
-                <div className="h-full">
-                  <div className="font-semibold">{props.event.title}</div>
-                  {!props.event.allDay && props.event.capacity && (
-                    <div className="text-xs opacity-90">
-                      Capacidad: {props.event.capacity}
-                    </div>
-                  )}
-                </div>
-              );
-            }
-          }}
-          popup
-          popupOffset={30}
-          showMultiDayTimes
-          step={30}
-          timeslots={2}
-          min={new Date(0, 0, 0, 7, 0, 0)}
-          max={new Date(0, 0, 0, 21, 0, 0)}
         />
       </div>
 
-      {/* Leyenda */}
-      <div className="mt-4 p-4 bg-white rounded-lg shadow-sm">
-        <h3 className="text-lg font-semibold mb-2 text-turquesa">Información</h3>
-        <div className="flex flex-wrap gap-4">
-          <div className="flex items-center">
-            <div className="w-4 h-4 bg-turquesa rounded mr-2"></div>
-            <span className="text-sm text-gris-medio">Reserva activa</span>
-          </div>
-          <div className="flex items-center">
-            <div className="w-4 h-4 bg-gris-sutil border border-gris-medio rounded mr-2"></div>
-            <span className="text-sm text-gris-medio">Horario disponible</span>
-          </div>
-        </div>
+      {/* Lista de eventos */}
+      <div className="bg-white p-4 rounded-lg shadow-md">
+        <h3 className="text-lg font-semibold text-turquesa mb-3">
+          Reservas del {format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: es })}
+        </h3>
+
+        {filteredEvents.length > 0 ? (
+          <ul className="space-y-4">
+            {filteredEvents.map((event) => (
+              <li key={event.id} className="border-b pb-2">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h4 className="text-base font-semibold text-gris-medio">
+                      {event.title}
+                    </h4>
+                    <p className="text-sm text-gris-medio">
+                      {format(new Date(event.start), "HH:mm")} - {format(new Date(event.end), "HH:mm")}
+                    </p>
+                    <p className="text-sm text-gris-medio">{event.desc}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    {/* Botón de editar */}
+                    <button
+                      onClick={() => handleEdit(event.id)}
+                      className="text-sm text-white bg-turquesa px-3 py-1 rounded hover:bg-turquesa/90 transition"
+                    >
+                      Editar
+                    </button>
+                    {/* Botón de cancelar */}
+                    <button
+                      onClick={() => handleCancel(event.id)}
+                      className="text-sm text-white bg-fucsia px-3 py-1 rounded hover:bg-fucsia/90 transition"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-gris-medio">No hay reservas para este día.</p>
+        )}
       </div>
     </div>
   );
 };
 
-export default BigCalendarView;
+export default MobileCalendarView;

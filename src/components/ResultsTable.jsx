@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ReactPaginate from "react-paginate";
 import { useQuery } from "@tanstack/react-query";
 import { fetchSpaces } from "../Services/spacesService";
@@ -8,7 +8,24 @@ const ResultsTable = ({ filters }) => {
   const [page, setPage] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedSpace, setSelectedSpace] = useState(null);
-  const itemsPerPage = 9;
+  const [itemsPerPage, setItemsPerPage] = useState(9);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth <= 768) {
+        setItemsPerPage(4);
+      } else {
+        setItemsPerPage(9);
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    handleResize();
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
 
   const images = [
     "/src/assets/1.webp",
@@ -39,7 +56,6 @@ const ResultsTable = ({ filters }) => {
     return <p>Error al cargar los datos. Por favor, inténtalo de nuevo.</p>;
   }
 
-  // Calcular los datos para la página actual
   const startIndex = page * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const paginatedData = data.slice(startIndex, endIndex);
@@ -50,14 +66,17 @@ const ResultsTable = ({ filters }) => {
 
   return (
     <div className="bg-white shadow-md p-4 md:p-6 rounded-xl">
-      {/* Grid responsivo ajustado */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {paginatedData.map((item, index) => (
           <div
             key={index}
             className="border rounded-lg overflow-hidden shadow hover:shadow-lg transition duration-300"
           >
-            <img src={getRandomImage()} alt="Espacio" className="h-48 w-full object-cover" />
+            <img
+              src={getRandomImage()}
+              alt="Espacio"
+              className="h-48 w-full object-cover"
+            />
             <div className="p-4">
               <h3 className="text-lg font-bold text-gray-800">{item.sede}</h3>
               <p className="text-gray-600 text-sm">Ubicación: {item.localidad}</p>
@@ -83,7 +102,6 @@ const ResultsTable = ({ filters }) => {
         ))}
       </div>
 
-      {/* Paginación con espaciado responsivo */}
       <div className="mt-4 md:mt-6">
         <ReactPaginate
           pageCount={Math.ceil(data.length / itemsPerPage)}
@@ -96,7 +114,6 @@ const ResultsTable = ({ filters }) => {
         />
       </div>
 
-      {/* Modal */}
       <ReservationModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

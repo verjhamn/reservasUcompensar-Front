@@ -7,6 +7,7 @@ const SearchFilters = ({ filters, setFilters }) => {
     espaciosFisicos: [],
     tiposRecurso: [],
   });
+  const [showMoreFilters, setShowMoreFilters] = useState(false);
 
   const handleChange = (e) => {
     setFilters({
@@ -54,39 +55,6 @@ const SearchFilters = ({ filters, setFilters }) => {
             ))}
           </select>
         </div>
-
-        {/* Capacidad */}
-        <div>
-          <label className="block text-gray-700 mb-1">Capacidad</label>
-          <input
-            type="number"
-            name="capacidad"
-            value={filters.capacidad || ""}
-            onChange={handleChange}
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
-            placeholder="Número de personas"
-            min="1"
-          />
-        </div>
-
-        {/* Espacio Físico */}
-        <div>
-          <label className="block text-gray-700 mb-1">Espacio Físico</label>
-          <select
-            name="espaciofisico"
-            value={filters.espaciofisico || ""}
-            onChange={handleChange}
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
-          >
-            <option value="">Seleccionar</option>
-            {options.espaciosFisicos.map((espacio, index) => (
-              <option key={index} value={espacio}>
-                {espacio}
-              </option>
-            ))}
-          </select>
-        </div>
-
         {/* Tipo de Recurso */}
         <div>
           <label className="block text-gray-700 mb-1">Tipo de Recurso</label>
@@ -105,53 +73,101 @@ const SearchFilters = ({ filters, setFilters }) => {
           </select>
         </div>
 
-        {/* Fecha de Inicio */}
-        <div>
-          <label className="block text-gray-700 mb-1">Fecha de Inicio</label>
-          <input
-            type="date"
-            name="clseFechainicio"
-            value={filters.clseFechainicio || ""}
-            onChange={handleChange}
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
-          />
+        {/* Botón para mostrar más filtros */}
+        <div className="col-span-1 sm:col-span-2 lg:col-span-1">
+          <button
+            type="button"
+            onClick={() => setShowMoreFilters(!showMoreFilters)}
+            className="text-turquesa underline"
+          >
+            {showMoreFilters ? "Menos filtros" : "Más filtros"}
+          </button>
         </div>
 
-        {/* Fecha de Finalización */}
-        <div>
-          <label className="block text-gray-700 mb-1">Fecha de Finalización</label>
-          <input
-            type="date"
-            name="clseFechafinal"
-            value={filters.clseFechafinal || ""}
-            onChange={handleChange}
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
-          />
-        </div>
+        {/* Filtros adicionales */}
+        {showMoreFilters && (
+          <>
+            {/* Capacidad */}
+            <div>
+              <label className="block text-gray-700 mb-1">Capacidad</label>
+              <input
+                type="number"
+                name="capacidad"
+                value={filters.capacidad || ""}
+                onChange={handleChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
+                placeholder="Número de personas"
+                min="1"
+              />
+            </div>
 
-        {/* Hora de Inicio */}
-        <div>
-          <label className="block text-gray-700 mb-1">Hora de Inicio</label>
-          <input
-            type="time"
-            name="horainicio"
-            value={filters.horainicio || ""}
-            onChange={handleChange}
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
-          />
-        </div>
+            {/* Espacio Físico */}
+            <div>
+              <label className="block text-gray-700 mb-1">Espacio Físico</label>
+              <select
+                name="espaciofisico"
+                value={filters.espaciofisico || ""}
+                onChange={handleChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
+              >
+                <option value="">Seleccionar</option>
+                {options.espaciosFisicos.map((espacio, index) => (
+                  <option key={index} value={espacio}>
+                    {espacio}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-        {/* Hora de Finalización */}
-        <div>
-          <label className="block text-gray-700 mb-1">Hora de Finalización</label>
-          <input
-            type="time"
-            name="horafinal"
-            value={filters.horafinal || ""}
-            onChange={handleChange}
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
-          />
-        </div>
+            {/* Fecha de Inicio */}
+            <div>
+              <label className="block text-gray-700 mb-1">Fecha de Inicio</label>
+              <input
+                type="date"
+                name="clseFechainicio"
+                value={filters.clseFechainicio || ""}
+                onChange={handleChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
+              />
+            </div>
+
+            {/* Fecha de Finalización */}
+            <div>
+              <label className="block text-gray-700 mb-1">Fecha de Finalización</label>
+              <input
+                type="date"
+                name="clseFechafinal"
+                value={filters.clseFechafinal || ""}
+                onChange={handleChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
+              />
+            </div>
+
+            {/* Hora de Inicio */}
+            <div>
+              <label className="block text-gray-700 mb-1">Hora de Inicio</label>
+              <input
+                type="time"
+                name="horainicio"
+                value={filters.horainicio || ""}
+                onChange={handleChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
+              />
+            </div>
+
+            {/* Hora de Finalización */}
+            <div>
+              <label className="block text-gray-700 mb-1">Hora de Finalización</label>
+              <input
+                type="time"
+                name="horafinal"
+                value={filters.horafinal || ""}
+                onChange={handleChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
+              />
+            </div>
+          </>
+        )}
       </form>
     </div>
   );
