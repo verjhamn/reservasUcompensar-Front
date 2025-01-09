@@ -1,13 +1,14 @@
-import React, { useEffect, useState } from "react";
-import { fetchSpaces } from "../Services/spacesService";
+import React, { useState } from "react";
 
 const SearchFilters = ({ filters, setFilters }) => {
-  const [options, setOptions] = useState({
-    sedes: [],
-    espaciosFisicos: [],
-    tiposRecurso: [],
-  });
   const [showMoreFilters, setShowMoreFilters] = useState(false);
+
+  // Opciones estáticas para los desplegables
+  const staticOptions = {
+    sedes: ["Sede A", "Sede B", "Sede C"],
+    espaciosFisicos: ["Sala 1", "Sala 2", "Laboratorio"],
+    tiposRecurso: ["Proyector", "Computadora", "Pizarra"],
+  };
 
   const handleChange = (e) => {
     setFilters({
@@ -15,25 +16,6 @@ const SearchFilters = ({ filters, setFilters }) => {
       [e.target.name]: e.target.value,
     });
   };
-
-  useEffect(() => {
-    const fetchFilterOptions = async () => {
-      try {
-        const data = await fetchSpaces(); // Llama al servicio para obtener datos
-
-        // Extraer valores únicos para los filtros
-        const sedes = [...new Set(data.map((item) => item.sede))];
-        const espaciosFisicos = [...new Set(data.map((item) => item.espaciofisico))];
-        const tiposRecurso = [...new Set(data.map((item) => item.tiporecurso))];
-
-        setOptions({ sedes, espaciosFisicos, tiposRecurso });
-      } catch (error) {
-        console.error("Error al cargar las opciones de los filtros:", error);
-      }
-    };
-
-    fetchFilterOptions();
-  }, []);
 
   return (
     <div className="bg-white shadow-md p-4 md:p-6 rounded-xl">
@@ -48,7 +30,7 @@ const SearchFilters = ({ filters, setFilters }) => {
             className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
           >
             <option value="">Seleccionar</option>
-            {options.sedes.map((sede, index) => (
+            {staticOptions.sedes.map((sede, index) => (
               <option key={index} value={sede}>
                 {sede}
               </option>
@@ -65,7 +47,7 @@ const SearchFilters = ({ filters, setFilters }) => {
             className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
           >
             <option value="">Seleccionar</option>
-            {options.tiposRecurso.map((tipo, index) => (
+            {staticOptions.tiposRecurso.map((tipo, index) => (
               <option key={index} value={tipo}>
                 {tipo}
               </option>
@@ -111,7 +93,7 @@ const SearchFilters = ({ filters, setFilters }) => {
                 className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
               >
                 <option value="">Seleccionar</option>
-                {options.espaciosFisicos.map((espacio, index) => (
+                {staticOptions.espaciosFisicos.map((espacio, index) => (
                   <option key={index} value={espacio}>
                     {espacio}
                   </option>

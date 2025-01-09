@@ -18,6 +18,8 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
   const [filteredEvents, setFilteredEvents] = useState([]);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedStartTime, setSelectedStartTime] = useState("");
+  const [selectedEndTime, setSelectedEndTime] = useState("");
 
   useEffect(() => {
     if (spaceData && reservas) {
@@ -26,9 +28,11 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
       );
       setFilteredEvents(
         eventsForSpace.map((reserva) => ({
+          id: reserva.id,
           title: reserva.titulo,
           start: new Date(reserva.inicio),
           end: new Date(reserva.fin),
+          desc: reserva.descripcion,
         }))
       );
     }
@@ -49,12 +53,24 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
   };
 
   const handleConfirmReservation = () => {
-    if (selectedSlot) {
+    if (selectedDate && selectedStartTime && selectedEndTime) {
+      const startDateTime = new Date(
+        `${format(selectedDate, "yyyy-MM-dd")}T${selectedStartTime}`
+      );
+      const endDateTime = new Date(
+        `${format(selectedDate, "yyyy-MM-dd")}T${selectedEndTime}`
+      );
+
+      if (startDateTime >= endDateTime) {
+        alert("La hora de inicio debe ser anterior a la hora de finalización.");
+        return;
+      }
+
       const newReservation = {
         idEspacio: spaceData.idEspacio,
         titulo: `Reserva para ${spaceData.espaciofisico}`,
-        inicio: selectedSlot.start.toISOString(),
-        fin: selectedSlot.end.toISOString(),
+        inicio: startDateTime.toISOString(),
+        fin: endDateTime.toISOString(),
         idUsuario: "U001", // Simulado
         nombreUsuario: "Juan Pérez", // Simulado
         correoUsuario: "juan.perez@example.com", // Simulado
@@ -64,7 +80,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
       alert("Reserva confirmada con éxito.");
       onClose();
     } else {
-      alert("Por favor seleccione un horario antes de confirmar.");
+      alert("Por favor seleccione una fecha, una hora de inicio y una hora de finalización.");
     }
   };
 
@@ -76,12 +92,11 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
         style: {
           backgroundColor: "#00aab7",
           color: "#fff",
-          /* borderRadius: "50%", */
         },
       };
     }
     return {};
-  }
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -111,19 +126,21 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
         <div className="border-b mb-6">
           <button
             onClick={() => setActiveTab("info")}
-            className={`py-2 px-4 ${activeTab === "info"
-              ? "border-b-2 border-turquesa font-bold text-turquesa"
-              : "text-gray-600 hover:text-gray-800"
-              }`}
+            className={`py-2 px-4 ${
+              activeTab === "info"
+                ? "border-b-2 border-turquesa font-bold text-turquesa"
+                : "text-gray-600 hover:text-gray-800"
+            }`}
           >
             Información
           </button>
           <button
             onClick={() => setActiveTab("availability")}
-            className={`py-2 px-4 ${activeTab === "availability"
-              ? "border-b-2 border-turquesa font-bold text-turquesa"
-              : "text-gray-600 hover:text-gray-800"
-              }`}
+            className={`py-2 px-4 ${
+              activeTab === "availability"
+                ? "border-b-2 border-turquesa font-bold text-turquesa"
+                : "text-gray-600 hover:text-gray-800"
+            }`}
           >
             Disponibilidad
           </button>
@@ -157,12 +174,6 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
                   <h3 className="font-semibold text-gray-700 text-lg">Recurso</h3>
                   <p className="text-gray-600 text-base">{spaceData.recurso}</p>
                 </div>
-                {/*          <div className="col-span-2 md:col-span-1">
-                  <h3 className="font-semibold text-gray-700 text-lg">Horario</h3>
-                  <p className="text-gray-600 text-base">
-                    {spaceData.horainicio} - {spaceData.horafinal}
-                  </p>
-                </div> */}
               </div>
             </div>
 
@@ -176,43 +187,69 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
         )}
 
         {activeTab === "availability" && (
-          <div className="bg-white rounded-lg shadow-md mb-4">
+          <div>
             <Calendar
               localizer={localizer}
-              events={[]} // Sin mostrar eventos en el calendario
+              events={filteredEvents}
               selectable
               onSelectSlot={handleSlotSelect}
-              date={new Date()}
-              onNavigate={(date) => setSelectedDate(date)} // Cambiar la fecha seleccionada
+              date={selectedDate}
+              onNavigate={(date) => setSelectedDate(date)}
               views={["month"]}
               style={{ height: 300 }}
               dayPropGetter={dayPropGetter}
-              messages={{
-                next: "Siguiente",
-                previous: "Anterior",
-                today: "Hoy",
-                month: "Mes",
-                week: "Semana",
-                day: "Día",
-                agenda: "Agenda",
-                date: "Fecha",
-                time: "Hora",
-                event: "Evento",
-                noEventsInRange: "No hay eventos en este rango.",
-              }}
-              formats={{
-                monthHeaderFormat: "MMMM yyyy",
-                weekdayFormat: (date) =>
-                  format(date, "EE", { locale: es }).toUpperCase(),
-                dayFormat: "d",
-              }}
             />
+
+            {/* Selector de hora */}
+{/* Selector de hora */}
+<div className="bg-white p-4 mt-4">
+  <h3 className="text-lg font-semibold text-turquesa mb-3">Seleccionar horario</h3>
+  <div className="flex gap-4">
+    <div>
+      <label className="block text-sm font-semibold text-gray-600">Hora de inicio</label>
+      <select
+        value={selectedStartTime}
+        onChange={(e) => setSelectedStartTime(e.target.value)}
+        className="w-full p-2 border border-gray-300 rounded-md"
+      >
+        <option value="">Seleccionar</option>
+        {[...Array(14)].map((_, i) => {
+          const hour = 7 + i; // Horas desde las 7:00 AM hasta las 20:00 PM
+          return (
+            <option key={hour} value={`${hour}:00`}>
+              {hour < 12 ? `${hour}:00 AM` : `${hour === 12 ? hour : hour - 12}:00 PM`}
+            </option>
+          );
+        })}
+      </select>
+    </div>
+    <div>
+      <label className="block text-sm font-semibold text-gray-600">Hora de finalización</label>
+      <select
+        value={selectedEndTime}
+        onChange={(e) => setSelectedEndTime(e.target.value)}
+        className="w-full p-2 border border-gray-300 rounded-md"
+      >
+        <option value="">Seleccionar</option>
+        {[...Array(14)].map((_, i) => {
+          const hour = 7 + i; // Horas desde las 7:00 AM hasta las 20:00 PM
+          return (
+            <option key={hour} value={`${hour}:00`}>
+              {hour < 12 ? `${hour}:00 AM` : `${hour === 12 ? hour : hour - 12}:00 PM`}
+            </option>
+          );
+        })}
+      </select>
+    </div>
+  </div>
+</div>
+
+
             {/* Lista de eventos */}
-            <div className="bg-white p-4">
+            <div className="bg-white p-4 mt-4">
               <h3 className="text-lg font-semibold text-turquesa mb-3">
                 Reservas del {format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: es })}
               </h3>
-
               {filteredEvents.length > 0 ? (
                 <ul className="space-y-4">
                   {filteredEvents.map((event) => (
@@ -228,16 +265,14 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
                           <p className="text-sm text-gris-medio">{event.desc}</p>
                         </div>
                         <div className="flex gap-2">
-                          {/* Botón de editar */}
                           <button
-                            onClick={() => handleEdit(event.id)}
+                            onClick={() => alert("Editar no implementado aún.")}
                             className="text-sm text-white bg-turquesa px-3 py-1 rounded hover:bg-turquesa/90 transition"
                           >
                             Editar
                           </button>
-                          {/* Botón de cancelar */}
                           <button
-                            onClick={() => handleCancel(event.id)}
+                            onClick={() => alert("Cancelar no implementado aún.")}
                             className="text-sm text-white bg-fucsia px-3 py-1 rounded hover:bg-fucsia/90 transition"
                           >
                             Cancelar
@@ -251,16 +286,17 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
                 <p className="text-sm text-gris-medio">No hay reservas para este día.</p>
               )}
             </div>
-            <div className="mt-4 flex justify-end gap-4">
+
+            {/* Botón de confirmación */}
+            <div className="mt-4 flex justify-end">
               <button
                 onClick={handleConfirmReservation}
-                className="px-6 py-3 text-base m-2 bg-turquesa text-white rounded-lg hover:bg-turquesa/90 transition-colors"
+                className="px-6 py-3 bg-turquesa text-white rounded-lg hover:bg-turquesa/90 transition"
               >
                 Confirmar Reserva
               </button>
             </div>
           </div>
-
         )}
       </div>
     </div>

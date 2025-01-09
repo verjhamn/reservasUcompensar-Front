@@ -1,25 +1,39 @@
 import axios from "axios";
 
-export const getAuthToken = async () => {
-  const url =
-    "https://api-academusoft-web.ucompensar.edu.co:8093/integrador-rest/servicios/app-acceso/acceso?=";
+const API_BASE_URL = "/api";
 
-  try {
-    const response = await axios.post(
-      url,
-      { codigoAplicacion: "ReservaEspacios" },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          "WWW-Authenticate":
-            "Basic UmVzZXJ2YUVzcGFjaW9zOjQ1OThlNzE0MWMyYTk5ODYyM2IzMzYxYmZmODMxYmQ0",
-        },
-      }
-    );
+// Obtener el token del localStorage
+export const getAuthToken = () => {
+    const token = localStorage.getItem("authToken");
+    console.log("Token retrieved:", token); // Debug
+    return token;
+};
 
-    return response.data.token; // Devuelve el token
-  } catch (error) {
-    console.error("Error al obtener el token:", error);
-    throw error; // Maneja el error según sea necesario
-  }
+// Guardar el token en el localStorage
+export const setAuthToken = (token) => {
+    localStorage.setItem("authToken", token);
+    console.log("Token guardado:", token); // Debug
+};
+
+// Solicitar un nuevo token
+export const fetchAuthToken = async () => {
+    const data = {
+        email: "jhmendezb@ucompensar.edu.co",
+        password: "123456789",
+    };
+
+    try {
+        console.log("Solicitando nuevo token..."); // Debug
+        const response = await axios.post(`${API_BASE_URL}/auth/login`, data);
+        const token = response.data.token;
+        if (token) {
+            setAuthToken(token);
+            return token;
+        } else {
+            throw new Error("No se recibió un token válido.");
+        }
+    } catch (error) {
+        console.error("Error al obtener el token de autenticación:", error);
+        throw error;
+    }
 };
