@@ -93,6 +93,7 @@ const ResultsTable = ({ filters = {} }) => {
                         />
                         <div className="p-4">
                             <h3 className="text-lg font-bold text-gray-800">{item.nombre}</h3>
+                            <p className="text-gray-600 text-sm">Sede: {item.sede}</p>                            
                             <p className="text-gray-600 text-sm">Ubicación: {item.ubicacion}</p>
                             <p className="text-gray-600 text-sm">Capacidad: {item.capacidad}</p>
                             <p className="text-gray-600 text-sm">Recurso: {item.tiporecurso}</p>

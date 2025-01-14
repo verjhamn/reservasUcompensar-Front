@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Calendar, dateFnsLocalizer } from "react-big-calendar";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import { format, parse, startOfWeek, getDay } from "date-fns";
+import { format, parse, startOfWeek, getDay, addHours } from "date-fns";
 import es from "date-fns/locale/es";
 
 const locales = { es: es };
@@ -20,23 +20,30 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedStartTime, setSelectedStartTime] = useState("");
   const [selectedEndTime, setSelectedEndTime] = useState("");
+  const [selectedHours, setSelectedHours] = useState([]);
 
   useEffect(() => {
-    if (spaceData && reservas) {
-      const eventsForSpace = reservas.filter(
-        (reserva) => reserva.idEspacio === spaceData.idEspacio
-      );
-      setFilteredEvents(
-        eventsForSpace.map((reserva) => ({
-          id: reserva.id,
-          title: reserva.titulo,
-          start: new Date(reserva.inicio),
-          end: new Date(reserva.fin),
-          desc: reserva.descripcion,
-        }))
-      );
+    // Verifica si existe spaceData y si tiene la propiedad reservas
+    if (spaceData && spaceData.reservas) {
+      // Transforma cada reserva en un objeto de evento para el calendario
+      const eventsForSpace = spaceData.reservas.map(reserva => ({
+        // Mapea las propiedades de la reserva al formato requerido por el calendario
+        id: reserva.idReserva,
+        title: reserva.titulo,
+        // Convierte las fechas del formato DD/MM/YYYY HH:mm al formato YYYY-MM-DD HH:mm
+        // usando una expresión regular para reorganizar las partes de la fecha
+        start: new Date(reserva.inicio.replace(/(\d{2})\/(\d{2})\/(\d{4}) (\d{2}:\d{2})/, '$3-$2-$1 $4')),
+        end: new Date(reserva.fin.replace(/(\d{2})\/(\d{2})\/(\d{4}) (\d{2}:\d{2})/, '$3-$2-$1 $4')),
+        // Crea una descripción con el nombre del usuario
+        desc: `Reservado por: ${reserva.usuario.nombre}`,
+        // Mantiene la referencia al usuario y estado de la reserva
+        usuario: reserva.usuario,
+        estado: reserva.estado
+      }));
+      // Actualiza el estado con los eventos transformados
+      setFilteredEvents(eventsForSpace);
     }
-  }, [spaceData, reservas]);
+  }, [spaceData]); // El efecto se ejecuta cuando spaceData cambia
 
   const handleSlotSelect = (slotInfo) => {
     const isSlotOccupied = filteredEvents.some(
@@ -53,18 +60,15 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
   };
 
   const handleConfirmReservation = () => {
-    if (selectedDate && selectedStartTime && selectedEndTime) {
+    if (selectedDate && selectedHours.length > 0) {
       const startDateTime = new Date(
-        `${format(selectedDate, "yyyy-MM-dd")}T${selectedStartTime}`
+        `${format(selectedDate, "yyyy-MM-dd")}T${selectedHours[0]}`
       );
       const endDateTime = new Date(
-        `${format(selectedDate, "yyyy-MM-dd")}T${selectedEndTime}`
+        `${format(selectedDate, "yyyy-MM-dd")}T${selectedHours[selectedHours.length - 1]}`
       );
-
-      if (startDateTime >= endDateTime) {
-        alert("La hora de inicio debe ser anterior a la hora de finalización.");
-        return;
-      }
+      // Añadimos una hora al tiempo final para incluir la última hora completa
+      endDateTime.setHours(endDateTime.getHours() + 1);
 
       const newReservation = {
         idEspacio: spaceData.idEspacio,
@@ -77,11 +81,49 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
       };
 
       console.log("Reserva enviada al backend:", newReservation);
-      alert("Reserva confirmada con éxito.");
+      alert(`Reserva confirmada con éxito para el día ${format(selectedDate, "dd/MM/yyyy", { locale: es })} de ${selectedHours[0]} a ${format(endDateTime, 'HH:mm')}`);
       onClose();
     } else {
-      alert("Por favor seleccione una fecha, una hora de inicio y una hora de finalización.");
+      alert("Por favor seleccione una fecha y al menos una hora para la reserva.");
     }
+  };
+
+  const generateTimeSlots = () => {
+    const slots = [];
+    for (let hour = 7; hour <= 21; hour++) {
+      slots.push(`${hour.toString().padStart(2, '0')}:00`);
+    }
+    return slots;
+  };
+
+  const isTimeSlotAvailable = (timeSlot) => {
+    const slotDate = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${timeSlot}`);
+    
+    return !filteredEvents.some(event => 
+      slotDate >= new Date(event.start) && 
+      slotDate < new Date(event.end)
+    );
+  };
+
+  const handleTimeSelect = (time) => {
+    if (selectedHours.includes(time)) {
+      // Si la hora ya está seleccionada, la quitamos
+      setSelectedHours(prev => prev.filter(hour => hour !== time));
+      return;
+    }
+
+    // Convertimos todas las horas a números para ordenarlas
+    const allHours = [...selectedHours, time].map(h => parseInt(h.split(':')[0]));
+    const min = Math.min(...allHours);
+    const max = Math.max(...allHours);
+
+    // Verificamos si las horas son consecutivas
+    if (max - min + 1 !== allHours.length) {
+      alert("Solo puedes seleccionar horas consecutivas");
+      return;
+    }
+
+    setSelectedHours(prev => [...prev, time].sort());
   };
 
   if (!isOpen || !spaceData) return null;
@@ -126,21 +168,19 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
         <div className="border-b mb-6">
           <button
             onClick={() => setActiveTab("info")}
-            className={`py-2 px-4 ${
-              activeTab === "info"
-                ? "border-b-2 border-turquesa font-bold text-turquesa"
-                : "text-gray-600 hover:text-gray-800"
-            }`}
+            className={`py-2 px-4 ${activeTab === "info"
+              ? "border-b-2 border-turquesa font-bold text-turquesa"
+              : "text-gray-600 hover:text-gray-800"
+              }`}
           >
             Información
           </button>
           <button
             onClick={() => setActiveTab("availability")}
-            className={`py-2 px-4 ${
-              activeTab === "availability"
-                ? "border-b-2 border-turquesa font-bold text-turquesa"
-                : "text-gray-600 hover:text-gray-800"
-            }`}
+            className={`py-2 px-4 ${activeTab === "availability"
+              ? "border-b-2 border-turquesa font-bold text-turquesa"
+              : "text-gray-600 hover:text-gray-800"
+              }`}
           >
             Disponibilidad
           </button>
@@ -157,22 +197,30 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
                   className="w-full h-64 md:h-80 object-cover rounded-lg shadow-lg"
                 />
               </div>
-              <div className="w-full md:w-1/3 grid grid-cols-2 md:grid-cols-1 gap-4">
-                <div>
-                  <h3 className="font-semibold text-gray-700 text-lg">Sede</h3>
-                  <p className="text-gray-600 text-base">{spaceData.sede}</p>
+              <div className="w-full max-h-80 md:w-1/3 grid grid-cols-2 md:grid-cols-1 gap-4 overflow-y-auto">
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-gray-700 text-lg truncate">ID</h3>
+                  <p className="text-gray-600 text-base truncate">{spaceData.idEspacio}</p>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-gray-700 text-lg">Ubicación</h3>
-                  <p className="text-gray-600 text-base">{spaceData.localidad}</p>
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-gray-700 text-lg truncate">Sede</h3>
+                  <p className="text-gray-600 text-base truncate">{spaceData.sede}</p>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-gray-700 text-lg">Espacio</h3>
-                  <p className="text-gray-600 text-base">{spaceData.espaciofisico}</p>
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-gray-700 text-lg truncate">Nombre</h3>
+                  <p className="text-gray-600 text-base truncate">{spaceData.nombre}</p>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-gray-700 text-lg">Recurso</h3>
-                  <p className="text-gray-600 text-base">{spaceData.recurso}</p>
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-gray-700 text-lg truncate">Capacidad</h3>
+                  <p className="text-gray-600 text-base truncate">{spaceData.capacidad}</p>
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-gray-700 text-lg truncate">Ubicación</h3>
+                  <p className="text-gray-600 text-base truncate">{spaceData.ubicacion}</p>
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-gray-700 text-lg truncate">Tipo recurso</h3>
+                  <p className="text-gray-600 text-base truncate">{spaceData.ubicacion}</p>
                 </div>
               </div>
             </div>
@@ -182,6 +230,27 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
               <p className="text-gray-600 text-base">
                 <em>Descripción genérica del espacio disponible.</em>
               </p>
+            </div>
+
+            <div className="flex justify-end mt-4">
+              <button
+                onClick={() => setActiveTab("availability")}
+                className="px-6 py-3 bg-turquesa text-white rounded-lg hover:bg-turquesa/90 transition flex items-center gap-2"
+              >
+                Siguiente
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  className="h-5 w-5" 
+                  viewBox="0 0 20 20" 
+                  fill="currentColor"
+                >
+                  <path 
+                    fillRule="evenodd" 
+                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" 
+                    clipRule="evenodd" 
+                  />
+                </svg>
+              </button>
             </div>
           </div>
         )}
@@ -201,48 +270,44 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
             />
 
             {/* Selector de hora */}
-{/* Selector de hora */}
-<div className="bg-white p-4 mt-4">
-  <h3 className="text-lg font-semibold text-turquesa mb-3">Seleccionar horario</h3>
-  <div className="flex gap-4">
-    <div>
-      <label className="block text-sm font-semibold text-gray-600">Hora de inicio</label>
-      <select
-        value={selectedStartTime}
-        onChange={(e) => setSelectedStartTime(e.target.value)}
-        className="w-full p-2 border border-gray-300 rounded-md"
-      >
-        <option value="">Seleccionar</option>
-        {[...Array(14)].map((_, i) => {
-          const hour = 7 + i; // Horas desde las 7:00 AM hasta las 20:00 PM
-          return (
-            <option key={hour} value={`${hour}:00`}>
-              {hour < 12 ? `${hour}:00 AM` : `${hour === 12 ? hour : hour - 12}:00 PM`}
-            </option>
-          );
-        })}
-      </select>
-    </div>
-    <div>
-      <label className="block text-sm font-semibold text-gray-600">Hora de finalización</label>
-      <select
-        value={selectedEndTime}
-        onChange={(e) => setSelectedEndTime(e.target.value)}
-        className="w-full p-2 border border-gray-300 rounded-md"
-      >
-        <option value="">Seleccionar</option>
-        {[...Array(14)].map((_, i) => {
-          const hour = 7 + i; // Horas desde las 7:00 AM hasta las 20:00 PM
-          return (
-            <option key={hour} value={`${hour}:00`}>
-              {hour < 12 ? `${hour}:00 AM` : `${hour === 12 ? hour : hour - 12}:00 PM`}
-            </option>
-          );
-        })}
-      </select>
-    </div>
-  </div>
-</div>
+            <div className="bg-white p-4 mt-4">
+              <h3 className="text-lg font-semibold text-turquesa mb-3">Seleccionar horario</h3>
+              
+              <div className="mb-4">
+                <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
+                  {generateTimeSlots().map((time) => (
+                    <button
+                      key={time}
+                      onClick={() => handleTimeSelect(time)}
+                      disabled={!isTimeSlotAvailable(time)}
+                      className={`
+                        p-2 rounded-md text-sm
+                        ${selectedHours.includes(time)
+                          ? 'bg-turquesa text-white' 
+                          : isTimeSlotAvailable(time)
+                            ? 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                        }
+                      `}
+                    >
+                      {time}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {selectedHours.length > 0 && (
+                <div className="mt-2 text-sm text-gray-600">
+                  Horario seleccionado: {selectedHours[0]} - {format(
+                    addHours(
+                      new Date(`${format(selectedDate, "yyyy-MM-dd")}T${selectedHours[selectedHours.length - 1]}`),
+                      1
+                    ),
+                    'HH:mm'
+                  )}
+                </div>
+              )}
+            </div>
 
 
             {/* Lista de eventos */}
