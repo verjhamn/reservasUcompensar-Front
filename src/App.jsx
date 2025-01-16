@@ -31,7 +31,7 @@ function App() {
                 view === "table" ? "bg-turquesa hover:bg-turquesa/90 text-white" : "bg-gray-300"
               }`}
             >
-              Reservar
+              Catálogo
             </button>
             <button
               onClick={() => setView("Calendario")}
@@ -39,7 +39,7 @@ function App() {
                 view === "Calendario" ? "bg-turquesa hover:bg-turquesa/90 text-white" : "bg-gray-300"
               }`}
             >
-              Calendario
+              Mis Reservas
             </button>
             <button
               onClick={() => setView("fullCalendar")}

@@ -3,6 +3,7 @@ import { Calendar, dateFnsLocalizer } from "react-big-calendar";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { format, parse, startOfWeek, getDay, addHours } from "date-fns";
 import es from "date-fns/locale/es";
+import { createReservation } from "../Services/createReservationService";
 
 const locales = { es: es };
 const localizer = dateFnsLocalizer({
@@ -21,6 +22,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
   const [selectedStartTime, setSelectedStartTime] = useState("");
   const [selectedEndTime, setSelectedEndTime] = useState("");
   const [selectedHours, setSelectedHours] = useState([]);
+  const [reservationTitle, setReservationTitle] = useState("");
 
   useEffect(() => {
     // Verifica si existe spaceData y si tiene la propiedad reservas
@@ -59,30 +61,59 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
     }
   };
 
-  const handleConfirmReservation = () => {
+  const handleConfirmReservation = async () => {
     if (selectedDate && selectedHours.length > 0) {
+      if (!reservationTitle.trim()) {
+        alert("Por favor ingrese un título para la reserva");
+        return;
+      }
+
       const startDateTime = new Date(
         `${format(selectedDate, "yyyy-MM-dd")}T${selectedHours[0]}`
       );
       const endDateTime = new Date(
         `${format(selectedDate, "yyyy-MM-dd")}T${selectedHours[selectedHours.length - 1]}`
       );
-      // Añadimos una hora al tiempo final para incluir la última hora completa
       endDateTime.setHours(endDateTime.getHours() + 1);
 
-      const newReservation = {
+      const formattedStart = format(startDateTime, "dd/MM/yyyy HH:mm");
+      const formattedEnd = format(endDateTime, "dd/MM/yyyy HH:mm");
+
+      const reservationData = {
         idEspacio: spaceData.idEspacio,
-        titulo: `Reserva para ${spaceData.espaciofisico}`,
-        inicio: startDateTime.toISOString(),
-        fin: endDateTime.toISOString(),
-        idUsuario: "U001", // Simulado
-        nombreUsuario: "Juan Pérez", // Simulado
-        correoUsuario: "juan.perez@example.com", // Simulado
+        titulo: reservationTitle,
+        inicio: formattedStart,
+        fin: formattedEnd,
+        idUsuario: "U001",
+        nombreUsuario: "Juan Pérez",
+        correoUsuario: "juan.perez@example.com",
+        detalles: {
+          equiposNecesarios: ["Proyector"],
+          comentarios: "Reserva realizada desde el sistema"
+        }
       };
 
-      console.log("Reserva enviada al backend:", newReservation);
-      alert(`Reserva confirmada con éxito para el día ${format(selectedDate, "dd/MM/yyyy", { locale: es })} de ${selectedHours[0]} a ${format(endDateTime, 'HH:mm')}`);
-      onClose();
+      console.log("Intentando crear reserva con datos:", reservationData);
+
+      try {
+        const response = await createReservation(reservationData);
+        console.log("=== Reserva creada exitosamente ===");
+        console.log("ID de reserva:", response.data.id);
+        console.log("Fecha de creación:", response.data.created_at);
+        console.log("Fecha de inicio:", response.data.inicio);
+        console.log("Fecha de fin:", response.data.fin);
+        console.log("Respuesta completa:", response);
+
+        alert(`Reserva confirmada con éxito para el día ${format(selectedDate, "dd/MM/yyyy", { locale: es })} de ${selectedHours[0]} a ${format(endDateTime, 'HH:mm')}`);
+        onClose();
+      } catch (error) {
+        console.error("=== Error al crear la reserva ===");
+        console.error("Tipo de error:", error.name);
+        console.error("Mensaje:", error.message);
+        console.error("Detalles completos:", error);
+        
+        alert("Hubo un error al crear la reserva. Por favor, intente nuevamente.");
+      }
     } else {
       alert("Por favor seleccione una fecha y al menos una hora para la reserva.");
     }
@@ -268,6 +299,18 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
               style={{ height: 300 }}
               dayPropGetter={dayPropGetter}
             />
+
+            {/* Campo de título de la reserva */}
+            <div className="bg-white p-4 mt-4">
+              <h3 className="text-lg font-semibold text-turquesa mb-3">Título de la reserva</h3>
+              <input
+                type="text"
+                value={reservationTitle}
+                onChange={(e) => setReservationTitle(e.target.value)}
+                placeholder="Ingrese el título de la reserva"
+                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-turquesa"
+              />
+            </div>
 
             {/* Selector de hora */}
             <div className="bg-white p-4 mt-4">
