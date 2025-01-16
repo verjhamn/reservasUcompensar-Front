@@ -23,6 +23,10 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
   const [selectedEndTime, setSelectedEndTime] = useState("");
   const [selectedHours, setSelectedHours] = useState([]);
   const [reservationTitle, setReservationTitle] = useState("");
+  const [reservationDescription, setReservationDescription] = useState("");
+  const [selectedPeriod, setSelectedPeriod] = useState(null);
+
+  const isCoworking = spaceData?.tiporecurso === "Sala de reuniones";
 
   useEffect(() => {
     // Verifica si existe spaceData y si tiene la propiedad reservas
@@ -62,60 +66,70 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
   };
 
   const handleConfirmReservation = async () => {
-    if (selectedDate && selectedHours.length > 0) {
-      if (!reservationTitle.trim()) {
-        alert("Por favor ingrese un título para la reserva");
+    if (!reservationTitle.trim()) {
+      alert("Por favor ingrese un título para la reserva");
+      return;
+    }
+
+    let startDateTime, endDateTime;
+
+    if (isCoworking) {
+      if (!selectedPeriod) {
+        alert("Por favor seleccione un período de tiempo");
         return;
       }
-
-      const startDateTime = new Date(
-        `${format(selectedDate, "yyyy-MM-dd")}T${selectedHours[0]}`
-      );
-      const endDateTime = new Date(
-        `${format(selectedDate, "yyyy-MM-dd")}T${selectedHours[selectedHours.length - 1]}`
-      );
-      endDateTime.setHours(endDateTime.getHours() + 1);
-
-      const formattedStart = format(startDateTime, "dd/MM/yyyy HH:mm");
-      const formattedEnd = format(endDateTime, "dd/MM/yyyy HH:mm");
-
-      const reservationData = {
-        idEspacio: spaceData.idEspacio,
-        titulo: reservationTitle,
-        inicio: formattedStart,
-        fin: formattedEnd,
-        idUsuario: "U001",
-        nombreUsuario: "Juan Pérez",
-        correoUsuario: "juan.perez@example.com",
-        detalles: {
-          equiposNecesarios: ["Proyector"],
-          comentarios: "Reserva realizada desde el sistema"
-        }
-      };
-
-      console.log("Intentando crear reserva con datos:", reservationData);
-
-      try {
-        const response = await createReservation(reservationData);
-        console.log("=== Reserva creada exitosamente ===");
-        console.log("ID de reserva:", response.data.id);
-        console.log("Fecha de creación:", response.data.created_at);
-        console.log("Fecha de inicio:", response.data.inicio);
-        console.log("Fecha de fin:", response.data.fin);
-        console.log("Respuesta completa:", response);
-
-        alert(`Reserva confirmada con éxito para el día ${format(selectedDate, "dd/MM/yyyy", { locale: es })} de ${selectedHours[0]} a ${format(endDateTime, 'HH:mm')}`);
-        onClose();
-      } catch (error) {
-        console.error("=== Error al crear la reserva ===");
-        console.error("Tipo de error:", error.name);
-        console.error("Mensaje:", error.message);
-        console.error("Detalles completos:", error);
-        
-        alert("Hubo un error al crear la reserva. Por favor, intente nuevamente.");
-      }
+      // Usar el período seleccionado
+      startDateTime = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${selectedPeriod.start}`);
+      endDateTime = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${selectedPeriod.end}`);
     } else {
-      alert("Por favor seleccione una fecha y al menos una hora para la reserva.");
+      if (!selectedHours.length) {
+        alert("Por favor seleccione al menos una hora");
+        return;
+      }
+      // Usar las horas seleccionadas (código existente)
+      startDateTime = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${selectedHours[0]}`);
+      endDateTime = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${selectedHours[selectedHours.length - 1]}`);
+      endDateTime.setHours(endDateTime.getHours() + 1);
+    }
+
+    const formattedStart = format(startDateTime, "dd/MM/yyyy HH:mm");
+    const formattedEnd = format(endDateTime, "dd/MM/yyyy HH:mm");
+
+    const reservationData = {
+      idEspacio: spaceData.idEspacio,
+      titulo: reservationTitle,
+      descripcion: reservationDescription,
+      inicio: formattedStart,
+      fin: formattedEnd,
+      idUsuario: "U001",
+      nombreUsuario: "Juan Pérez",
+      correoUsuario: "juan.perez@example.com",
+      detalles: {
+        equiposNecesarios: ["Proyector"],
+        comentarios: "Reserva realizada desde el sistema"
+      }
+    };
+
+    console.log("Intentando crear reserva con datos:", reservationData);
+
+    try {
+      const response = await createReservation(reservationData);
+      console.log("=== Reserva creada exitosamente ===");
+      console.log("ID de reserva:", response.data.id);
+      console.log("Fecha de creación:", response.data.created_at);
+      console.log("Fecha de inicio:", response.data.inicio);
+      console.log("Fecha de fin:", response.data.fin);
+      console.log("Respuesta completa:", response);
+
+      alert(`Reserva confirmada con éxito para el día ${format(selectedDate, "dd/MM/yyyy", { locale: es })} de ${selectedHours[0]} a ${format(endDateTime, 'HH:mm')}`);
+      onClose();
+    } catch (error) {
+      console.error("=== Error al crear la reserva ===");
+      console.error("Tipo de error:", error.name);
+      console.error("Mensaje:", error.message);
+      console.error("Detalles completos:", error);
+
+      alert("Hubo un error al crear la reserva. Por favor, intente nuevamente.");
     }
   };
 
@@ -129,9 +143,9 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
 
   const isTimeSlotAvailable = (timeSlot) => {
     const slotDate = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${timeSlot}`);
-    
-    return !filteredEvents.some(event => 
-      slotDate >= new Date(event.start) && 
+
+    return !filteredEvents.some(event =>
+      slotDate >= new Date(event.start) &&
       slotDate < new Date(event.end)
     );
   };
@@ -155,6 +169,71 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
     }
 
     setSelectedHours(prev => [...prev, time].sort());
+  };
+
+  const coworkingPeriods = [
+    { id: 0, name: "Mañana", start: "07:00", end: "12:00" },
+    { id: 1, name: "Mañana", start: "13:00", end: "17:00" },
+    { id: 2, name: "Mañana-Tarde", start: "07:00", end: "17:00" },
+    { id: 3, name: "Tarde-Noche", start: "17:00", end: "22:00" },
+    
+  ];
+
+  const renderTimeSelector = () => {
+    if (isCoworking) {
+      return (
+        <div className="bg-white p-4 mt-4">
+          <h3 className="text-lg font-semibold text-turquesa mb-3">Seleccionar período</h3>
+          <div className="grid grid-cols-2 gap-4">
+            {coworkingPeriods.map((period) => (
+              <button
+                key={period.id}
+                onClick={() => setSelectedPeriod(period)}
+                className={`
+                  p-4 rounded-md text-sm
+                  ${selectedPeriod?.id === period.id
+                    ? 'bg-turquesa text-white'
+                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                  }
+                `}
+              >
+                {period.name}
+                <br />
+                <span className="text-xs">
+                  {period.start} - {period.end}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="bg-white p-4 mt-4">
+        <h3 className="text-lg font-semibold text-turquesa mb-3">Seleccionar horario</h3>
+        <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
+          {generateTimeSlots().map((time) => (
+            <button
+              key={time}
+              onClick={() => handleTimeSelect(time)}
+              disabled={!isTimeSlotAvailable(time)}
+              className={`
+                p-2 rounded-md text-sm
+                ${selectedHours.includes(time)
+                  ? 'bg-turquesa text-white'
+                  : isTimeSlotAvailable(time)
+                    ? 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                }
+              `}
+            >
+              {time}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
   };
 
   if (!isOpen || !spaceData) return null;
@@ -269,16 +348,16 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
                 className="px-6 py-3 bg-turquesa text-white rounded-lg hover:bg-turquesa/90 transition flex items-center gap-2"
               >
                 Siguiente
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  className="h-5 w-5" 
-                  viewBox="0 0 20 20" 
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  viewBox="0 0 20 20"
                   fill="currentColor"
                 >
-                  <path 
-                    fillRule="evenodd" 
-                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" 
-                    clipRule="evenodd" 
+                  <path
+                    fillRule="evenodd"
+                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                    clipRule="evenodd"
                   />
                 </svg>
               </button>
@@ -299,8 +378,8 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
               style={{ height: 300 }}
               dayPropGetter={dayPropGetter}
             />
-
-            {/* Campo de título de la reserva */}
+            {renderTimeSelector()}
+            {/* Campo de título y descripción de la reserva */}
             <div className="bg-white p-4 mt-4">
               <h3 className="text-lg font-semibold text-turquesa mb-3">Título de la reserva</h3>
               <input
@@ -308,53 +387,21 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
                 value={reservationTitle}
                 onChange={(e) => setReservationTitle(e.target.value)}
                 placeholder="Ingrese el título de la reserva"
+                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-turquesa mb-4"
+              />
+
+              <h3 className="text-lg font-semibold text-turquesa mb-3">Descripción de la reserva</h3>
+              <textarea
+                value={reservationDescription}
+                onChange={(e) => setReservationDescription(e.target.value)}
+                placeholder="Ingrese la descripción de la reserva"
                 className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-turquesa"
+                rows="3"
               />
             </div>
 
-            {/* Selector de hora */}
-            <div className="bg-white p-4 mt-4">
-              <h3 className="text-lg font-semibold text-turquesa mb-3">Seleccionar horario</h3>
-              
-              <div className="mb-4">
-                <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
-                  {generateTimeSlots().map((time) => (
-                    <button
-                      key={time}
-                      onClick={() => handleTimeSelect(time)}
-                      disabled={!isTimeSlotAvailable(time)}
-                      className={`
-                        p-2 rounded-md text-sm
-                        ${selectedHours.includes(time)
-                          ? 'bg-turquesa text-white' 
-                          : isTimeSlotAvailable(time)
-                            ? 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                        }
-                      `}
-                    >
-                      {time}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {selectedHours.length > 0 && (
-                <div className="mt-2 text-sm text-gray-600">
-                  Horario seleccionado: {selectedHours[0]} - {format(
-                    addHours(
-                      new Date(`${format(selectedDate, "yyyy-MM-dd")}T${selectedHours[selectedHours.length - 1]}`),
-                      1
-                    ),
-                    'HH:mm'
-                  )}
-                </div>
-              )}
-            </div>
-
-
             {/* Lista de eventos */}
-            <div className="bg-white p-4 mt-4">
+            {/*<div className="bg-white p-4 mt-4">
               <h3 className="text-lg font-semibold text-turquesa mb-3">
                 Reservas del {format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: es })}
               </h3>
@@ -393,7 +440,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
               ) : (
                 <p className="text-sm text-gris-medio">No hay reservas para este día.</p>
               )}
-            </div>
+            </div>*/}
 
             {/* Botón de confirmación */}
             <div className="mt-4 flex justify-end">
