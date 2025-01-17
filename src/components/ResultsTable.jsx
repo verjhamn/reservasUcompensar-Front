@@ -34,8 +34,17 @@ const ResultsTable = ({ filters = {} }) => {
             setIsLoading(true);
             setError(null);
             try {
-                const reservations = await fetchFilteredReservations(filters);
-                setData(reservations);
+                const response = await fetchFilteredReservations(filters);
+                console.log('Respuesta completa:', response);
+                
+                if (!response || !response.espacios) {
+                    console.log('No hay datos en la respuesta');
+                    setData([]);
+                    return;
+                }
+                
+                console.log('Espacios encontrados:', response.espacios.length);
+                setData(response.espacios);
             } catch (err) {
                 console.error("Error al obtener datos en ResultsTable:", err);
                 setError(err.message || "Error al cargar los datos.");
@@ -70,36 +79,40 @@ const ResultsTable = ({ filters = {} }) => {
         return <p>{error}</p>;
     }
 
+    console.log('Datos antes de paginar:', data);
+
     const startIndex = page * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     const paginatedData = data.slice(startIndex, endIndex);
 
-    if (paginatedData.length === 0) {
+    console.log('Datos paginados:', paginatedData);
+
+    if (data.length === 0) {
         return <p>No se encontraron resultados para los filtros seleccionados.</p>;
     }
 
     return (
         <div className="bg-white shadow-md p-4 md:p-6 rounded-xl">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                {paginatedData.map((item) => (
+                {paginatedData.map((item, index) => (
                     <div
-                        key={item.idEspacio}
-                        className="border rounded-lg overflow-hidden shadow hover:shadow-lg transition duration-300"
+                        key={`${item.id}-${index}`}
+                        className="border rounded-lg overflow-hidden shadow hover:shadow-lg transition duration-300 flex flex-col"
                     >
                         <img
                             src={getRandomImage()}
                             alt="Espacio"
                             className="h-48 w-full object-cover"
                         />
-                        <div className="p-4">
-                            <h3 className="text-lg font-bold text-gray-800">{item.nombre}</h3>
-                            <p className="text-gray-600 text-sm">Sede: {item.sede}</p>                            
-                            <p className="text-gray-600 text-sm">Ubicación: {item.ubicacion}</p>
-                            <p className="text-gray-600 text-sm">Capacidad: {item.capacidad}</p>
-                            <p className="text-gray-600 text-sm">Recurso: {item.tiporecurso}</p>
-                            <p className="text-gray-600 text-sm">
-                                <em>Descripción genérica del espacio disponible.</em>
-                            </p>
+                        <div className="p-4 flex flex-col flex-grow">
+                            <div className="flex-grow">
+                                <h3 className="text-lg font-bold text-gray-800">{item.nombre}</h3>
+                                <p className="text-gray-600 text-sm">Código: {item.codigo}</p>
+                                <p className="text-gray-600 text-sm">Sede: {item.sede.nombre}</p>
+                                <p className="text-gray-600 text-sm">Piso: {item.piso}</p>
+                                <p className="text-gray-600 text-sm">Tipo: {item.tipo_espacio}</p>
+                                <p className="text-gray-600 text-sm">Capacidad: {item.cantidad_equipos}</p>
+                            </div>
                             <button
                                 onClick={() => {
                                     setSelectedSpace({ ...item, image: getRandomImage() });
@@ -123,6 +136,12 @@ const ResultsTable = ({ filters = {} }) => {
                     previousClassName="text-gray-500 hover:text-blue-500"
                     nextClassName="text-gray-500 hover:text-blue-500"
                     pageClassName="text-gray-500 hover:text-blue-500"
+                    pageRangeDisplayed={5}
+                    marginPagesDisplayed={2}
+                    previousLabel={"Anterior"}
+                    nextLabel={"Siguiente"}
+                    pageLinkClassName="px-3 py-1"
+                    renderOnZeroPageCount={null}
                 />
             </div>
 

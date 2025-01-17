@@ -26,30 +26,22 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
   const [reservationDescription, setReservationDescription] = useState("");
   const [selectedPeriod, setSelectedPeriod] = useState(null);
 
-  const isCoworking = spaceData?.tiporecurso === "Sala de reuniones";
+  const isCoworking = spaceData?.coworking === "SI";
 
   useEffect(() => {
-    // Verifica si existe spaceData y si tiene la propiedad reservas
     if (spaceData && spaceData.reservas) {
-      // Transforma cada reserva en un objeto de evento para el calendario
       const eventsForSpace = spaceData.reservas.map(reserva => ({
-        // Mapea las propiedades de la reserva al formato requerido por el calendario
-        id: reserva.idReserva,
+        id: reserva.id,
         title: reserva.titulo,
-        // Convierte las fechas del formato DD/MM/YYYY HH:mm al formato YYYY-MM-DD HH:mm
-        // usando una expresión regular para reorganizar las partes de la fecha
         start: new Date(reserva.inicio.replace(/(\d{2})\/(\d{2})\/(\d{4}) (\d{2}:\d{2})/, '$3-$2-$1 $4')),
         end: new Date(reserva.fin.replace(/(\d{2})\/(\d{2})\/(\d{4}) (\d{2}:\d{2})/, '$3-$2-$1 $4')),
-        // Crea una descripción con el nombre del usuario
         desc: `Reservado por: ${reserva.usuario.nombre}`,
-        // Mantiene la referencia al usuario y estado de la reserva
         usuario: reserva.usuario,
         estado: reserva.estado
       }));
-      // Actualiza el estado con los eventos transformados
       setFilteredEvents(eventsForSpace);
     }
-  }, [spaceData]); // El efecto se ejecuta cuando spaceData cambia
+  }, [spaceData]);
 
   const handleSlotSelect = (slotInfo) => {
     const isSlotOccupied = filteredEvents.some(
@@ -78,7 +70,6 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
         alert("Por favor seleccione un período de tiempo");
         return;
       }
-      // Usar el período seleccionado
       startDateTime = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${selectedPeriod.start}`);
       endDateTime = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${selectedPeriod.end}`);
     } else {
@@ -86,7 +77,6 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
         alert("Por favor seleccione al menos una hora");
         return;
       }
-      // Usar las horas seleccionadas (código existente)
       startDateTime = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${selectedHours[0]}`);
       endDateTime = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${selectedHours[selectedHours.length - 1]}`);
       endDateTime.setHours(endDateTime.getHours() + 1);
@@ -96,17 +86,17 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
     const formattedEnd = format(endDateTime, "dd/MM/yyyy HH:mm");
 
     const reservationData = {
-      idEspacio: spaceData.idEspacio,
+      idEspacio: spaceData.id,
       titulo: reservationTitle,
-      descripcion: reservationDescription,
+      descripcion: reservationDescription || "",
       inicio: formattedStart,
       fin: formattedEnd,
-      idUsuario: "U001",
-      nombreUsuario: "Juan Pérez",
-      correoUsuario: "juan.perez@example.com",
+      idUsuario: localStorage.getItem('userId') || "U001",
+      nombreUsuario: localStorage.getItem('userName') || "Usuario",
+      correoUsuario: localStorage.getItem('userEmail') || "usuario@example.com",
       detalles: {
-        equiposNecesarios: ["Proyector"],
-        comentarios: "Reserva realizada desde el sistema"
+        equiposNecesarios: [],
+        comentarios: reservationDescription || ""
       }
     };
 
@@ -114,22 +104,17 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
 
     try {
       const response = await createReservation(reservationData);
-      console.log("=== Reserva creada exitosamente ===");
-      console.log("ID de reserva:", response.data.id);
-      console.log("Fecha de creación:", response.data.created_at);
-      console.log("Fecha de inicio:", response.data.inicio);
-      console.log("Fecha de fin:", response.data.fin);
-      console.log("Respuesta completa:", response);
-
-      alert(`Reserva confirmada con éxito para el día ${format(selectedDate, "dd/MM/yyyy", { locale: es })} de ${selectedHours[0]} a ${format(endDateTime, 'HH:mm')}`);
-      onClose();
+      console.log("Respuesta del servidor:", response);
+      
+      if (response.status === "success") {
+        alert(`Reserva confirmada con éxito para el día ${format(selectedDate, "dd/MM/yyyy", { locale: es })} de ${selectedHours[0]} a ${format(endDateTime, 'HH:mm')}`);
+        onClose();
+      } else {
+        throw new Error(response.message || 'Error al crear la reserva');
+      }
     } catch (error) {
-      console.error("=== Error al crear la reserva ===");
-      console.error("Tipo de error:", error.name);
-      console.error("Mensaje:", error.message);
-      console.error("Detalles completos:", error);
-
-      alert("Hubo un error al crear la reserva. Por favor, intente nuevamente.");
+      console.error("Error al crear la reserva:", error);
+      alert(`Error al crear la reserva: ${error.message || 'Por favor, intente nuevamente.'}`);
     }
   };
 
@@ -303,18 +288,18 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
               <div className="w-full md:w-2/3">
                 <img
                   src={spaceData.image}
-                  alt={spaceData.espaciofisico}
+                  alt={spaceData.nombre}
                   className="w-full h-64 md:h-80 object-cover rounded-lg shadow-lg"
                 />
               </div>
               <div className="w-full max-h-80 md:w-1/3 grid grid-cols-2 md:grid-cols-1 gap-4 overflow-y-auto">
                 <div className="min-w-0">
                   <h3 className="font-semibold text-gray-700 text-lg truncate">ID</h3>
-                  <p className="text-gray-600 text-base truncate">{spaceData.idEspacio}</p>
+                  <p className="text-gray-600 text-base truncate">{spaceData.id}</p>
                 </div>
                 <div className="min-w-0">
-                  <h3 className="font-semibold text-gray-700 text-lg truncate">Sede</h3>
-                  <p className="text-gray-600 text-base truncate">{spaceData.sede}</p>
+                  <h3 className="font-semibold text-gray-700 text-lg truncate">Código</h3>
+                  <p className="text-gray-600 text-base truncate">{spaceData.codigo}</p>
                 </div>
                 <div className="min-w-0">
                   <h3 className="font-semibold text-gray-700 text-lg truncate">Nombre</h3>
@@ -322,15 +307,15 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
                 </div>
                 <div className="min-w-0">
                   <h3 className="font-semibold text-gray-700 text-lg truncate">Capacidad</h3>
-                  <p className="text-gray-600 text-base truncate">{spaceData.capacidad}</p>
+                  <p className="text-gray-600 text-base truncate">{spaceData.cantidad_equipos}</p>
                 </div>
                 <div className="min-w-0">
-                  <h3 className="font-semibold text-gray-700 text-lg truncate">Ubicación</h3>
-                  <p className="text-gray-600 text-base truncate">{spaceData.ubicacion}</p>
+                  <h3 className="font-semibold text-gray-700 text-lg truncate">Tipo de Espacio</h3>
+                  <p className="text-gray-600 text-base truncate">{spaceData.tipo_espacio}</p>
                 </div>
                 <div className="min-w-0">
-                  <h3 className="font-semibold text-gray-700 text-lg truncate">Tipo recurso</h3>
-                  <p className="text-gray-600 text-base truncate">{spaceData.ubicacion}</p>
+                  <h3 className="font-semibold text-gray-700 text-lg truncate">Tipo de Equipos</h3>
+                  <p className="text-gray-600 text-base truncate">{spaceData.tipo_equipos}</p>
                 </div>
               </div>
             </div>
@@ -338,7 +323,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
             <div className="bg-gris-sutil p-4 md:p-6 rounded-lg">
               <h3 className="font-semibold text-gray-700 text-lg mb-3">Información Adicional</h3>
               <p className="text-gray-600 text-base">
-                <em>Descripción genérica del espacio disponible.</em>
+                {spaceData.observaciones || "Sin observaciones adicionales."}
               </p>
             </div>
 
@@ -380,8 +365,8 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
             />
             {renderTimeSelector()}
             {/* Campo de título y descripción de la reserva */}
-            <div className="bg-white p-4 mt-4">
-              <h3 className="text-lg font-semibold text-turquesa mb-3">Título de la reserva</h3>
+            <div className="bg-white p-4 mt-1">
+              <h3 className="text-lg font-semibold text-turquesa mb-1">Título de la reserva</h3>
               <input
                 type="text"
                 value={reservationTitle}

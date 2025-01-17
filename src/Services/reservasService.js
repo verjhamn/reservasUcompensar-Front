@@ -15,6 +15,11 @@ export const fetchFilteredReservations = async (filters) => {
             }
         }
 
+        // Preparar los filtros eliminando valores vacíos
+        const filtrosLimpios = Object.fromEntries(
+            Object.entries(filters).filter(([_, value]) => value !== "" && value !== null && value !== undefined)
+        );
+
         const config = {
             headers: {
                 Authorization: `Bearer ${token}`,
@@ -23,33 +28,48 @@ export const fetchFilteredReservations = async (filters) => {
             },
         };
 
-        console.log("Token usado:", token); // Debug
-        console.log("Enviando filtros:", filters); // Debug
+        console.log("Filtros procesados:", filtrosLimpios); // Debug
 
-        // Aquí enviamos los filtros directamente en el body sin envolverlos en un objeto.
-        const response = await axios.post(
-            `${API_BASE_URL}/reservas/filtrar`,
-            filters, // Enviar los filtros directamente
-            config
-        );
+        console.log('Enviando filtros al backend:', filtrosLimpios); // Debug log
+        
+        try {
+            const response = await axios.post(
+                `${API_BASE_URL}/reservas/filtrar`,
+                filtrosLimpios,
+                config
+            );
 
-        console.log("Respuesta del backend:", response.data); // Debug
-        if (response.data && response.data.success) {
-            return response.data.espacios; // Datos de las reservas
-        } else {
-            throw new Error(response.data.message || "No se pudo filtrar las reservas.");
+            return response.data;
+        } catch (error) {
+            // Si el error es 401 (Unauthorized), intentamos renovar el token
+            if (error.response && error.response.status === 401) {
+                console.log("Token expirado. Solicitando uno nuevo...");
+                const newToken = await fetchAuthToken();
+                if (!newToken) {
+                    throw new Error("No se pudo renovar el token.");
+                }
+
+                // Reintentamos la petición con el nuevo token
+                const newConfig = {
+                    ...config,
+                    headers: {
+                        ...config.headers,
+                        Authorization: `Bearer ${newToken}`,
+                    },
+                };
+
+                const retryResponse = await axios.post(
+                    `${API_BASE_URL}/reservas/filtrar`,
+                    filtrosLimpios,
+                    newConfig
+                );
+
+                return retryResponse.data;
+            }
+            throw error;
         }
     } catch (error) {
-        if (error.response && error.response.status === 401) {
-            console.error("Error 401: Token no autorizado o expirado.");
-            // Intenta obtener un nuevo token y reintentar
-            const newToken = await fetchAuthToken();
-            if (newToken) {
-                return fetchFilteredReservations(filters); // Reintentar la solicitud
-            }
-        }
-
-        console.error("Error al filtrar reservas:", error);
+        console.error("Error completo:", error); // Debug log más detallado
         throw error;
     }
 };

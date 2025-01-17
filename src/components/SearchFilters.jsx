@@ -5,9 +5,9 @@ const SearchFilters = ({ filters, setFilters }) => {
 
   // Opciones estáticas para los desplegables
   const staticOptions = {
-    sedes: ["Sede A", "Sede B", "Sede C"],
+    sedes: ["Campus", "Teusaquillo"],
     espaciosFisicos: ["Sala 1", "Sala 2", "Laboratorio"],
-    tiposRecurso: ["Proyector", "Computadora", "Pizarra"],
+    tiposRecurso: ["Coworking", "Reunión", "Auditorio"],
   };
 
   const handleChange = (e) => {
@@ -41,7 +41,7 @@ const SearchFilters = ({ filters, setFilters }) => {
         <div>
           <label className="block text-gray-700 mb-1">Tipo de Recurso</label>
           <select
-            name="tiporecurso"
+            name="tipo"
             value={filters.tiporecurso || ""}
             onChange={handleChange}
             className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
