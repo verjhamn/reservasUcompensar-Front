@@ -26,7 +26,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
   const [reservationDescription, setReservationDescription] = useState("");
   const [selectedPeriod, setSelectedPeriod] = useState(null);
 
-  const isCoworking = spaceData?.coworking === "SI";
+  const isCoworking = spaceData?.coworking !== "SI";
 
   useEffect(() => {
     if (spaceData && spaceData.reservas) {
@@ -86,12 +86,12 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
     const formattedEnd = format(endDateTime, "dd/MM/yyyy HH:mm");
 
     const reservationData = {
-      idEspacio: spaceData.id,
+      idEspacio: spaceData.idEspacio,
+      user_id: localStorage.getItem('userId') || "1",
       titulo: reservationTitle,
       descripcion: reservationDescription || "",
       inicio: formattedStart,
       fin: formattedEnd,
-      idUsuario: localStorage.getItem('userId') || "U001",
       nombreUsuario: localStorage.getItem('userName') || "Usuario",
       correoUsuario: localStorage.getItem('userEmail') || "usuario@example.com",
       detalles: {
@@ -293,29 +293,22 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
                 />
               </div>
               <div className="w-full max-h-80 md:w-1/3 grid grid-cols-2 md:grid-cols-1 gap-4 overflow-y-auto">
-                <div className="min-w-0">
-                  <h3 className="font-semibold text-gray-700 text-lg truncate">ID</h3>
-                  <p className="text-gray-600 text-base truncate">{spaceData.id}</p>
-                </div>
+
                 <div className="min-w-0">
                   <h3 className="font-semibold text-gray-700 text-lg truncate">Código</h3>
                   <p className="text-gray-600 text-base truncate">{spaceData.codigo}</p>
                 </div>
                 <div className="min-w-0">
-                  <h3 className="font-semibold text-gray-700 text-lg truncate">Nombre</h3>
-                  <p className="text-gray-600 text-base truncate">{spaceData.nombre}</p>
+                  <h3 className="font-semibold text-gray-700 text-lg truncate">Tipo</h3>
+                  <p className="text-gray-600 text-base truncate">{spaceData.tipo}</p>
                 </div>
                 <div className="min-w-0">
-                  <h3 className="font-semibold text-gray-700 text-lg truncate">Capacidad</h3>
-                  <p className="text-gray-600 text-base truncate">{spaceData.cantidad_equipos}</p>
+                  <h3 className="font-semibold text-gray-700 text-lg truncate">Piso</h3>
+                  <p className="text-gray-600 text-base truncate">{spaceData.espacio.piso}</p>
                 </div>
                 <div className="min-w-0">
-                  <h3 className="font-semibold text-gray-700 text-lg truncate">Tipo de Espacio</h3>
-                  <p className="text-gray-600 text-base truncate">{spaceData.tipo_espacio}</p>
-                </div>
-                <div className="min-w-0">
-                  <h3 className="font-semibold text-gray-700 text-lg truncate">Tipo de Equipos</h3>
-                  <p className="text-gray-600 text-base truncate">{spaceData.tipo_equipos}</p>
+                  <h3 className="font-semibold text-gray-700 text-lg truncate">Equipos</h3>
+                  <p className="text-gray-600 text-base truncate">{spaceData.espacio.cantidad_equipos}</p>
                 </div>
               </div>
             </div>
@@ -323,7 +316,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
             <div className="bg-gris-sutil p-4 md:p-6 rounded-lg">
               <h3 className="font-semibold text-gray-700 text-lg mb-3">Información Adicional</h3>
               <p className="text-gray-600 text-base">
-                {spaceData.observaciones || "Sin observaciones adicionales."}
+                {spaceData.descripcion || "Sin observaciones adicionales."}
               </p>
             </div>
 
@@ -384,48 +377,6 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
                 rows="3"
               />
             </div>
-
-            {/* Lista de eventos */}
-            {/*<div className="bg-white p-4 mt-4">
-              <h3 className="text-lg font-semibold text-turquesa mb-3">
-                Reservas del {format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: es })}
-              </h3>
-              {filteredEvents.length > 0 ? (
-                <ul className="space-y-4">
-                  {filteredEvents.map((event) => (
-                    <li key={event.id} className="border-b pb-2">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h4 className="text-base font-semibold text-gris-medio">
-                            {event.title}
-                          </h4>
-                          <p className="text-sm text-gris-medio">
-                            {format(new Date(event.start), "HH:mm")} - {format(new Date(event.end), "HH:mm")}
-                          </p>
-                          <p className="text-sm text-gris-medio">{event.desc}</p>
-                        </div>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => alert("Editar no implementado aún.")}
-                            className="text-sm text-white bg-turquesa px-3 py-1 rounded hover:bg-turquesa/90 transition"
-                          >
-                            Editar
-                          </button>
-                          <button
-                            onClick={() => alert("Cancelar no implementado aún.")}
-                            className="text-sm text-white bg-fucsia px-3 py-1 rounded hover:bg-fucsia/90 transition"
-                          >
-                            Cancelar
-                          </button>
-                        </div>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-sm text-gris-medio">No hay reservas para este día.</p>
-              )}
-            </div>*/}
 
             {/* Botón de confirmación */}
             <div className="mt-4 flex justify-end">

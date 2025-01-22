@@ -1,12 +1,15 @@
 import axios from "axios";
-import { getAuthToken, fetchAuthToken } from "./authService";
+import { getAuthToken, fetchAuthToken, setAuthToken } from "./authService";
 
 const API_BASE_URL = "https://qareservas.ucompensar.edu.co/api";
 
-// Función para filtrar reservas
+// Función para filtrar reservas (Coworking)
 export const fetchFilteredReservations = async (filters) => {
     try {
+        // Obtener el token desde localStorage
         let token = getAuthToken();
+
+        // Si no hay token, solicitar uno nuevo
         if (!token) {
             console.log("Token no encontrado. Solicitando uno nuevo...");
             token = await fetchAuthToken();
@@ -15,61 +18,49 @@ export const fetchFilteredReservations = async (filters) => {
             }
         }
 
-        // Preparar los filtros eliminando valores vacíos
-        const filtrosLimpios = Object.fromEntries(
-            Object.entries(filters).filter(([_, value]) => value !== "" && value !== null && value !== undefined)
-        );
-
+        // Configurar encabezados con el token
         const config = {
             headers: {
-                Authorization: `Bearer ${token}`,
+                Authorization: `Bearer ${token}`, // Incluir token
                 "Content-Type": "application/json",
                 Accept: "application/json",
             },
         };
 
-        console.log("Filtros procesados:", filtrosLimpios); // Debug
+        console.log("Token usado:", token); // Debugging
+        console.log("Filtros procesados:", filters); // Debugging
 
-        console.log('Enviando filtros al backend:', filtrosLimpios); // Debug log
-        
-        try {
-            const response = await axios.post(
-                `${API_BASE_URL}/reservas/filtrar`,
-                filtrosLimpios,
-                config
-            );
+        // Realizar solicitud al endpoint de coworking
+        const response = await axios.get(`${API_BASE_URL}/reservas/coworking`, config);
 
-            return response.data;
-        } catch (error) {
-            // Si el error es 401 (Unauthorized), intentamos renovar el token
-            if (error.response && error.response.status === 401) {
-                console.log("Token expirado. Solicitando uno nuevo...");
-                const newToken = await fetchAuthToken();
-                if (!newToken) {
-                    throw new Error("No se pudo renovar el token.");
-                }
-
-                // Reintentamos la petición con el nuevo token
-                const newConfig = {
-                    ...config,
-                    headers: {
-                        ...config.headers,
-                        Authorization: `Bearer ${newToken}`,
-                    },
-                };
-
-                const retryResponse = await axios.post(
-                    `${API_BASE_URL}/reservas/filtrar`,
-                    filtrosLimpios,
-                    newConfig
-                );
-
-                return retryResponse.data;
-            }
-            throw error;
-        }
+        console.log("Respuesta de espacios de coworking:", response.data); // Debugging
+        return response.data.espacios_coworking;
     } catch (error) {
-        console.error("Error completo:", error); // Debug log más detallado
+        // Si el error es 401, renovar el token y reintentar
+        if (error.response && error.response.status === 401) {
+            console.log("Token expirado. Solicitando uno nuevo...");
+            const newToken = await fetchAuthToken();
+            if (!newToken) {
+                throw new Error("No se pudo renovar el token.");
+            }
+            setAuthToken(newToken); // Guardar el nuevo token
+
+            // Reintentar con el nuevo token
+            const retryConfig = {
+                headers: {
+                    Authorization: `Bearer ${newToken}`,
+                    "Content-Type": "application/json",
+                    Accept: "application/json",
+                },
+            };
+
+            const retryResponse = await axios.get(`${API_BASE_URL}/reservas/coworking`, retryConfig);
+            console.log("Respuesta de espacios de coworking (reintento):", retryResponse.data); // Debugging
+            return retryResponse.data.espacios_coworking;
+        }
+
+        // Si no es 401, loguear el error
+        console.error("Error al filtrar reservas:", error.response || error.message);
         throw error;
     }
 };

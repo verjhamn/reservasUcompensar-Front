@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import ReactPaginate from "react-paginate";
 import ReservationModal from "./ReservationModal";
-import { fetchFilteredReservations } from "../services/reservasService";
+import { fetchFilteredReservations } from "../Services/reservasService";
 
 const ResultsTable = ({ filters = {} }) => {
     const [page, setPage] = useState(0);
@@ -37,14 +37,14 @@ const ResultsTable = ({ filters = {} }) => {
                 const response = await fetchFilteredReservations(filters);
                 console.log('Respuesta completa:', response);
                 
-                if (!response || !response.espacios) {
+                if (!response || response.length === 0) {
                     console.log('No hay datos en la respuesta');
                     setData([]);
                     return;
                 }
                 
-                console.log('Espacios encontrados:', response.espacios.length);
-                setData(response.espacios);
+                console.log('Espacios encontrados:', response.length);
+                setData(response);
             } catch (err) {
                 console.error("Error al obtener datos en ResultsTable:", err);
                 setError(err.message || "Error al cargar los datos.");
@@ -106,12 +106,12 @@ const ResultsTable = ({ filters = {} }) => {
                         />
                         <div className="p-4 flex flex-col flex-grow">
                             <div className="flex-grow">
-                                <h3 className="text-lg font-bold text-gray-800">{item.nombre}</h3>
+                                <h3 className="text-lg font-bold text-gray-800">{item.espacio.nombre}</h3>
                                 <p className="text-gray-600 text-sm">Código: {item.codigo}</p>
-                                <p className="text-gray-600 text-sm">Sede: {item.sede.nombre}</p>
-                                <p className="text-gray-600 text-sm">Piso: {item.piso}</p>
-                                <p className="text-gray-600 text-sm">Tipo: {item.tipo_espacio}</p>
-                                <p className="text-gray-600 text-sm">Capacidad: {item.cantidad_equipos}</p>
+                                <p className="text-gray-600 text-sm">Sede: {item.espacio.codigo}</p>
+                                <p className="text-gray-600 text-sm">Piso: {item.espacio.piso}</p>
+                                <p className="text-gray-600 text-sm">Tipo: {item.tipo}</p>
+                                <p className="text-gray-600 text-sm">Capacidad: {item.espacio.cantidad_equipos}</p>
                             </div>
                             <button
                                 onClick={() => {
