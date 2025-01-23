@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Calendar, dateFnsLocalizer } from "react-big-calendar";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import { format, parse, startOfWeek, getDay } from "date-fns";
+import { format, parse, startOfWeek, getDay, addHours, isBefore, startOfDay } from "date-fns";
 import es from "date-fns/locale/es";
+import { createReservation } from "../Services/createReservationService";
 
 const locales = { es: es };
 const localizer = dateFnsLocalizer({
@@ -16,23 +17,32 @@ const localizer = dateFnsLocalizer({
 const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
   const [activeTab, setActiveTab] = useState("info");
   const [filteredEvents, setFilteredEvents] = useState([]);
-  const [selectedSlot, setSelectedSlot] = useState(null);
+  //const [selectedSlot, setSelectedSlot] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
+  //const [selectedStartTime, setSelectedStartTime] = useState("");
+  //const [selectedEndTime, setSelectedEndTime] = useState("");
+  const [selectedHours, setSelectedHours] = useState([]);
+  const [reservationTitle, setReservationTitle] = useState("");
+  const [reservationDescription, setReservationDescription] = useState("");
+  const [selectedPeriod, setSelectedPeriod] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const isCoworking = spaceData?.coworking !== "SI";
 
   useEffect(() => {
-    if (spaceData && reservas) {
-      const eventsForSpace = reservas.filter(
-        (reserva) => reserva.idEspacio === spaceData.idEspacio
-      );
-      setFilteredEvents(
-        eventsForSpace.map((reserva) => ({
-          title: reserva.titulo,
-          start: new Date(reserva.inicio),
-          end: new Date(reserva.fin),
-        }))
-      );
+    if (spaceData && spaceData.reservas) {
+      const eventsForSpace = spaceData.reservas.map(reserva => ({
+        id: reserva.id,
+        title: reserva.titulo,
+        start: new Date(reserva.inicio.replace(/(\d{2})\/(\d{2})\/(\d{4}) (\d{2}:\d{2})/, '$3-$2-$1 $4')),
+        end: new Date(reserva.fin.replace(/(\d{2})\/(\d{2})\/(\d{4}) (\d{2}:\d{2})/, '$3-$2-$1 $4')),
+        desc: `Reservado por: ${reserva.usuario.nombre}`,
+        usuario: reserva.usuario,
+        estado: reserva.estado
+      }));
+      setFilteredEvents(eventsForSpace);
     }
-  }, [spaceData, reservas]);
+  }, [spaceData]);
 
   const handleSlotSelect = (slotInfo) => {
     const isSlotOccupied = filteredEvents.some(
@@ -48,24 +58,183 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
     }
   };
 
-  const handleConfirmReservation = () => {
-    if (selectedSlot) {
-      const newReservation = {
-        idEspacio: spaceData.idEspacio,
-        titulo: `Reserva para ${spaceData.espaciofisico}`,
-        inicio: selectedSlot.start.toISOString(),
-        fin: selectedSlot.end.toISOString(),
-        idUsuario: "U001", // Simulado
-        nombreUsuario: "Juan Pérez", // Simulado
-        correoUsuario: "juan.perez@example.com", // Simulado
-      };
-
-      console.log("Reserva enviada al backend:", newReservation);
-      alert("Reserva confirmada con éxito.");
-      onClose();
-    } else {
-      alert("Por favor seleccione un horario antes de confirmar.");
+  const handleConfirmReservation = async () => {
+    if (!reservationTitle.trim()) {
+      alert("Por favor ingrese un título para la reserva");
+      return;
     }
+
+    let startDateTime, endDateTime;
+
+    if (isCoworking) {
+      if (!selectedPeriod) {
+        alert("Por favor seleccione un período de tiempo");
+        return;
+      }
+      startDateTime = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${selectedPeriod.start}`);
+      endDateTime = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${selectedPeriod.end}`);
+    } else {
+      if (!selectedHours.length) {
+        alert("Por favor seleccione al menos una hora");
+        return;
+      }
+      startDateTime = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${selectedHours[0]}`);
+      endDateTime = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${selectedHours[selectedHours.length - 1]}`);
+      endDateTime.setHours(endDateTime.getHours() + 1);
+    }
+
+    const formattedDate = format(selectedDate, "dd/MM/yyyy");
+    const formattedStartTime = format(startDateTime, "HH:mm");
+    const formattedEndTime = format(endDateTime, "HH:mm");
+
+    const reservationData = {
+      espacio_id: spaceData.espacio_id,
+      user_id: localStorage.getItem('userId') || "1",
+      titulo: reservationTitle,
+      descripcion: reservationDescription || "",
+      fecha_reserva: formattedDate,
+      hora_inicio: formattedStartTime,
+      hora_fin: formattedEndTime,
+      observaciones: reservationDescription || ""
+    };
+
+    console.log("Intentando crear reserva con datos:", JSON.stringify(reservationData, null, 2));
+
+    setIsLoading(true); // Mostrar animación de carga
+
+    try {
+      const response = await createReservation(reservationData);
+      console.log("Respuesta del servidor:", response);
+
+      if (response.status === "success") {
+        alert(`Reserva confirmada con éxito para el día ${formattedDate} de ${formattedStartTime} a ${formattedEndTime}`);
+        handleClose();
+      } else {
+        throw new Error(response.message || 'Error al crear la reserva');
+      }
+    } catch (error) {
+      console.error("Error al crear la reserva:", error);
+      alert(`Error al crear la reserva: ${error.message || 'Por favor, intente nuevamente.'}`);
+    } finally {
+      setIsLoading(false); // Ocultar animación de carga
+    }
+  };
+
+  const generateTimeSlots = () => {
+    const slots = [];
+    for (let hour = 7; hour <= 21; hour++) {
+      slots.push(`${hour.toString().padStart(2, '0')}:00`);
+    }
+    return slots;
+  };
+
+  const isTimeSlotAvailable = (timeSlot) => {
+    const slotDate = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${timeSlot}`);
+
+    return !filteredEvents.some(event =>
+      slotDate >= new Date(event.start) &&
+      slotDate < new Date(event.end)
+    );
+  };
+
+  const handleTimeSelect = (time) => {
+    if (selectedHours.includes(time)) {
+      // Si la hora ya está seleccionada, la quitamos
+      setSelectedHours(prev => prev.filter(hour => hour !== time));
+      return;
+    }
+
+    // Convertimos todas las horas a números para ordenarlas
+    const allHours = [...selectedHours, time].map(h => parseInt(h.split(':')[0]));
+    const min = Math.min(...allHours);
+    const max = Math.max(...allHours);
+
+    // Verificamos si las horas son consecutivas
+    if (max - min + 1 !== allHours.length) {
+      alert("Solo puedes seleccionar horas consecutivas");
+      return;
+    }
+
+    setSelectedHours(prev => [...prev, time].sort());
+  };
+
+  const coworkingPeriods = [
+    { id: 0, name: "Mañana", start: "07:00", end: "12:00" },
+    { id: 1, name: "Mañana", start: "13:00", end: "17:00" },
+    { id: 2, name: "Mañana-Tarde", start: "07:00", end: "17:00" },
+    { id: 3, name: "Tarde-Noche", start: "17:00", end: "22:00" },
+
+  ];
+
+  const renderTimeSelector = () => {
+    if (isCoworking) {
+      return (
+        <div className="bg-white p-4 mt-4">
+          <h3 className="text-lg font-semibold text-turquesa mb-3">Seleccionar período</h3>
+          <div className="grid grid-cols-2 gap-4">
+            {coworkingPeriods.map((period) => (
+              <button
+                key={period.id}
+                onClick={() => setSelectedPeriod(period)}
+                className={`
+                  p-4 rounded-md text-sm
+                  ${selectedPeriod?.id === period.id
+                    ? 'bg-turquesa text-white'
+                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                  }
+                `}
+              >
+                {period.name}
+                <br />
+                <span className="text-xs">
+                  {period.start} - {period.end}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="bg-white p-4 mt-4">
+        <h3 className="text-lg font-semibold text-turquesa mb-3">Seleccionar horario</h3>
+        <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
+          {generateTimeSlots().map((time) => (
+            <button
+              key={time}
+              onClick={() => handleTimeSelect(time)}
+              disabled={!isTimeSlotAvailable(time)}
+              className={`
+                p-2 rounded-md text-sm
+                ${selectedHours.includes(time)
+                  ? 'bg-turquesa text-white'
+                  : isTimeSlotAvailable(time)
+                    ? 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                }
+              `}
+            >
+              {time}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const resetForm = () => {
+    setActiveTab("info");
+    setSelectedDate(new Date());
+    setSelectedHours([]);
+    setReservationTitle("");
+    setReservationDescription("");
+    setSelectedPeriod(null);
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
   };
 
   if (!isOpen || !spaceData) return null;
@@ -76,12 +245,41 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
         style: {
           backgroundColor: "#00aab7",
           color: "#fff",
-          /* borderRadius: "50%", */
+        },
+      };
+    }
+    if (isBefore(startOfDay(date), startOfDay(new Date()))) {
+      return {
+        style: {
+          backgroundColor: "#f0f0f0",
+          color: "#d3d3d3",
+          pointerEvents: "none",
         },
       };
     }
     return {};
-  }
+  };
+
+  const slotPropGetter = (date) => {
+    if (isBefore(startOfDay(date), startOfDay(new Date()))) {
+      return {
+        className: 'rbc-day-slot-disabled',
+        style: {
+          backgroundColor: '#f0f0f0',
+          pointerEvents: 'none',
+        },
+      };
+    }
+    return {};
+  };
+
+  const handleNavigate = (date) => {
+    if (isBefore(startOfDay(date), startOfDay(new Date()))) {
+      alert("No se puede reservar en días anteriores al actual.");
+      return;
+    }
+    setSelectedDate(date);
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -90,7 +288,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
         <div className="flex justify-between items-start mb-6">
           <h2 className="text-2xl font-bold text-gray-800">Detalles del Espacio</h2>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="text-gray-500 hover:text-gray-700 transition-colors"
           >
             <svg
@@ -136,57 +334,74 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
               <div className="w-full md:w-2/3">
                 <img
                   src={spaceData.image}
-                  alt={spaceData.espaciofisico}
+                  alt={spaceData.nombre}
                   className="w-full h-64 md:h-80 object-cover rounded-lg shadow-lg"
                 />
               </div>
-              <div className="w-full md:w-1/3 grid grid-cols-2 md:grid-cols-1 gap-4">
-                <div>
-                  <h3 className="font-semibold text-gray-700 text-lg">Sede</h3>
-                  <p className="text-gray-600 text-base">{spaceData.sede}</p>
+              <div className="w-full max-h-80 md:w-1/3 grid grid-cols-2 md:grid-cols-1 gap-4 overflow-y-auto">
+
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-gray-700 text-lg truncate">Código</h3>
+                  <p className="text-gray-600 text-base truncate">{spaceData.codigo}</p>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-gray-700 text-lg">Ubicación</h3>
-                  <p className="text-gray-600 text-base">{spaceData.localidad}</p>
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-gray-700 text-lg truncate">Tipo</h3>
+                  <p className="text-gray-600 text-base truncate">{spaceData.tipo}</p>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-gray-700 text-lg">Espacio</h3>
-                  <p className="text-gray-600 text-base">{spaceData.espaciofisico}</p>
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-gray-700 text-lg truncate">Piso</h3>
+                  <p className="text-gray-600 text-base truncate">{spaceData.espacio.piso}</p>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-gray-700 text-lg">Recurso</h3>
-                  <p className="text-gray-600 text-base">{spaceData.recurso}</p>
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-gray-700 text-lg truncate">Equipos</h3>
+                  <p className="text-gray-600 text-base truncate">{spaceData.espacio.cantidad_equipos}</p>
                 </div>
-                {/*          <div className="col-span-2 md:col-span-1">
-                  <h3 className="font-semibold text-gray-700 text-lg">Horario</h3>
-                  <p className="text-gray-600 text-base">
-                    {spaceData.horainicio} - {spaceData.horafinal}
-                  </p>
-                </div> */}
               </div>
             </div>
 
             <div className="bg-gris-sutil p-4 md:p-6 rounded-lg">
               <h3 className="font-semibold text-gray-700 text-lg mb-3">Información Adicional</h3>
               <p className="text-gray-600 text-base">
-                <em>Descripción genérica del espacio disponible.</em>
+                {spaceData.descripcion || "Sin observaciones adicionales."}
               </p>
+            </div>
+
+            <div className="flex justify-end mt-4">
+              <button
+                onClick={() => setActiveTab("availability")}
+                className="px-6 py-3 bg-turquesa text-white rounded-lg hover:bg-turquesa/90 transition flex items-center gap-2"
+              >
+                Siguiente
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
             </div>
           </div>
         )}
 
         {activeTab === "availability" && (
-          <div className="bg-white rounded-lg shadow-md mb-4">
+          <div>
             <Calendar
               localizer={localizer}
-              events={[]} // Sin mostrar eventos en el calendario
+              events={filteredEvents}
               selectable
               onSelectSlot={handleSlotSelect}
-              date={new Date()}
-              onNavigate={(date) => setSelectedDate(date)} // Cambiar la fecha seleccionada
+              date={selectedDate}
+              onNavigate={handleNavigate}
               views={["month"]}
               style={{ height: 300 }}
               dayPropGetter={dayPropGetter}
+              slotPropGetter={slotPropGetter}
               messages={{
                 next: "Siguiente",
                 previous: "Anterior",
@@ -201,68 +416,50 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
                 noEventsInRange: "No hay eventos en este rango.",
               }}
               formats={{
-                monthHeaderFormat: "MMMM yyyy",
-                weekdayFormat: (date) =>
-                  format(date, "EE", { locale: es }).toUpperCase(),
-                dayFormat: "d",
+                monthHeaderFormat: "MMMM yyyy", // Nombre del mes y año en español
+                weekdayFormat: (date) => format(date, "EE", { locale: es }).toUpperCase(), // Días abreviados (LU, MA...)
+                dayFormat: "d", // Día del mes
               }}
             />
-            {/* Lista de eventos */}
-            <div className="bg-white p-4">
-              <h3 className="text-lg font-semibold text-turquesa mb-3">
-                Reservas del {format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: es })}
-              </h3>
+            {renderTimeSelector()}
+            {/* Campo de título y descripción de la reserva */}
+            <div className="bg-white p-4 mt-1">
+              <h3 className="text-lg font-semibold text-turquesa mb-1">Título de la reserva</h3>
+              <input
+                type="text"
+                value={reservationTitle}
+                onChange={(e) => setReservationTitle(e.target.value)}
+                placeholder="Ingrese el título de la reserva"
+                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-turquesa mb-4"
+              />
 
-              {filteredEvents.length > 0 ? (
-                <ul className="space-y-4">
-                  {filteredEvents.map((event) => (
-                    <li key={event.id} className="border-b pb-2">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h4 className="text-base font-semibold text-gris-medio">
-                            {event.title}
-                          </h4>
-                          <p className="text-sm text-gris-medio">
-                            {format(new Date(event.start), "HH:mm")} - {format(new Date(event.end), "HH:mm")}
-                          </p>
-                          <p className="text-sm text-gris-medio">{event.desc}</p>
-                        </div>
-                        <div className="flex gap-2">
-                          {/* Botón de editar */}
-                          <button
-                            onClick={() => handleEdit(event.id)}
-                            className="text-sm text-white bg-turquesa px-3 py-1 rounded hover:bg-turquesa/90 transition"
-                          >
-                            Editar
-                          </button>
-                          {/* Botón de cancelar */}
-                          <button
-                            onClick={() => handleCancel(event.id)}
-                            className="text-sm text-white bg-fucsia px-3 py-1 rounded hover:bg-fucsia/90 transition"
-                          >
-                            Cancelar
-                          </button>
-                        </div>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-sm text-gris-medio">No hay reservas para este día.</p>
-              )}
+              <h3 className="text-lg font-semibold text-turquesa mb-3">Descripción de la reserva</h3>
+              <textarea
+                value={reservationDescription}
+                onChange={(e) => setReservationDescription(e.target.value)}
+                placeholder="Ingrese la descripción de la reserva"
+                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-turquesa"
+                rows="3"
+              />
             </div>
-            <div className="mt-4 flex justify-end gap-4">
+
+            {/* Botón de confirmación */}
+            <div className="mt-4 flex justify-end">
               <button
                 onClick={handleConfirmReservation}
-                className="px-6 py-3 text-base m-2 bg-turquesa text-white rounded-lg hover:bg-turquesa/90 transition-colors"
+                className="px-6 py-3 bg-turquesa text-white rounded-lg hover:bg-turquesa/90 transition"
               >
                 Confirmar Reserva
               </button>
             </div>
           </div>
-
         )}
       </div>
+      {isLoading && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="loader"></div>
+        </div>
+      )}
     </div>
   );
 };

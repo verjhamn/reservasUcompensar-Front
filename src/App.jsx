@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import SearchFilters from "./components/SearchFilters";
 import ResultsTable from "./components/ResultsTable";
 import BigCalendarView from "./components/BigCalendarView";
 import FullCalendarView from "./components/FullCalendarView";
+import InfoModal from "./components/InfoModal";
 
 function App() {
   const [filters, setFilters] = useState({
@@ -17,9 +18,24 @@ function App() {
   });
 
   const [view, setView] = useState("table"); // Cambiar entre "table" y "bigCalendar"
+  const [showModal, setShowModal] = useState(true);
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+  };
+
+  useEffect(() => {
+    // Mostrar el modal al cargar la app
+    const timer = setTimeout(() => {
+      setShowModal(false);
+    }, 10000); // Cerrar el modal después de 10 segundos
+
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col">
+      {showModal && <InfoModal onClose={handleCloseModal} />}
       <Header />
       <main className="flex-grow bg-gray-100">
         <div className="container mx-auto py-6">
@@ -31,7 +47,7 @@ function App() {
                 view === "table" ? "bg-turquesa hover:bg-turquesa/90 text-white" : "bg-gray-300"
               }`}
             >
-              Reservar
+              Catálogo
             </button>
             <button
               onClick={() => setView("Calendario")}
@@ -39,7 +55,7 @@ function App() {
                 view === "Calendario" ? "bg-turquesa hover:bg-turquesa/90 text-white" : "bg-gray-300"
               }`}
             >
-              Calendario
+              Mis Reservas
             </button>
             <button
               onClick={() => setView("fullCalendar")}
