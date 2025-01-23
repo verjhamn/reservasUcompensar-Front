@@ -18,7 +18,7 @@ export const setAuthToken = (token) => {
 // Solicitar un nuevo token
 export const fetchAuthToken = async () => {
     const data = {
-        email: "jhmendezb@ucompensar.edu.co",
+        email: "afurianv@ucompensar.edu.co",
         password: "123456789",
     };
 

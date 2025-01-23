@@ -89,7 +89,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
 
     const reservationData = {
       espacio_id: spaceData.espacio_id,
-      user_id: localStorage.getItem('userId') || "1",
+      user_id: localStorage.getItem('userId') || "3",
       titulo: reservationTitle,
       descripcion: reservationDescription || "",
       fecha_reserva: formattedDate,

@@ -5,7 +5,7 @@ const SearchFilters = ({ filters, setFilters }) => {
 
   // Opciones estáticas para los desplegables
   const staticOptions = {
-    sedes: ["Campus", "Teusaquillo"],
+    sedes: ["Campus AV 68"],
     espaciosFisicos: ["Sala 1", "Sala 2", "Laboratorio"],
     tiposRecurso: ["Coworking", "Reunión", "Auditorio"],
   };

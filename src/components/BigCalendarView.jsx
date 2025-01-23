@@ -3,43 +3,71 @@ import { Calendar, dateFnsLocalizer } from "react-big-calendar";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { format, parse, startOfWeek, getDay } from "date-fns";
 import es from "date-fns/locale/es";
-import { generateRandomEvents } from "../services/eventGenerator";
+import { getMisReservas } from "../services/getMisReservas"; // Importar el nuevo servicio
 
 // Configuración de localización en español
 const locales = { es: es };
 const localizer = dateFnsLocalizer({
   format,
   parse,
-  startOfWeek: () => startOfWeek(new Date(), { weekStartsOn: 1 }), // La semana comienza el lunes
+  startOfWeek: () => startOfWeek(new Date(), { weekStartsOn: 1 }),
   getDay,
   locales,
 });
 
-const MobileCalendarView = () => {
-  const [events, setEvents] = useState([]);
+const BigCalendarView = () => {
+  const [events, setEvents] = useState([]); // Eventos cargados desde el backend
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [filteredEvents, setFilteredEvents] = useState([]);
+  const [filteredEvents, setFilteredEvents] = useState([]); // Eventos filtrados por fecha
 
+  // Obtener las reservas del usuario autenticado
   useEffect(() => {
-    const generatedEvents = generateRandomEvents();
-    setEvents(generatedEvents);
+    const fetchReservations = async () => {
+      console.log("[BigCalendarView] Cargando reservas del usuario...");
+      try {
+        const reservas = await getMisReservas(); // Llamar al servicio
+        console.log("[BigCalendarView] Reservas obtenidas:", reservas);
+
+        // Convertir reservas al formato del calendario
+        const formattedEvents = reservas.map((reserva) => ({
+          id: reserva.id,
+          title: reserva.titulo,
+          start: new Date(reserva.hora_inicio),
+          end: new Date(reserva.hora_fin),
+          desc: reserva.descripcion,
+        }));
+
+        setEvents(formattedEvents);
+        console.log("[BigCalendarView] Eventos formateados:", formattedEvents);
+      } catch (error) {
+        console.error("[BigCalendarView] Error al cargar reservas:", error);
+      }
+    };
+
+    fetchReservations();
   }, []);
 
+  // Filtrar eventos según la fecha seleccionada
   useEffect(() => {
-    const filtered = events.filter((event) =>
-      format(new Date(event.start), "yyyy-MM-dd") ===
-      format(selectedDate, "yyyy-MM-dd")
+    const filtered = events.filter(
+      (event) =>
+        format(new Date(event.start), "yyyy-MM-dd") ===
+        format(selectedDate, "yyyy-MM-dd")
     );
     setFilteredEvents(filtered);
+    console.log("[BigCalendarView] Eventos filtrados por fecha:", filtered);
   }, [selectedDate, events]);
 
   const handleEdit = (eventId) => {
+    console.log("[BigCalendarView] Editar reserva con ID:", eventId);
     alert(`Editar reserva con ID: ${eventId}`);
   };
 
   const handleCancel = (eventId) => {
+    console.log("[BigCalendarView] Intentando cancelar reserva con ID:", eventId);
     if (window.confirm("¿Estás seguro de que deseas cancelar esta reserva?")) {
       setEvents((prevEvents) => prevEvents.filter((event) => event.id !== eventId));
+      console.log("[BigCalendarView] Reserva cancelada con éxito.");
       alert("Reserva cancelada con éxito.");
     }
   };
@@ -51,7 +79,6 @@ const MobileCalendarView = () => {
         style: {
           backgroundColor: "#00aab7",
           color: "#fff",
-          /* borderRadius: "50%", */
         },
       };
     }
@@ -85,7 +112,7 @@ const MobileCalendarView = () => {
           }}
           formats={{
             monthHeaderFormat: "MMMM yyyy", // Nombre del mes y año en español
-            weekdayFormat: (date) => format(date, "EE", { locale: es }).toUpperCase(), // Días abreviados (LU, MA...)
+            weekdayFormat: (date) => format(date, "EE", { locale: es }).toUpperCase(),
             dayFormat: "d", // Día del mes
           }}
         />
@@ -107,7 +134,8 @@ const MobileCalendarView = () => {
                       {event.title}
                     </h4>
                     <p className="text-sm text-gris-medio">
-                      {format(new Date(event.start), "HH:mm")} - {format(new Date(event.end), "HH:mm")}
+                      {format(new Date(event.start), "HH:mm")} -{" "}
+                      {format(new Date(event.end), "HH:mm")}
                     </p>
                     <p className="text-sm text-gris-medio">{event.desc}</p>
                   </div>
@@ -139,4 +167,4 @@ const MobileCalendarView = () => {
   );
 };
 
-export default MobileCalendarView;
+export default BigCalendarView;

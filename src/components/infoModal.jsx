@@ -37,7 +37,7 @@ const InfoModal = ({ onClose }) => {
         {/* Imagen del Modal */}
         <div className="mb-6">
           <img
-            src="/src/assets/imgModal.webp"
+            src="https://reservas.ucompensar.edu.co/img/imgModal.webp"
             alt="Imagen Informativa"
             className="w-full h-40 object-cover rounded-lg shadow-md"
           />

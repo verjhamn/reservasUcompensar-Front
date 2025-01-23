@@ -57,10 +57,10 @@ const ResultsTable = ({ filters = {} }) => {
     }, [filters]);
 
     const images = [
-        "/src/assets/1.webp",
-        "/src/assets/2.webp",
-        "/src/assets/3.webp",
-        "/src/assets/4.webp",
+        "https://reservas.ucompensar.edu.co/img/1.webp",
+        "https://reservas.ucompensar.edu.co/img/2.webp",
+        "https://reservas.ucompensar.edu.co/img/3.webp",
+        "https://reservas.ucompensar.edu.co/img/4.webp",
     ];
 
     const getRandomImage = () => {
