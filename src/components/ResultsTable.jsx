@@ -111,7 +111,7 @@ const ResultsTable = ({ filters = {} }) => {
                                 <p className="text-gray-600 text-sm">Sede: {item.espacio.codigo}</p>
                                 <p className="text-gray-600 text-sm">Piso: {item.espacio.piso}</p>
                                 <p className="text-gray-600 text-sm">Tipo: {item.tipo}</p>
-                                <p className="text-gray-600 text-sm">Capacidad: {item.espacio.cantidad_equipos}</p>
+
                             </div>
                             <button
                                 onClick={() => {

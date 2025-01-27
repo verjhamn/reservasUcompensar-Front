@@ -3,7 +3,8 @@ import { Calendar, dateFnsLocalizer } from "react-big-calendar";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { format, parse, startOfWeek, getDay } from "date-fns";
 import es from "date-fns/locale/es";
-import { getMisReservas } from "../services/getMisReservas"; // Importar el nuevo servicio
+import { getMisReservas } from "../services/getMisReservas"; 
+import { deleteReserva } from "../services/deleteReservaService";
 
 // Configuración de localización en español
 const locales = { es: es };
@@ -63,12 +64,18 @@ const BigCalendarView = () => {
     alert(`Editar reserva con ID: ${eventId}`);
   };
 
-  const handleCancel = (eventId) => {
+  const handleCancel = async (eventId) => {
     console.log("[BigCalendarView] Intentando cancelar reserva con ID:", eventId);
     if (window.confirm("¿Estás seguro de que deseas cancelar esta reserva?")) {
-      setEvents((prevEvents) => prevEvents.filter((event) => event.id !== eventId));
-      console.log("[BigCalendarView] Reserva cancelada con éxito.");
-      alert("Reserva cancelada con éxito.");
+      try {
+        await deleteReserva(eventId);
+        setEvents((prevEvents) => prevEvents.filter((event) => event.id !== eventId));
+        console.log("[BigCalendarView] Reserva cancelada con éxito.");
+        alert("Reserva cancelada con éxito.");
+      } catch (error) {
+        console.error("[BigCalendarView] Error al cancelar la reserva:", error);
+        alert("Hubo un error al cancelar la reserva. Por favor, inténtalo de nuevo.");
+      }
     }
   };
 

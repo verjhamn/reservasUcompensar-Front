@@ -3,7 +3,7 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import SearchFilters from "./components/SearchFilters";
 import ResultsTable from "./components/ResultsTable";
-import BigCalendarView from "./components/BigCalendarView";
+import BigCalendarView from "./components/misReservas";
 import FullCalendarView from "./components/FullCalendarView";
 import InfoModal from "./components/InfoModal";
 
