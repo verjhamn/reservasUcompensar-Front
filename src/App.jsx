@@ -61,14 +61,14 @@ function App() {
             >
               Mis Reservas
             </button>
-            <button
+            {/* <button
               onClick={() => setView("fullCalendar")}
               className={`py-2 px-4 rounded ${
                 view === "fullCalendar" ? "bg-turquesa hover:bg-turquesa/90 text-white" : "bg-gray-300"
               }`}
             >
               Admin Calendario
-            </button>
+            </button> */}
           </div>
 
           {/* Layout responsivo modificado */}

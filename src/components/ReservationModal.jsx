@@ -85,7 +85,8 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas, goToMyReservat
     const formattedEndTime = format(endDateTime, "HH:mm");
 
     const reservationData = {
-      espacio_id: spaceData.espacio_id,
+      espacio_id: spaceData.id,
+      espacio_type: "App\\Models\\basics\\EspacioCoworking",
       user_id: getUserId() || "1",
       titulo: reservationTitle,
       descripcion: reservationDescription || "",

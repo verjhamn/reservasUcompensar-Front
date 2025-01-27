@@ -14,7 +14,7 @@ const SearchFilters = ({ filters, setFilters, onFilterChange }) => {
   // Opciones estáticas para los desplegables
   const staticOptions = {
     sedes: ["Campus AV 68"],
-    espaciosFisicos: ["Sala 1", "Sala 2", "Laboratorio"],
+    espaciosFisicos: ["Piso 3", "Piso 4"],
     tiposRecurso: ["Personal", "Interlocución"],
   };
 
@@ -96,11 +96,11 @@ const SearchFilters = ({ filters, setFilters, onFilterChange }) => {
                 ))}
               </select>
             </div>
-            {/* Espacio Físico */}
+            {/* Piso*/}
             <div>
-              <label className="block text-gray-700 mb-1">Espacio Físico</label>
+              <label className="block text-gray-700 mb-1">Piso</label>
               <select
-                name="espaciofisico"
+                name="Piso"
                 value={filters.espaciofisico || ""}
                 onChange={handleChange}
                 className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"

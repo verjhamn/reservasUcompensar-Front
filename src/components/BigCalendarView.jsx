@@ -113,12 +113,12 @@ const MobileCalendarView = () => {
                   </div>
                   <div className="flex gap-2">
                     {/* Botón de editar */}
-                    <button
+{/*                     <button
                       onClick={() => handleEdit(event.id)}
                       className="text-sm text-white bg-turquesa px-3 py-1 rounded hover:bg-turquesa/90 transition"
                     >
                       Editar
-                    </button>
+                    </button> */}
                     {/* Botón de cancelar */}
                     <button
                       onClick={() => handleCancel(event.id)}

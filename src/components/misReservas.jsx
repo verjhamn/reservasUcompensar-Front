@@ -61,7 +61,7 @@ const BigCalendarView = () => {
 
   const handleEdit = (eventId) => {
     console.log("[BigCalendarView] Editar reserva con ID:", eventId);
-    alert(`Editar reserva con ID: ${eventId}`);
+    alert(`Editar reserva con ID: ${eventId} (Funcionalidad en desarrollo...)`);
   };
 
   const handleCancel = async (eventId) => {
@@ -148,12 +148,12 @@ const BigCalendarView = () => {
                   </div>
                   <div className="flex gap-2">
                     {/* Botón de editar */}
-                    <button
+            {/*         <button
                       onClick={() => handleEdit(event.id)}
                       className="text-sm text-white bg-turquesa px-3 py-1 rounded hover:bg-turquesa/90 transition"
                     >
                       Editar
-                    </button>
+                    </button> */}
                     {/* Botón de cancelar */}
                     <button
                       onClick={() => handleCancel(event.id)}

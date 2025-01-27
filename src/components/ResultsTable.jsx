@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
 import ReactPaginate from "react-paginate";
 import ReservationModal from "./ReservationModal";
+import LoginTest from "./loginTest";
 import { fetchFilteredReservations } from "../Services/reservasService";
 
 const ResultsTable = ({ filters = {}, goToMyReservations }) => {
     const [page, setPage] = useState(0);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isLoginOpen, setIsLoginOpen] = useState(false);
     const [selectedSpace, setSelectedSpace] = useState(null);
     const [itemsPerPage, setItemsPerPage] = useState(9);
     const [data, setData] = useState([]);
@@ -71,6 +73,11 @@ const ResultsTable = ({ filters = {}, goToMyReservations }) => {
         setPage(selected);
     };
 
+    const handleLoginSuccess = () => {
+        setIsLoginOpen(false);
+        setIsModalOpen(true);
+    };
+
     if (isLoading) {
         return <p>Cargando...</p>;
     }
@@ -116,7 +123,7 @@ const ResultsTable = ({ filters = {}, goToMyReservations }) => {
                             <button
                                 onClick={() => {
                                     setSelectedSpace({ ...item, image: getRandomImage() });
-                                    setIsModalOpen(true);
+                                    setIsLoginOpen(true);
                                 }}
                                 className="mt-4 w-full bg-turquesa text-white py-2 px-4 rounded hover:bg-turquesa/90 transition duration-300"
                             >
@@ -144,6 +151,12 @@ const ResultsTable = ({ filters = {}, goToMyReservations }) => {
                     renderOnZeroPageCount={null}
                 />
             </div>
+
+            <LoginTest
+                isOpen={isLoginOpen}
+                onClose={() => setIsLoginOpen(false)}
+                onLoginSuccess={handleLoginSuccess}
+            />
 
             <ReservationModal
                 isOpen={isModalOpen}
