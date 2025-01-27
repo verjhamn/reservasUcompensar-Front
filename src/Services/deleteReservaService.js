@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "https://qareservas.ucompensar.edu.co/api/reservas";
+const API_URL = "https://backreservas.ucompensar.edu.co/api/reservas";
 
 export const deleteReserva = async (idEspacio) => {
   try {

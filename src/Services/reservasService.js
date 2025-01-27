@@ -1,7 +1,7 @@
 import axios from "axios";
 import { getAuthToken, fetchAuthToken, setAuthToken } from "./authService";
 
-const API_BASE_URL = "https://qareservas.ucompensar.edu.co/api";
+const API_BASE_URL = "https://backreservas.ucompensar.edu.co/api";
 
 // Función para filtrar reservas (Coworking)
 export const fetchFilteredReservations = async (filters) => {

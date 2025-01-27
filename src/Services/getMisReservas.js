@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "https://qareservas.ucompensar.edu.co/api/mis-reservas";
+const API_URL = "https://backreservas.ucompensar.edu.co/api/mis-reservas";
 
 export const getMisReservas = async () => {
   try {

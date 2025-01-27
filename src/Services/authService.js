@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = "https://qareservas.ucompensar.edu.co/api";
+const API_BASE_URL = "https://backreservas.ucompensar.edu.co/api";
 
 // Obtener el token del localStorage
 export const getAuthToken = () => {

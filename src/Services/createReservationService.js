@@ -17,7 +17,7 @@ export const createReservation = async (reservationData) => {
         };
 
         const response = await axios.post(
-            'https://qareservas.ucompensar.edu.co/api/reservas/crear',
+            'https://backreservas.ucompensar.edu.co/api/reservas/crear',
             reservationData,
             config
         );
