@@ -3,7 +3,7 @@ import ReactPaginate from "react-paginate";
 import ReservationModal from "./ReservationModal";
 import { fetchFilteredReservations } from "../Services/reservasService";
 
-const ResultsTable = ({ filters = {} }) => {
+const ResultsTable = ({ filters = {}, goToMyReservations }) => {
     const [page, setPage] = useState(0);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedSpace, setSelectedSpace] = useState(null);
@@ -149,6 +149,7 @@ const ResultsTable = ({ filters = {} }) => {
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 spaceData={selectedSpace}
+                goToMyReservations={goToMyReservations}
             />
         </div>
     );

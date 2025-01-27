@@ -23,6 +23,7 @@ export const getMisReservas = async () => {
 
     // Verificar si la respuesta es exitosa
     if (response.data.success) {
+      console.log("[getMisReservas] Reservas obtenidas:", response.data.data);
       return response.data.data; // Retornar las reservas del usuario
     } else {
       console.error("[getMisReservas] Error en la respuesta:", response.data);

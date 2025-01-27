@@ -4,6 +4,7 @@ import "react-big-calendar/lib/css/react-big-calendar.css";
 import { format, parse, startOfWeek, getDay, addHours, isBefore, startOfDay } from "date-fns";
 import es from "date-fns/locale/es";
 import { createReservation } from "../Services/createReservationService";
+import { getUserId } from "../Services/authService";
 
 const locales = { es: es };
 const localizer = dateFnsLocalizer({
@@ -14,18 +15,14 @@ const localizer = dateFnsLocalizer({
   locales,
 });
 
-const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
+const ReservationModal = ({ isOpen, onClose, spaceData, reservas, goToMyReservations }) => {
   const [activeTab, setActiveTab] = useState("info");
   const [filteredEvents, setFilteredEvents] = useState([]);
-  //const [selectedSlot, setSelectedSlot] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
-  //const [selectedStartTime, setSelectedStartTime] = useState("");
-  //const [selectedEndTime, setSelectedEndTime] = useState("");
   const [selectedHours, setSelectedHours] = useState([]);
   const [reservationTitle, setReservationTitle] = useState("");
   const [reservationDescription, setReservationDescription] = useState("");
   const [selectedPeriod, setSelectedPeriod] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
 
   const isCoworking = spaceData?.coworking !== "SI";
 
@@ -89,7 +86,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
 
     const reservationData = {
       espacio_id: spaceData.espacio_id,
-      user_id: localStorage.getItem('userId') || "3",
+      user_id: getUserId() || "1",
       titulo: reservationTitle,
       descripcion: reservationDescription || "",
       fecha_reserva: formattedDate,
@@ -100,23 +97,20 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
 
     console.log("Intentando crear reserva con datos:", JSON.stringify(reservationData, null, 2));
 
-    setIsLoading(true); // Mostrar animación de carga
-
     try {
       const response = await createReservation(reservationData);
       console.log("Respuesta del servidor:", response);
-
+      
       if (response.status === "success") {
         alert(`Reserva confirmada con éxito para el día ${formattedDate} de ${formattedStartTime} a ${formattedEndTime}`);
-        handleClose();
+        onClose();
+        goToMyReservations();
       } else {
         throw new Error(response.message || 'Error al crear la reserva');
       }
     } catch (error) {
       console.error("Error al crear la reserva:", error);
       alert(`Error al crear la reserva: ${error.message || 'Por favor, intente nuevamente.'}`);
-    } finally {
-      setIsLoading(false); // Ocultar animación de carga
     }
   };
 
@@ -163,7 +157,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
     { id: 1, name: "Mañana", start: "13:00", end: "17:00" },
     { id: 2, name: "Mañana-Tarde", start: "07:00", end: "17:00" },
     { id: 3, name: "Tarde-Noche", start: "17:00", end: "22:00" },
-
+    
   ];
 
   const renderTimeSelector = () => {
@@ -223,20 +217,6 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
     );
   };
 
-  const resetForm = () => {
-    setActiveTab("info");
-    setSelectedDate(new Date());
-    setSelectedHours([]);
-    setReservationTitle("");
-    setReservationDescription("");
-    setSelectedPeriod(null);
-  };
-
-  const handleClose = () => {
-    resetForm();
-    onClose();
-  };
-
   if (!isOpen || !spaceData) return null;
 
   const dayPropGetter = (date) => {
@@ -260,19 +240,6 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
     return {};
   };
 
-  const slotPropGetter = (date) => {
-    if (isBefore(startOfDay(date), startOfDay(new Date()))) {
-      return {
-        className: 'rbc-day-slot-disabled',
-        style: {
-          backgroundColor: '#f0f0f0',
-          pointerEvents: 'none',
-        },
-      };
-    }
-    return {};
-  };
-
   const handleNavigate = (date) => {
     if (isBefore(startOfDay(date), startOfDay(new Date()))) {
       alert("No se puede reservar en días anteriores al actual.");
@@ -288,7 +255,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
         <div className="flex justify-between items-start mb-6">
           <h2 className="text-2xl font-bold text-gray-800">Detalles del Espacio</h2>
           <button
-            onClick={handleClose}
+            onClick={onClose}
             className="text-gray-500 hover:text-gray-700 transition-colors"
           >
             <svg
@@ -401,25 +368,6 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
               views={["month"]}
               style={{ height: 300 }}
               dayPropGetter={dayPropGetter}
-              slotPropGetter={slotPropGetter}
-              messages={{
-                next: "Siguiente",
-                previous: "Anterior",
-                today: "Hoy",
-                month: "Mes",
-                week: "Semana",
-                day: "Día",
-                agenda: "Agenda",
-                date: "Fecha",
-                time: "Hora",
-                event: "Evento",
-                noEventsInRange: "No hay eventos en este rango.",
-              }}
-              formats={{
-                monthHeaderFormat: "MMMM yyyy", // Nombre del mes y año en español
-                weekdayFormat: (date) => format(date, "EE", { locale: es }).toUpperCase(), // Días abreviados (LU, MA...)
-                dayFormat: "d", // Día del mes
-              }}
             />
             {renderTimeSelector()}
             {/* Campo de título y descripción de la reserva */}
@@ -455,11 +403,6 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas }) => {
           </div>
         )}
       </div>
-      {isLoading && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="loader"></div>
-        </div>
-      )}
     </div>
   );
 };

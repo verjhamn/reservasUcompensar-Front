@@ -15,6 +15,19 @@ export const setAuthToken = (token) => {
     console.log("Token guardado:", token); // Debug
 };
 
+// Obtener el ID del usuario del localStorage
+export const getUserId = () => {
+    const userId = localStorage.getItem("userId");
+    console.log("User ID retrieved:", userId); // Debug
+    return userId;
+};
+
+// Guardar el ID del usuario en el localStorage
+export const setUserId = (userId) => {
+    localStorage.setItem("userId", userId);
+    console.log("User ID guardado:", userId); // Debug
+};
+
 // Solicitar un nuevo token
 export const fetchAuthToken = async () => {
     const data = {
@@ -26,11 +39,14 @@ export const fetchAuthToken = async () => {
         console.log("Solicitando nuevo token..."); // Debug
         const response = await axios.post(`${API_BASE_URL}/auth/login`, data);
         const token = response.data.token;
-        if (token) {
+        const userId = response.data.data.id;
+        if (token && userId) {
             setAuthToken(token);
+            setUserId(userId);
+            console.log("Nuevo token y User ID recibidos y guardados:", token, userId); // Debug
             return token;
         } else {
-            throw new Error("No se recibió un token válido.");
+            throw new Error("No se recibió un token o ID de usuario válido.");
         }
     } catch (error) {
         console.error("Error al obtener el token de autenticación:", error);

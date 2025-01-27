@@ -24,6 +24,10 @@ function App() {
     setShowModal(false);
   };
 
+  const goToMyReservations = () => {
+    setView("Calendario");
+  };
+
   useEffect(() => {
     // Mostrar el modal al cargar la app
     const timer = setTimeout(() => {
@@ -76,7 +80,7 @@ function App() {
               </div>
               {/* Contenido principal */}
               <div className="w-full lg:flex-1">
-                <ResultsTable filters={filters} />
+                <ResultsTable filters={filters} goToMyReservations={goToMyReservations} />
               </div>
             </div>
           )}
