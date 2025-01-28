@@ -101,7 +101,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas, goToMyReservat
     try {
       const response = await createReservation(reservationData);
       console.log("Respuesta del servidor:", response);
-      
+
       if (response.status === "success") {
         alert(`Reserva confirmada con éxito para el día ${formattedDate} de ${formattedStartTime} a ${formattedEndTime}`);
         onClose();
@@ -158,7 +158,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas, goToMyReservat
     { id: 1, name: "Mañana", start: "13:00", end: "17:00" },
     { id: 2, name: "Mañana-Tarde", start: "07:00", end: "17:00" },
     { id: 3, name: "Tarde-Noche", start: "17:00", end: "22:00" },
-    
+
   ];
 
   const renderTimeSelector = () => {
@@ -318,11 +318,11 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas, goToMyReservat
                 </div>
                 <div className="min-w-0">
                   <h3 className="font-semibold text-gray-700 text-lg truncate">Piso</h3>
-                  <p className="text-gray-600 text-base truncate">{spaceData.espacio.piso}</p>
+                  <p className="text-gray-600 text-base truncate">{spaceData.piso}</p>
                 </div>
                 <div className="min-w-0">
                   <h3 className="font-semibold text-gray-700 text-lg truncate">Equipos</h3>
-                  <p className="text-gray-600 text-base truncate">{spaceData.espacio.cantidad_equipos}</p>
+                  <p className="text-gray-600 text-base truncate">{spaceData.cantidad_equipos}</p>
                 </div>
               </div>
             </div>
@@ -369,6 +369,24 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas, goToMyReservat
               views={["month"]}
               style={{ height: 300 }}
               dayPropGetter={dayPropGetter}
+              messages={{
+                next: "Siguiente",
+                previous: "Anterior",
+                today: "Hoy",
+                month: "Mes",
+                week: "Semana",
+                day: "Día",
+                agenda: "Agenda",
+                date: "Fecha",
+                time: "Hora",
+                event: "Evento",
+                noEventsInRange: "No hay eventos en este rango.",
+              }}
+              formats={{
+                monthHeaderFormat: "MMMM yyyy", // Nombre del mes y año en español
+                weekdayFormat: (date) => format(date, "EE", { locale: es }).toUpperCase(), // Días abreviados (LU, MA...)
+                dayFormat: "d", // Día del mes
+              }}
             />
             {renderTimeSelector()}
             {/* Campo de título y descripción de la reserva */}

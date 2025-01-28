@@ -30,11 +30,27 @@ export const fetchFilteredReservations = async (filters) => {
         console.log("Token usado:", token); // Debugging
         console.log("Filtros procesados:", filters); // Debugging
 
-        // Realizar solicitud al endpoint de coworking
-        const response = await axios.get(`${API_BASE_URL}/reservas/coworking`, config);
+        // Realizar solicitud al nuevo endpoint con el body adecuado
+        const body = {
+            palabra: filters.palabra || "",
+            tipo: "coworking",
+            sede: filters.sede || "",
+            piso: filters.piso || "",
+            agrupable: filters.agrupable || "",
+            espaciofisico: filters.espaciofisico || "",
+            tiporecurso: filters.tiporecurso || "",
+            capacidad: filters.capacidad || "",
+            fecha: filters.fecha || "",
+            horaInicio: filters.horaInicio || "",
+            horaFin: filters.horaFin || ""
+        };
+        console.log("Body de la solicitud:", body); // Debugging
+        
 
-        console.log("Respuesta de espacios de coworking:", response.data); // Debugging
-        return response.data.espacios_coworking;
+        const response = await axios.post(`${API_BASE_URL}/espacios/filtrar`, body, config);
+
+        console.log("Respuesta de espacios:", response.data); // Debugging
+        return response.data.espacios;
     } catch (error) {
         // Si el error es 401, renovar el token y reintentar
         if (error.response && error.response.status === 401) {
@@ -54,9 +70,9 @@ export const fetchFilteredReservations = async (filters) => {
                 },
             };
 
-            const retryResponse = await axios.get(`${API_BASE_URL}/reservas/coworking`, retryConfig);
-            console.log("Respuesta de espacios de coworking (reintento):", retryResponse.data); // Debugging
-            return retryResponse.data.espacios_coworking;
+            const retryResponse = await axios.post(`${API_BASE_URL}/espacios/filtrar`, body, retryConfig);
+            console.log("Respuesta de espacios (reintento):", retryResponse.data); // Debugging
+            return retryResponse.data.espacios;
         }
 
         // Si no es 401, loguear el error
