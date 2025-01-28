@@ -32,6 +32,7 @@ const BigCalendarView = () => {
         // Convertir reservas al formato del calendario
         const formattedEvents = reservas.map((reserva) => ({
           id: reserva.id,
+          idEspacio: reserva.espacio.codigo,
           title: reserva.titulo,
           start: new Date(reserva.hora_inicio),
           end: new Date(reserva.hora_fin),
@@ -140,6 +141,8 @@ const BigCalendarView = () => {
                     <h4 className="text-base font-semibold text-gris-medio">
                       {event.title}
                     </h4>
+                    <p className="text-sm text-gris-medio">ID Reserva: {event.id}</p>
+                    <p className="text-sm text-gris-medio">Codigo Espacio: {event.idEspacio}</p>
                     <p className="text-sm text-gris-medio">
                       {format(new Date(event.start), "HH:mm")} -{" "}
                       {format(new Date(event.end), "HH:mm")}

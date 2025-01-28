@@ -20,6 +20,11 @@ function App() {
   const [view, setView] = useState("table"); // Cambiar entre "table" y "bigCalendar"
   const [showModal, setShowModal] = useState(true);
 
+  // Nueva función para manejar cambios en los filtros
+  const handleFilterChange = (newFilters) => {
+    setFilters(newFilters);
+  };
+
   const handleCloseModal = () => {
     setShowModal(false);
   };
@@ -61,14 +66,6 @@ function App() {
             >
               Mis Reservas
             </button>
-            {/* <button
-              onClick={() => setView("fullCalendar")}
-              className={`py-2 px-4 rounded ${
-                view === "fullCalendar" ? "bg-turquesa hover:bg-turquesa/90 text-white" : "bg-gray-300"
-              }`}
-            >
-              Admin Calendario
-            </button> */}
           </div>
 
           {/* Layout responsivo modificado */}
@@ -76,7 +73,11 @@ function App() {
             <div className="flex flex-col lg:flex-row gap-6">
               {/* Sidebar de filtros */}
               <div className="w-full lg:w-1/4">
-                <SearchFilters filters={filters} setFilters={setFilters} />
+                <SearchFilters 
+                  filters={filters} 
+                  setFilters={setFilters} 
+                  onFilterChange={handleFilterChange} 
+                />
               </div>
               {/* Contenido principal */}
               <div className="w-full lg:flex-1">

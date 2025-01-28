@@ -2,51 +2,56 @@ import React, { useState } from "react";
 
 const coworkingPeriods = [
   { id: 0, name: "Mañana", start: "07:00", end: "12:00" },
-  { id: 1, name: "Mañana", start: "13:00", end: "17:00" },
+  { id: 1, name: "Tarde", start: "13:00", end: "17:00" },
   { id: 2, name: "Mañana-Tarde", start: "07:00", end: "17:00" },
   { id: 3, name: "Tarde-Noche", start: "17:00", end: "22:00" },
 ];
 
 const SearchFilters = ({ filters, setFilters, onFilterChange }) => {
   const [showMoreFilters, setShowMoreFilters] = useState(false);
-  const [selectedPeriod, setSelectedPeriod] = useState(null);
 
-  // Opciones estáticas para los desplegables
   const staticOptions = {
-    sedes: ["Campus AV 68"],
-    espaciosFisicos: ["Piso 3", "Piso 4"],
+    sedes: ["Campus Av. 68"],
+    espaciosFisicos: ["3", "4"],
     tiposRecurso: ["Personal", "Interlocución"],
   };
 
+  const formatFecha = (dateString) => {
+    if (!dateString) return "";
+    const [year, month, day] = dateString.split("-");
+    return `${day}/${month}/${year}`; // Convertir a DD/MM/AAAA
+  };
+
   const handleChange = (e) => {
-    setFilters({
-      ...filters,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+    let formattedValue = value;
+
+    if (name === "fecha") {
+      formattedValue = formatFecha(value);
+    }
+
+    const updatedFilters = { ...filters, [name]: formattedValue };
+    setFilters(updatedFilters);
+    //onFilterChange(updatedFilters);
   };
 
   const handlePeriodSelect = (e) => {
     const period = coworkingPeriods.find(p => p.id === parseInt(e.target.value));
-    setSelectedPeriod(period);
-    onFilterChange(period);
+    if (period) {
+      const updatedFilters = {
+        ...filters,
+        horaInicio: period.start,
+        horaFin: period.end,
+      };
+      setFilters(updatedFilters);
+      //onFilterChange(updatedFilters);
+    }
   };
 
   return (
     <div className="bg-white shadow-md p-4 md:p-6 rounded-xl">
       <form className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
-        {/* Codigo */}
-        <div>
-          <label className="block text-gray-700 mb-1">Codigo</label>
-          <input
-            type="search"
-            name="capacidad"
-            value={filters.capacidad || ""}
-            onChange={handleChange}
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
-            placeholder="Digitar código"
-            min="1"
-          />
-        </div>
+
         {/* Sede */}
         <div>
           <label className="block text-gray-700 mb-1">Sede</label>
@@ -65,6 +70,23 @@ const SearchFilters = ({ filters, setFilters, onFilterChange }) => {
           </select>
         </div>
 
+        {/* Tipo de Recurso */}
+        <div>
+          <label className="block text-gray-700 mb-1">Tipo de Recurso</label>
+          <select
+            name="tiporecurso"
+            value={filters.tiporecurso || ""}
+            onChange={handleChange}
+            className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
+          >
+            <option value="">Seleccionar</option>
+            {staticOptions.tiposRecurso.map((tipo, index) => (
+              <option key={index} value={tipo}>
+                {tipo}
+              </option>
+            ))}
+          </select>
+        </div>
         {/* Botón para mostrar más filtros */}
         <div className="col-span-1 sm:col-span-2 lg:col-span-1">
           <button
@@ -79,29 +101,13 @@ const SearchFilters = ({ filters, setFilters, onFilterChange }) => {
         {/* Filtros adicionales */}
         {showMoreFilters && (
           <>
-            {/* Tipo de Recurso */}
-            <div>
-              <label className="block text-gray-700 mb-1">Tipo de Recurso</label>
-              <select
-                name="tipo"
-                value={filters.tiporecurso || ""}
-                onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
-              >
-                <option value="">Seleccionar</option>
-                {staticOptions.tiposRecurso.map((tipo, index) => (
-                  <option key={index} value={tipo}>
-                    {tipo}
-                  </option>
-                ))}
-              </select>
-            </div>
-            {/* Piso*/}
+
+            {/* Piso */}
             <div>
               <label className="block text-gray-700 mb-1">Piso</label>
               <select
-                name="Piso"
-                value={filters.espaciofisico || ""}
+                name="piso"
+                value={filters.piso || ""}
                 onChange={handleChange}
                 className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
               >
@@ -119,11 +125,11 @@ const SearchFilters = ({ filters, setFilters, onFilterChange }) => {
               <label className="block text-gray-700 mb-1">Fecha</label>
               <input
                 type="date"
-                name="clseFechainicio"
-                value={filters.clseFechainicio || ""}
+                name="fecha"
+                value={filters.fecha ? filters.fecha.split("/").reverse().join("-") : ""}
                 onChange={handleChange}
                 className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
-                min={new Date().toISOString().split("T")[0]} // Prevent selecting past dates
+                min={new Date().toISOString().split("T")[0]} // Restringir fechas pasadas
               />
             </div>
 
@@ -132,7 +138,7 @@ const SearchFilters = ({ filters, setFilters, onFilterChange }) => {
               <label className="block text-gray-700 mb-1">Período</label>
               <select
                 name="periodo"
-                value={selectedPeriod ? selectedPeriod.id : ""}
+                value={filters.horaInicio ? coworkingPeriods.find(p => p.start === filters.horaInicio)?.id : ""}
                 onChange={handlePeriodSelect}
                 className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
               >
@@ -143,6 +149,18 @@ const SearchFilters = ({ filters, setFilters, onFilterChange }) => {
                   </option>
                 ))}
               </select>
+            </div>
+            {/* Código */}
+            <div>
+              <label className="block text-gray-700 mb-1">Código</label>
+              <input
+                type="search"
+                name="palabra"
+                value={filters.palabra || ""}
+                onChange={handleChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
+                placeholder="Digitar código"
+              />
             </div>
           </>
         )}
