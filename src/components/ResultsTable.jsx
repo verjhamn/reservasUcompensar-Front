@@ -49,6 +49,13 @@ const ResultsTable = ({ filters = {}, goToMyReservations }) => {
           .filter(Boolean); // Evitar valores nulos o indefinidos
 
         setData(coworkingSpaces);
+
+        // Nueva funcionalidad: Si hay solo un resultado y el código vino en la URL, abrir el modal automáticamente
+        if (coworkingSpaces.length === 1 && filters.palabra) {
+          setSelectedSpace({ ...coworkingSpaces[0], image: getRandomImage() });
+          setIsLoginOpen(true);
+        }
+
       } catch (err) {
         console.error("Error al obtener datos en ResultsTable:", err);
         setError(err.message || "Error al cargar los datos.");
