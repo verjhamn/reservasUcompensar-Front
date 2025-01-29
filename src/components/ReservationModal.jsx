@@ -41,7 +41,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas, goToMyReservat
     }
   }, [spaceData]);
 
-  const handleSlotSelect = (slotInfo) => {
+/*   const handleSlotSelect = (slotInfo) => {
     const isSlotOccupied = filteredEvents.some(
       (event) =>
         new Date(slotInfo.start) < new Date(event.end) &&
@@ -53,8 +53,24 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas, goToMyReservat
     } else {
       alert("Este horario ya está ocupado. Por favor seleccione otro.");
     }
+  }; */
+  const handleSlotSelect = (slotInfo) => {
+    const selectedStart = startOfDay(slotInfo.start); // Asegura que se seleccione el día completo
+    const selectedEnd = addHours(selectedStart, 23); // Finaliza al final del día
+  
+    const isSlotOccupied = filteredEvents.some(
+      (event) =>
+        new Date(selectedStart) < new Date(event.end) &&
+        new Date(selectedEnd) > new Date(event.start)
+    );
+  
+    if (!isSlotOccupied) {
+      setSelectedDate(selectedStart); // Selecciona el día completo
+    } else {
+      alert("Este horario ya está ocupado. Por favor seleccione otro.");
+    }
   };
-
+  
   const handleConfirmReservation = async () => {
     if (!reservationTitle.trim()) {
       alert("Por favor ingrese un título para la reserva");

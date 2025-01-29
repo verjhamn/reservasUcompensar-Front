@@ -3,7 +3,7 @@ import { Calendar, dateFnsLocalizer } from "react-big-calendar";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { format, parse, startOfWeek, getDay } from "date-fns";
 import es from "date-fns/locale/es";
-import { getMisReservas } from "../services/getMisReservas"; 
+import { getMisReservas } from "../services/getMisReservas";
 import { deleteReserva } from "../services/deleteReservaService";
 
 // Configuración de localización en español
@@ -100,6 +100,8 @@ const BigCalendarView = () => {
         <Calendar
           localizer={localizer}
           events={[]} // Sin mostrar eventos en el calendario
+          selectable
+          onSelectSlot={(slotInfo) => setSelectedDate(slotInfo.start)}
           date={selectedDate}
           onNavigate={(date) => setSelectedDate(date)} // Cambiar la fecha seleccionada
           views={["month"]}
@@ -151,7 +153,7 @@ const BigCalendarView = () => {
                   </div>
                   <div className="flex gap-2">
                     {/* Botón de editar */}
-            {/*         <button
+                    {/*         <button
                       onClick={() => handleEdit(event.id)}
                       className="text-sm text-white bg-turquesa px-3 py-1 rounded hover:bg-turquesa/90 transition"
                     >
