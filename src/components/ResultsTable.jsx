@@ -120,9 +120,8 @@ const ResultsTable = ({ filters = {}, goToMyReservations }) => {
               <div className="flex-grow">
                 <h3 className="text-lg font-bold text-gray-800">{item.tipo || "Tipo no disponible"}</h3>
                 <p className="text-gray-600 text-sm">Código: {item.codigo || "Código no disponible"}</p>
-                <p className="text-gray-600 text-sm">Descripción: {item.descripcion || "Descripción no disponible"}</p>
                 <p className="text-gray-600 text-sm">Piso: {item.piso || "No disponible"}</p>
-                <p className="text-gray-600 text-sm">Reservable: {item.reservable || "No disponible"}</p>
+                <p className="text-gray-600 text-sm">Descripción: {item.descripcion || "Descripción no disponible"}</p>
               </div>
               <button
                 onClick={() => {
