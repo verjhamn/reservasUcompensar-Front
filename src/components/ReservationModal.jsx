@@ -103,7 +103,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas, goToMyReservat
     const reservationData = {
       espacio_id: spaceData.id,
       espacio_type: "App\\Models\\basics\\EspacioCoworking",
-      user_id: getUserId() || "1",
+      user_id: getUserId() || "3816a79a-78e1-4dc1-ae3b-3c5e4533ff8f",
       titulo: reservationTitle,
       descripcion: reservationDescription || "",
       fecha_reserva: formattedDate,
