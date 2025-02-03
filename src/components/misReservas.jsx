@@ -5,7 +5,7 @@ import { format, parse, startOfWeek, getDay } from "date-fns";
 import es from "date-fns/locale/es";
 import { getMisReservas } from "../services/getMisReservas";
 import { deleteReserva } from "../services/deleteReservaService";
-
+ 
 // Configuración de localización en español
 const locales = { es: es };
 const localizer = dateFnsLocalizer({
@@ -15,12 +15,12 @@ const localizer = dateFnsLocalizer({
   getDay,
   locales,
 });
-
+ 
 const BigCalendarView = () => {
   const [events, setEvents] = useState([]); // Eventos cargados desde el backend
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [filteredEvents, setFilteredEvents] = useState([]); // Eventos filtrados por fecha
-
+ 
   // Obtener las reservas del usuario autenticado
   useEffect(() => {
     const fetchReservations = async () => {
@@ -28,7 +28,7 @@ const BigCalendarView = () => {
       try {
         const reservas = await getMisReservas(); // Llamar al servicio
         console.log("[BigCalendarView] Reservas obtenidas:", reservas);
-
+ 
         // Convertir reservas al formato del calendario
         const formattedEvents = reservas.map((reserva) => ({
           id: reserva.id,
@@ -38,17 +38,17 @@ const BigCalendarView = () => {
           end: new Date(reserva.hora_fin),
           desc: reserva.descripcion,
         }));
-
+ 
         setEvents(formattedEvents);
         console.log("[BigCalendarView] Eventos formateados:", formattedEvents);
       } catch (error) {
         console.error("[BigCalendarView] Error al cargar reservas:", error);
       }
     };
-
+ 
     fetchReservations();
   }, []);
-
+ 
   // Filtrar eventos según la fecha seleccionada
   useEffect(() => {
     const filtered = events.filter(
@@ -59,12 +59,12 @@ const BigCalendarView = () => {
     setFilteredEvents(filtered);
     console.log("[BigCalendarView] Eventos filtrados por fecha:", filtered);
   }, [selectedDate, events]);
-
+ 
   const handleEdit = (eventId) => {
     console.log("[BigCalendarView] Editar reserva con ID:", eventId);
     alert(`Editar reserva con ID: ${eventId} (Funcionalidad en desarrollo...)`);
   };
-
+ 
   const handleCancel = async (eventId) => {
     console.log("[BigCalendarView] Intentando cancelar reserva con ID:", eventId);
     if (window.confirm("¿Estás seguro de que deseas cancelar esta reserva?")) {
@@ -79,7 +79,7 @@ const BigCalendarView = () => {
       }
     }
   };
-
+ 
   // Estilo personalizado para el día seleccionado
   const dayPropGetter = (date) => {
     if (format(date, "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd")) {
@@ -92,7 +92,7 @@ const BigCalendarView = () => {
     }
     return {};
   };
-
+ 
   return (
     <div className="p-4 bg-gris-sutil rounded-lg shadow-lg">
       {/* Selector de fecha (calendario reducido) */}
@@ -127,13 +127,13 @@ const BigCalendarView = () => {
           }}
         />
       </div>
-
+ 
       {/* Lista de eventos */}
       <div className="bg-white p-4 rounded-lg shadow-md">
         <h3 className="text-lg font-semibold text-turquesa mb-3">
           Reservas del {format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: es })}
         </h3>
-
+ 
         {filteredEvents.length > 0 ? (
           <ul className="space-y-4">
             {filteredEvents.map((event) => (
@@ -178,5 +178,5 @@ const BigCalendarView = () => {
     </div>
   );
 };
-
+ 
 export default BigCalendarView;

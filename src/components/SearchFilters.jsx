@@ -13,7 +13,7 @@ const SearchFilters = ({ filters, setFilters, onFilterChange }) => {
   const staticOptions = {
     sedes: ["Campus Av. 68"],
     espaciosFisicos: ["3", "4"],
-    tiposRecurso: ["Personal", "Interlocución"],
+    tiposRecurso: ["Personal", "Puesto en L"],
   };
 
   const formatFecha = (dateString) => {

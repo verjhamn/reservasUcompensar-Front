@@ -1,23 +1,14 @@
-import axios from "axios";
+import { axiosInstance } from "./authService";
 
-const API_URL = "https://backreservas.ucompensar.edu.co/api/mis-reservas";
+const API_URL = "https://backreservas.ucompensar.edu.co/api/";
+const API_URL2 = "https://qareservas.ucompensar.edu.co/api";
 
 export const getMisReservas = async () => {
   try {
     console.log("[getMisReservas] Iniciando solicitud al endpoint...");
 
-    // Recuperar el token de autenticación del usuario
-    const token = localStorage.getItem("authToken");
-    if (!token) {
-      console.error("[getMisReservas] Token no encontrado.");
-      throw new Error("Usuario no autenticado. Por favor, inicia sesión.");
-    }
-
-    const response = await axios.get(API_URL, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    // Realizar la solicitud usando axiosInstance, que maneja la autenticación automáticamente
+    const response = await axiosInstance.get(`${API_URL2}/mis-reservas`);
 
     console.log("[getMisReservas] Respuesta del servidor:", response.data);
 
