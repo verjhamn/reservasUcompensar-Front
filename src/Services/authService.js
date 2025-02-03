@@ -38,7 +38,7 @@ export const fetchAuthToken = async () => {
 
     try {
         console.log("Solicitando nuevo token...");
-        const response = await axios.post(`${API_BASE_URL_2}/auth/login`, data);
+        const response = await axios.post(`${API_BASE_URL}/auth/login`, data);
         const { token, data: { id: userId } } = response.data;
 
         if (token && userId) {

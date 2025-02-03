@@ -1,6 +1,6 @@
 import { axiosInstance } from "./authService";
 
-const API_URL = "https://backreservas.ucompensar.edu.co/api/";
+const API_URL = "https://backreservas.ucompensar.edu.co/api";
 const API_URL2 = "https://qareservas.ucompensar.edu.co/api";
 
 export const getMisReservas = async () => {
@@ -8,7 +8,7 @@ export const getMisReservas = async () => {
     console.log("[getMisReservas] Iniciando solicitud al endpoint...");
 
     // Realizar la solicitud usando axiosInstance, que maneja la autenticación automáticamente
-    const response = await axiosInstance.get(`${API_URL2}/mis-reservas`);
+    const response = await axiosInstance.get(`${API_URL}/mis-reservas`);
 
     console.log("[getMisReservas] Respuesta del servidor:", response.data);
 

@@ -48,7 +48,7 @@ export const fetchFilteredReservations = async (filters) => {
         console.log("Body de la solicitud:", body); // Debugging
         
 
-        const response = await axios.post(`${API_BASE_URL2}/espacios/filtrar`, body, config);
+        const response = await axios.post(`${API_BASE_URL}/espacios/filtrar`, body, config);
 
         console.log("Respuesta de espacios:", response.data); // Debugging
         return response.data.espacios;

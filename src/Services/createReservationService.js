@@ -8,7 +8,7 @@ export const createReservation = async (reservationData) => {
         console.log("[createReservation] Enviando solicitud de reserva...");
 
         // Realizar la solicitud usando axiosInstance, que maneja la autenticación automáticamente
-        const response = await axiosInstance.post(`${API_BASE_URL2}/reservas/crear`, reservationData);
+        const response = await axiosInstance.post(`${API_BASE_URL}/reservas/crear`, reservationData);
 
         console.log("[createReservation] Respuesta del servidor:", response.data);
 
