@@ -49,7 +49,7 @@ const InfoModal = ({ onClose }) => {
             Esta aplicación permite reservar exclusivamente espacios de coworking en la sede Campus Av. 68.
           </p>
           <p className="text-gray-600 text-base md:text-xl leading-relaxed">
-            Para reservar espacios en la sede Teusaquillo, por favor realiza la solicitud a través de la MIS dando clic <a href="https://mis.ucompensar.edu.co" target="_blank" className="text-turquesa underline">aquí</a>.
+            Para reservar espacios en la sede Teusaquillo, por favor realiza la solicitud a través de la MIS haciendo clic <a href="https://mis.ucompensar.edu.co" target="_blank" className="text-turquesa underline">aquí</a>.
           </p>
           <p className="text-gray-600 text-base md:text-2xl leading-relaxed">
             ¡Gracias por tu comprensión!

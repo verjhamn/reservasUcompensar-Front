@@ -72,7 +72,7 @@ const SearchFilters = ({ filters, setFilters, onFilterChange }) => {
 
         {/* Tipo de Recurso */}
         <div>
-          <label className="block text-gray-700 mb-1">Tipo de Recurso</label>
+          <label className="block text-gray-700 mb-1">Tipo de recurso</label>
           <select
             name="tiporecurso"
             value={filters.tiporecurso || ""}
@@ -135,7 +135,7 @@ const SearchFilters = ({ filters, setFilters, onFilterChange }) => {
 
             {/* Período */}
             <div>
-              <label className="block text-gray-700 mb-1">Período</label>
+              <label className="block text-gray-700 mb-1">Franja horaria</label>
               <select
                 name="periodo"
                 value={filters.horaInicio ? coworkingPeriods.find(p => p.start === filters.horaInicio)?.id : ""}
@@ -159,7 +159,7 @@ const SearchFilters = ({ filters, setFilters, onFilterChange }) => {
                 value={filters.palabra || ""}
                 onChange={handleChange}
                 className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
-                placeholder="Digitar código"
+                placeholder="Ej: P3C01L"
               />
             </div>
           </>

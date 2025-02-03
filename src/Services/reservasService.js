@@ -43,7 +43,8 @@ export const fetchFilteredReservations = async (filters) => {
             capacidad: filters.capacidad || "",
             fecha: filters.fecha || "",
             horaInicio: filters.horaInicio || "",
-            horaFin: filters.horaFin || ""
+            horaFin: filters.horaFin || "",
+            id:filters.id || "",
         };
         console.log("Body de la solicitud:", body); // Debugging
         

@@ -3,8 +3,11 @@ import ReactPaginate from "react-paginate";
 import ReservationModal from "./ReservationModal";
 import LoginTest from "./loginTest";
 import { fetchFilteredReservations } from "../Services/reservasService";
+import { useMsal } from "@azure/msal-react";
+import { loginRequest } from "../Services/SSOServices/authConfig";
 
 const ResultsTable = ({ filters = {}, goToMyReservations }) => {
+  const { instance } = useMsal();
   const [page, setPage] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
@@ -13,22 +16,18 @@ const ResultsTable = ({ filters = {}, goToMyReservations }) => {
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
+
+  
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth <= 768) {
-        setItemsPerPage(4);
-      } else {
-        setItemsPerPage(9);
-      }
+      setItemsPerPage(window.innerWidth <= 768 ? 4 : 9);
     };
 
     window.addEventListener("resize", handleResize);
     handleResize();
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   useEffect(() => {
@@ -37,25 +36,15 @@ const ResultsTable = ({ filters = {}, goToMyReservations }) => {
       setError(null);
       try {
         const response = await fetchFilteredReservations(filters);
-
-        // Extraemos espacios_coworking y agregamos el atributo `piso`
         const coworkingSpaces = response
           .flatMap(item =>
             item.espacios_coworking.map(coworking => ({
               ...coworking,
-              piso: item.piso, // Incluimos el piso del espacio principal
+              piso: item.piso,
             }))
           )
-          .filter(Boolean); // Evitar valores nulos o indefinidos
-
+          .filter(Boolean);
         setData(coworkingSpaces);
-
-        // Nueva funcionalidad: Si hay solo un resultado y el código vino en la URL, abrir el modal automáticamente
-        if (coworkingSpaces.length === 1 && filters.palabra) {
-          setSelectedSpace({ ...coworkingSpaces[0], image: getRandomImage() });
-          setIsLoginOpen(true);
-        }
-
       } catch (err) {
         console.error("Error al obtener datos en ResultsTable:", err);
         setError(err.message || "Error al cargar los datos.");
@@ -63,7 +52,6 @@ const ResultsTable = ({ filters = {}, goToMyReservations }) => {
         setIsLoading(false);
       }
     };
-
     fetchData();
   }, [filters]);
 
@@ -74,48 +62,51 @@ const ResultsTable = ({ filters = {}, goToMyReservations }) => {
     "https://reservas.ucompensar.edu.co/img/4.webp",
   ];
 
-  const getRandomImage = () => {
-    return images[Math.floor(Math.random() * images.length)];
-  };
+  const getRandomImage = () => images[Math.floor(Math.random() * images.length)];
 
-  const handlePageChange = ({ selected }) => {
-    setPage(selected);
-  };
+  const handleReserveClick = async (item) => {
+    let userData = localStorage.getItem("userData");
 
-  const handleLoginSuccess = () => {
-    setIsLoginOpen(false);
+    if (!userData) {
+        try {
+            const response = await instance.loginPopup(loginRequest);
+            const accessToken = response.accessToken;
+
+            // 🔹 Obtener datos del usuario desde Microsoft Graph
+            const graphResponse = await fetch("https://graph.microsoft.com/v1.0/me", {
+                headers: { Authorization: `Bearer ${accessToken}` },
+            });
+            const user = await graphResponse.json();
+
+            if (user) {
+                console.log("Usuario autenticado con SSO:", user);
+
+                // 🔹 Guardamos correctamente el usuario en localStorage
+                localStorage.setItem("userData", JSON.stringify(user));
+                window.dispatchEvent(new Event("storage")); // 🔹 Actualiza el Header automáticamente
+            }
+
+            setIsLoggedIn(true);
+        } catch (error) {
+            console.error("Error en el inicio de sesión con Microsoft:", error);
+            return;
+        }
+    }
+
+    setSelectedSpace({ ...item, image: getRandomImage() });
     setIsModalOpen(true);
-  };
+};
 
-  if (isLoading) {
-    return <p>Cargando...</p>;
-  }
-
-  if (error) {
-    return <p>{error}</p>;
-  }
-
-  if (data.length === 0) {
-    return <p>No se encontraron resultados para los filtros seleccionados.</p>;
-  }
-
-  const startIndex = page * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedData = data.slice(startIndex, endIndex);
+  if (isLoading) return <p>Cargando...</p>;
+  if (error) return <p>{error}</p>;
+  if (data.length === 0) return <p>No se encontraron resultados para los filtros seleccionados.</p>;
 
   return (
     <div className="bg-white shadow-md p-4 md:p-6 rounded-xl">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-        {paginatedData.map((item, index) => (
-          <div
-            key={`${item.id}-${index}`}
-            className="border rounded-lg overflow-hidden shadow hover:shadow-lg transition duration-300 flex flex-col"
-          >
-            <img
-              src={getRandomImage()}
-              alt="Espacio"
-              className="h-48 w-full object-cover"
-            />
+        {data.slice(page * itemsPerPage, (page + 1) * itemsPerPage).map((item, index) => (
+          <div key={`${item.id}-${index}`} className="border rounded-lg overflow-hidden shadow hover:shadow-lg transition duration-300 flex flex-col">
+            <img src={getRandomImage()} alt="Espacio" className="h-48 w-full object-cover" />
             <div className="p-4 flex flex-col flex-grow">
               <div className="flex-grow">
                 <h3 className="text-lg font-bold text-gray-800">Coworking {item.codigo || "Código no disponible"}</h3>
@@ -124,10 +115,7 @@ const ResultsTable = ({ filters = {}, goToMyReservations }) => {
                 <p className="text-gray-600 text-sm">Descripción: {item.descripcion || "Descripción no disponible"}</p>
               </div>
               <button
-                onClick={() => {
-                  setSelectedSpace({ ...item, image: getRandomImage() });
-                  setIsLoginOpen(true);
-                }}
+                onClick={() => handleReserveClick(item)}
                 className="mt-4 w-full bg-turquesa text-white py-2 px-4 rounded hover:bg-turquesa/90 transition duration-300"
               >
                 Reservar
@@ -140,7 +128,7 @@ const ResultsTable = ({ filters = {}, goToMyReservations }) => {
       <div className="mt-4 md:mt-6">
         <ReactPaginate
           pageCount={Math.ceil(data.length / itemsPerPage)}
-          onPageChange={handlePageChange}
+          onPageChange={({ selected }) => setPage(selected)}
           containerClassName="flex flex-wrap justify-center space-x-2"
           activeClassName="text-blue-500 font-bold"
           previousClassName="text-gray-500 hover:text-blue-500"
@@ -155,12 +143,7 @@ const ResultsTable = ({ filters = {}, goToMyReservations }) => {
         />
       </div>
 
-      <LoginTest
-        isOpen={isLoginOpen}
-        onClose={() => setIsLoginOpen(false)}
-        onLoginSuccess={handleLoginSuccess}
-      />
-
+      <LoginTest isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
       <ReservationModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
