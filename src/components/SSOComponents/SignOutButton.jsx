@@ -9,6 +9,7 @@ const SignOutButton = ({ onLogout }) => {
     const handleLogout = () => {
         instance.logoutPopup();
         localStorage.removeItem("userData");
+        modalShown.removeItem("modalShown");
         onLogout();
     };
 

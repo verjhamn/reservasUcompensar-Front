@@ -25,13 +25,22 @@ function App() {
     });
 
     const [view, setView] = useState("table"); 
-    const [showModal, setShowModal] = useState(true);
+    const [showModal, setShowModal] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
 
     // Verificar si hay un usuario autenticado en localStorage
     useEffect(() => {
         const storedUser = localStorage.getItem("userData");
         setIsLoggedIn(!!storedUser); // Si hay usuario, `isLoggedIn` será true
+    }, []);
+
+    // Verificar si el modal ya se ha mostrado
+    useEffect(() => {
+        const modalShown = localStorage.getItem("modalShown");
+        if (!modalShown) {
+            setShowModal(true);
+            localStorage.setItem("modalShown", "true");
+        }
     }, []);
 
     // Extraer código del espacio desde la URL
