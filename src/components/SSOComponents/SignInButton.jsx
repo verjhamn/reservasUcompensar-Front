@@ -17,7 +17,7 @@ const SignInButton = ({ onLoginSuccess }) => {
     };
 
     return (
-        <button onClick={handleLogin} className="bg-turquesa text-white px-4 py-2 rounded">
+        <button onClick={handleLogin} className="bg-turquesa text-sm md:text-md text-white px-4 py-2 rounded">
             Iniciar sesión
         </button>
     );

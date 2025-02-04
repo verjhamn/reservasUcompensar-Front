@@ -11,7 +11,7 @@ const SignOutButton = ({ onLogout }) => {
     };
 
     return (
-        <button onClick={handleLogout} className="bg-red-500 text-white px-4 py-2 rounded">
+        <button onClick={handleLogout} className="bg-fucsia text-sm md:text-md text-white px-4 py-2 rounded">
             Cerrar sesión
         </button>
     );

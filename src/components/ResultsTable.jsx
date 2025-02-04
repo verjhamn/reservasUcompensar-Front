@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import ReactPaginate from "react-paginate";
 import ReservationModal from "./ReservationModal";
-import LoginTest from "./loginTest";
 import { fetchFilteredReservations } from "../Services/reservasService";
 import { useMsal } from "@azure/msal-react";
 import { loginRequest } from "../Services/SSOServices/authConfig";
@@ -10,7 +9,6 @@ const ResultsTable = ({ filters = {}, goToMyReservations }) => {
   const { instance } = useMsal();
   const [page, setPage] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [selectedSpace, setSelectedSpace] = useState(null);
   const [itemsPerPage, setItemsPerPage] = useState(9);
   const [data, setData] = useState([]);
@@ -18,8 +16,6 @@ const ResultsTable = ({ filters = {}, goToMyReservations }) => {
   const [error, setError] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-
-  
   useEffect(() => {
     const handleResize = () => {
       setItemsPerPage(window.innerWidth <= 768 ? 4 : 9);
@@ -45,6 +41,11 @@ const ResultsTable = ({ filters = {}, goToMyReservations }) => {
           )
           .filter(Boolean);
         setData(coworkingSpaces);
+
+        // Si solo hay un espacio, iniciar automáticamente el proceso de reserva
+        if (coworkingSpaces.length === 1) {
+          handleReserveClick(coworkingSpaces[0]);
+        }
       } catch (err) {
         console.error("Error al obtener datos en ResultsTable:", err);
         setError(err.message || "Error al cargar los datos.");
@@ -68,34 +69,36 @@ const ResultsTable = ({ filters = {}, goToMyReservations }) => {
     let userData = localStorage.getItem("userData");
 
     if (!userData) {
-        try {
-            const response = await instance.loginPopup(loginRequest);
-            const accessToken = response.accessToken;
+      try {
+        const response = await instance.loginPopup(loginRequest);
+        const accessToken = response.accessToken;
 
-            // 🔹 Obtener datos del usuario desde Microsoft Graph
-            const graphResponse = await fetch("https://graph.microsoft.com/v1.0/me", {
-                headers: { Authorization: `Bearer ${accessToken}` },
-            });
-            const user = await graphResponse.json();
+        // Obtener datos del usuario desde Microsoft Graph
+        const graphResponse = await fetch("https://graph.microsoft.com/v1.0/me", {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        const user = await graphResponse.json();
 
-            if (user) {
-                console.log("Usuario autenticado con SSO:", user);
+        if (user) {
+          console.log("Usuario autenticado con SSO:", user);
 
-                // 🔹 Guardamos correctamente el usuario en localStorage
-                localStorage.setItem("userData", JSON.stringify(user));
-                window.dispatchEvent(new Event("storage")); // 🔹 Actualiza el Header automáticamente
-            }
-
-            setIsLoggedIn(true);
-        } catch (error) {
-            console.error("Error en el inicio de sesión con Microsoft:", error);
-            return;
+          // Guardamos correctamente el usuario en localStorage
+          localStorage.setItem("userData", JSON.stringify(user));
+          window.dispatchEvent(new Event("storage")); // Actualiza el Header automáticamente
         }
-    }
 
-    setSelectedSpace({ ...item, image: getRandomImage() });
-    setIsModalOpen(true);
-};
+        setIsLoggedIn(true);
+        setSelectedSpace({ ...item, image: getRandomImage() });
+        setIsModalOpen(true);
+      } catch (error) {
+        console.error("Error en el inicio de sesión con Microsoft:", error);
+        return;
+      }
+    } else {
+      setSelectedSpace({ ...item, image: getRandomImage() });
+      setIsModalOpen(true);
+    }
+  };
 
   if (isLoading) return <p>Cargando...</p>;
   if (error) return <p>{error}</p>;
@@ -143,7 +146,6 @@ const ResultsTable = ({ filters = {}, goToMyReservations }) => {
         />
       </div>
 
-      <LoginTest isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
       <ReservationModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

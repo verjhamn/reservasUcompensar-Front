@@ -42,12 +42,12 @@ const Header = () => {
     return (
         <header className="bg-white text-gray-800 py-4 flex justify-between items-center px-6">
             <div className="flex items-center">
-                <img src="https://ucompensar.edu.co/wp-content/uploads/2021/04/main-logo.svg" alt="Logo" className="h-12" />
+                <img src="https://ucompensar.edu.co/wp-content/uploads/2021/04/main-logo.svg" alt="Logo" className="h-12 mr-2" />
             </div>
 
             <div>
                 {user ? (
-                    <div className="flex items-center space-x-4">
+                    <div className="flex items-center text-sm md:text-md space-x-4">
                         <span>{user.displayName} ({user.mail})</span>
                         <SignOutButton onLogout={() => {
                             localStorage.removeItem("userData");
