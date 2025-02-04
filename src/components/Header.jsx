@@ -5,6 +5,7 @@ import { faUser, faSignOutAlt, faSignInAlt } from "@fortawesome/free-solid-svg-i
 import SignInButton from "./SSOComponents/SignInButton";
 import SignOutButton from "./SSOComponents/SignOutButton";
 import { getUserData } from "../Services/SSOServices/graphService";
+import { fetchAuthToken } from "../Services/authService";
 
 const Header = () => {
     const { accounts } = useMsal();
@@ -32,12 +33,15 @@ const Header = () => {
     const handleLoginSuccess = async (accessToken) => {
         try {
             const userData = await getUserData(accessToken);
-            console.log("Usuario autenticado:", userData);
-
+            console.log("[Header] Usuario autenticado con SSO:", userData);
+    
             localStorage.setItem("userData", JSON.stringify(userData));
             setUser(userData);
+    
+            console.log("[Header] Registrando usuario en el backend si es necesario...");
+            await fetchAuthToken(); // Llamamos de inmediato para autenticar o registrar al usuario en el backend.
         } catch (error) {
-            console.error("Error al obtener datos del usuario:", error);
+            console.error("[Header] Error al obtener datos del usuario:", error);
         }
     };
 
