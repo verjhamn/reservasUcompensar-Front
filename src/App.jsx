@@ -20,18 +20,26 @@ function App() {
         fecha: "",
         horaInicio: "",
         horaFinal: "",
-        palabra: "", // Aquí guardaremos el código del espacio si viene en la URL
+        palabra: "",
+        id:""
     });
 
     const [view, setView] = useState("table"); 
     const [showModal, setShowModal] = useState(true);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-    // Extraer código del espacio desde la URL (ejemplo: /espacio/P3C01L)
+    // Verificar si hay un usuario autenticado en localStorage
+    useEffect(() => {
+        const storedUser = localStorage.getItem("userData");
+        setIsLoggedIn(!!storedUser); // Si hay usuario, `isLoggedIn` será true
+    }, []);
+
+    // Extraer código del espacio desde la URL
     useEffect(() => {
         const pathParts = window.location.pathname.split("/");
         if (pathParts.length === 3 && pathParts[1] === "espacio") {
-            const codigoEspacio = pathParts[2]; // Extrae "P3C01L"
-            setFilters(prev => ({ ...prev, palabra: codigoEspacio }));
+            const codigoEspacio = pathParts[2];
+            setFilters(prev => ({ ...prev, id: codigoEspacio }));
         }
     }, []);
 
@@ -61,12 +69,16 @@ function App() {
                             >
                                 Catálogo
                             </button>
-                            <button
-                                onClick={() => setView("Calendario")}
-                                className={`py-2 px-4 rounded ${view === "Calendario" ? "bg-turquesa hover:bg-turquesa/90 text-white" : "bg-gray-300"}`}
-                            >
-                                Mis Reservas
-                            </button>
+
+                            {/* 🔹 Solo mostrar botón "Mis Reservas" si el usuario está autenticado */}
+                            {isLoggedIn && (
+                                <button
+                                    onClick={() => setView("Calendario")}
+                                    className={`py-2 px-4 rounded ${view === "Calendario" ? "bg-turquesa hover:bg-turquesa/90 text-white" : "bg-gray-300"}`}
+                                >
+                                    Mis Reservas
+                                </button>
+                            )}
                         </div>
 
                         {view === "table" && (

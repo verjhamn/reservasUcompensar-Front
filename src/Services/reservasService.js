@@ -2,6 +2,7 @@ import axios from "axios";
 import { getAuthToken, fetchAuthToken, setAuthToken } from "./authService";
 
 const API_BASE_URL = "https://backreservas.ucompensar.edu.co/api";
+const API_BASE_URL2 = "https://qareservas.ucompensar.edu.co/api";
 
 // Función para filtrar reservas (Coworking)
 export const fetchFilteredReservations = async (filters) => {
@@ -42,7 +43,8 @@ export const fetchFilteredReservations = async (filters) => {
             capacidad: filters.capacidad || "",
             fecha: filters.fecha || "",
             horaInicio: filters.horaInicio || "",
-            horaFin: filters.horaFin || ""
+            horaFin: filters.horaFin || "",
+            id:filters.id || "",
         };
         console.log("Body de la solicitud:", body); // Debugging
         

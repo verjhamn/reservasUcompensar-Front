@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSyncAlt } from "@fortawesome/free-solid-svg-icons";
 
 const coworkingPeriods = [
   { id: 0, name: "Mañana", start: "07:00", end: "12:00" },
@@ -13,7 +15,7 @@ const SearchFilters = ({ filters, setFilters, onFilterChange }) => {
   const staticOptions = {
     sedes: ["Campus Av. 68"],
     espaciosFisicos: ["3", "4"],
-    tiposRecurso: ["Personal", "Interlocución"],
+    tiposRecurso: ["Personal", "Puesto en L"],
   };
 
   const formatFecha = (dateString) => {
@@ -48,8 +50,33 @@ const SearchFilters = ({ filters, setFilters, onFilterChange }) => {
     }
   };
 
+  const handleClearFilters = () => {
+    const defaultFilters = {
+      capacidad: "",
+      espacio: "",
+      ubicacion: "",
+      fecha: "",
+      horaInicio: "",
+      horaFinal: "",
+      palabra: "",
+      id: ""
+    };
+    setFilters(defaultFilters);
+    onFilterChange(defaultFilters);
+  };
+
   return (
     <div className="bg-white shadow-md p-4 md:p-6 rounded-xl">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-semibold">Filtros de Búsqueda</h3>
+        <button
+          onClick={handleClearFilters}
+          className="text-turquesa hover:text-fucsia"
+          title="Limpiar Filtros"
+        >
+          <FontAwesomeIcon icon={faSyncAlt} />
+        </button>
+      </div>
       <form className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
 
         {/* Sede */}
@@ -72,7 +99,7 @@ const SearchFilters = ({ filters, setFilters, onFilterChange }) => {
 
         {/* Tipo de Recurso */}
         <div>
-          <label className="block text-gray-700 mb-1">Tipo de Recurso</label>
+          <label className="block text-gray-700 mb-1">Tipo de recurso</label>
           <select
             name="tiporecurso"
             value={filters.tiporecurso || ""}
@@ -135,7 +162,7 @@ const SearchFilters = ({ filters, setFilters, onFilterChange }) => {
 
             {/* Período */}
             <div>
-              <label className="block text-gray-700 mb-1">Período</label>
+              <label className="block text-gray-700 mb-1">Franja horaria</label>
               <select
                 name="periodo"
                 value={filters.horaInicio ? coworkingPeriods.find(p => p.start === filters.horaInicio)?.id : ""}
@@ -159,7 +186,7 @@ const SearchFilters = ({ filters, setFilters, onFilterChange }) => {
                 value={filters.palabra || ""}
                 onChange={handleChange}
                 className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
-                placeholder="Digitar código"
+                placeholder="Ej: P3C01L"
               />
             </div>
           </>
@@ -170,3 +197,4 @@ const SearchFilters = ({ filters, setFilters, onFilterChange }) => {
 };
 
 export default SearchFilters;
+

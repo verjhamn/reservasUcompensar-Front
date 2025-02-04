@@ -1,35 +1,26 @@
-import axios from "axios";
+import { axiosInstance } from "./authService";
 
-const API_URL = "https://backreservas.ucompensar.edu.co/api/reservas";
+const API_URL2 = "https://qareservas.ucompensar.edu.co/api";
+const API_URL = "https://backreservas.ucompensar.edu.co/api";
 
 export const deleteReserva = async (idEspacio) => {
   try {
-    console.log("[deleteReserva] Iniciando solicitud al endpoint...");
+    console.log("[deleteReserva] Enviando solicitud de eliminación...");
 
-    // Recuperar el token de autenticación del usuario
-    const token = localStorage.getItem("authToken");
-    if (!token) {
-      console.error("[deleteReserva] Token no encontrado.");
-      throw new Error("Usuario no autenticado. Por favor, inicia sesión.");
-    }
-
-    const response = await axios.delete(`${API_URL}/${idEspacio}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    // Usamos axiosInstance para que maneje automáticamente la autenticación
+    const response = await axiosInstance.delete(`${API_URL}/reservas/${idEspacio}`);
 
     console.log("[deleteReserva] Respuesta del servidor:", response.data);
 
     // Verificar si la respuesta es exitosa
     if (response.data.success || response.data.message === "Reserva eliminada con éxito.") {
-      return response.data.data; // Retornar las reservas del usuario
+      return response.data.data; // Retornar los datos de la reserva eliminada
     } else {
       console.error("[deleteReserva] Error en la respuesta:", response.data);
-      throw new Error(response.data.message || "Error al obtener las reservas.");
+      throw new Error(response.data.message || "Error al cancelar la reserva.");
     }
   } catch (error) {
-    console.error("[deleteReserva] Error al obtener las reservas:", error);
+    console.error("[deleteReserva] Error al cancelar la reserva:", error);
     throw error;
   }
 };
