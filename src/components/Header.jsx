@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useMsal } from "@azure/msal-react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faUser, faSignOutAlt, faSignInAlt } from "@fortawesome/free-solid-svg-icons";
 import SignInButton from "./SSOComponents/SignInButton";
 import SignOutButton from "./SSOComponents/SignOutButton";
 import { getUserData } from "../Services/SSOServices/graphService";
@@ -40,15 +42,19 @@ const Header = () => {
     };
 
     return (
-        <header className="bg-white text-gray-800 py-4 flex justify-between items-center px-6">
+        <header className="bg-white text-gray-800 py-4 flex justify-between items-center px-4 md:px-6 shadow-md">
             <div className="flex items-center">
-                <img src="https://ucompensar.edu.co/wp-content/uploads/2021/04/main-logo.svg" alt="Logo" className="h-12 mr-2" />
+                <img src="https://ucompensar.edu.co/wp-content/uploads/2021/04/main-logo.svg" alt="Logo" className="h-10 md:h-12 mr-2" />
             </div>
 
-            <div>
+            <div className="flex items-center space-x-4">
                 {user ? (
-                    <div className="flex items-center text-sm md:text-md space-x-4">
-                        <span>{user.displayName} ({user.mail})</span>
+                    <div className="flex items-center space-x-2 md:space-x-4">
+                        <FontAwesomeIcon icon={faUser} className="hidden md:inline text-gray-600" />
+                        <div className="flex items-center justify-end px-2 py-4">
+                            <span className="lg:inline text-stone-900 text-xxs md:text-ms">{user.givenName} {user.surname} </span>
+                            <span className="hidden text-xxs lg:text-ms lg:inline">({user.mail})</span>
+                        </div>
                         <SignOutButton onLogout={() => {
                             localStorage.removeItem("userData");
                             setUser(null);
