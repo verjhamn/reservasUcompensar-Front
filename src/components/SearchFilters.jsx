@@ -68,7 +68,7 @@ const SearchFilters = ({ filters, setFilters, onFilterChange }) => {
   return (
     <div className="bg-white shadow-md p-4 md:p-6 rounded-xl">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold">Filtros de Búsqueda</h3>
+        <h3 className="text-lg font-semibold">Filtros de búsqueda</h3>
         <button
           onClick={handleClearFilters}
           className="text-turquesa hover:text-fucsia"

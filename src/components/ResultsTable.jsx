@@ -4,6 +4,7 @@ import ReservationModal from "./ReservationModal";
 import { fetchFilteredReservations } from "../Services/reservasService";
 import { useMsal } from "@azure/msal-react";
 import { loginRequest } from "../Services/SSOServices/authConfig";
+import { fetchAuthToken } from "../Services/authService";
 
 const ResultsTable = ({ filters = {}, goToMyReservations }) => {
   const { instance } = useMsal();
@@ -85,6 +86,10 @@ const ResultsTable = ({ filters = {}, goToMyReservations }) => {
           // Guardamos correctamente el usuario en localStorage
           localStorage.setItem("userData", JSON.stringify(user));
           window.dispatchEvent(new Event("storage")); // Actualiza el Header automáticamente
+
+          // Llamamos a fetchAuthToken para registrar al usuario en el backend si no existe
+          console.log("[ResultsTable] Registrando usuario en el backend si es necesario...");
+          await fetchAuthToken();
         }
 
         setIsLoggedIn(true);
@@ -95,6 +100,10 @@ const ResultsTable = ({ filters = {}, goToMyReservations }) => {
         return;
       }
     } else {
+      //Si ya hay datos en localStorage, verificamos la autenticación en el backend
+      console.log("[ResultsTable] Verificando autenticación en backend...");
+      await fetchAuthToken();
+
       setSelectedSpace({ ...item, image: getRandomImage() });
       setIsModalOpen(true);
     }
