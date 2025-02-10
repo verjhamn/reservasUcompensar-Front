@@ -22,9 +22,9 @@ const SearchFilters = ({ filters, setFilters, onFilterChange }) => {
   const [showMoreFilters, setShowMoreFilters] = useState(false);
 
   const staticOptions = {
-    sedes: ["Campus Av. 68", "Teusaquillo"],
+    sedes: ["Campus Av. 68"],
     espaciosFisicos: ["3", "4"],
-    tipo: ["Coworking", "Laboratorio", "Espacios de reuniones", "Salas de clases", "Espacios de estudio"],
+    tipo: ["Coworking", "Laboratorio", "Espacios de reuniones", "Salas de clases", "Espacios de estudio","Espacio de eventos"],
     tiposRecurso: ["Personal", "Puesto en L"],
   };
 

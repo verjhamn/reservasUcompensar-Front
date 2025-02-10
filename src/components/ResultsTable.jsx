@@ -34,10 +34,8 @@ const ResultsTable = ({ filters = {}, goToMyReservations }) => {
       try {
         const response = await fetchFilteredReservations(filters);
         
-        // Process both types of spaces
         const processedSpaces = response.flatMap(item => {
           if (item.coworking_contenedor === "NO") {
-            // Return parent space info for non-coworking
             return [{
               id: item.id,
               codigo: item.codigo,
@@ -45,22 +43,21 @@ const ResultsTable = ({ filters = {}, goToMyReservations }) => {
               descripcion: item.descripcion,
               piso: item.piso,
               cantidad_equipos: item.cantidad_equipos,
-              // Include parent space as the container
-              espacio_id: item.id
+              espacio_id: item.id,
+              coworking_contenedor: "NO"  // Add this flag
             }];
           } else {
-            // Process coworking 
             return item.espacios_coworking.map(coworking => ({
               ...coworking,
               piso: item.piso,
-              Titulo:"Coworking"
+              Titulo: "Coworking",
+              coworking_contenedor: "SI"  // Add this flag
             }));
           }
         }).filter(Boolean);
 
         setData(processedSpaces);
 
-        // Automatic reservation for single result
         if (processedSpaces.length === 1) {
           handleReserveClick(processedSpaces[0]);
         }
