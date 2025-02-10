@@ -33,19 +33,36 @@ const ResultsTable = ({ filters = {}, goToMyReservations }) => {
       setError(null);
       try {
         const response = await fetchFilteredReservations(filters);
-        const coworkingSpaces = response
-          .flatMap(item =>
-            item.espacios_coworking.map(coworking => ({
+        
+        // Process both types of spaces
+        const processedSpaces = response.flatMap(item => {
+          if (item.coworking_contenedor === "NO") {
+            // Return parent space info for non-coworking
+            return [{
+              id: item.id,
+              codigo: item.codigo,
+              tipo: item.tipo_espacio,
+              descripcion: item.descripcion,
+              piso: item.piso,
+              cantidad_equipos: item.cantidad_equipos,
+              // Include parent space as the container
+              espacio_id: item.id
+            }];
+          } else {
+            // Process coworking 
+            return item.espacios_coworking.map(coworking => ({
               ...coworking,
               piso: item.piso,
-            }))
-          )
-          .filter(Boolean);
-        setData(coworkingSpaces);
+              Titulo:"Coworking"
+            }));
+          }
+        }).filter(Boolean);
 
-        // Si solo hay un espacio, iniciar automáticamente el proceso de reserva
-        if (coworkingSpaces.length === 1) {
-          handleReserveClick(coworkingSpaces[0]);
+        setData(processedSpaces);
+
+        // Automatic reservation for single result
+        if (processedSpaces.length === 1) {
+          handleReserveClick(processedSpaces[0]);
         }
       } catch (err) {
         console.error("Error al obtener datos en ResultsTable:", err);
@@ -121,7 +138,7 @@ const ResultsTable = ({ filters = {}, goToMyReservations }) => {
             <img src={getRandomImage()} alt="Espacio" className="h-48 w-full object-cover" />
             <div className="p-4 flex flex-col flex-grow">
               <div className="flex-grow">
-                <h3 className="text-lg font-bold text-gray-800">Coworking {item.codigo || "Código no disponible"}</h3>
+                <h3 className="text-lg font-bold text-gray-800">{item.Titulo} {item.codigo || "Código no disponible"}</h3>
                 <p className="text-gray-600 text-sm">Tipo: {item.tipo || "Tipo no disponible"}</p>
                 <p className="text-gray-600 text-sm">Piso: {item.piso || "No disponible"}</p>
                 <p className="text-gray-600 text-sm">Descripción: {item.descripcion || "Descripción no disponible"}</p>
