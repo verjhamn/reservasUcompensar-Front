@@ -7,7 +7,10 @@ const SignOutButton = ({ onLogout }) => {
     const { instance } = useMsal();
 
     const handleLogout = () => {
-        instance.logoutPopup();
+        instance.logoutPopup({
+            postLogoutRedirectUri: "/",
+            mainWindowRedirectUri: "/"
+        });
         localStorage.removeItem("userData");
         modalShown.removeItem("modalShown");
         onLogout();

@@ -171,9 +171,9 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas, goToMyReservat
 
   const coworkingPeriods = [
     { id: 0, name: "Mañana", start: "07:00", end: "12:00" },
-    { id: 1, name: "Mañana", start: "13:00", end: "17:00" },
+    { id: 1, name: "Tarde", start: "13:00", end: "17:00" },
     { id: 2, name: "Mañana-Tarde", start: "07:00", end: "17:00" },
-    { id: 3, name: "Tarde-Noche", start: "17:00", end: "22:00" },
+    { id: 3, name: "Noche", start: "18:00", end: "22:00" },
 
   ];
 

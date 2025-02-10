@@ -22,7 +22,7 @@ export const fetchFilteredReservations = async (filters) => {
         // Realizar solicitud al nuevo endpoint con el body adecuado
         const body = {
             palabra: filters.palabra || "",
-            tipo: "coworking",
+            tipo: filters.tipo || "",
             sede: filters.sede || "",
             piso: filters.piso || "",
             agrupable: filters.agrupable || "",
