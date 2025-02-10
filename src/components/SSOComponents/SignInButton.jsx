@@ -8,8 +8,11 @@ const SignInButton = ({ onLoginSuccess }) => {
     const { instance } = useMsal();
 
     const handleLogin = async () => {
+        
         try {
-            const response = await instance.loginPopup(loginRequest);
+            const response = await instance.loginPopup(loginRequest).catch(e => {
+                console.log(e);
+            });
             const accessToken = response.accessToken;
 
             onLoginSuccess(accessToken);

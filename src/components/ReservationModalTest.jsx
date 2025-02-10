@@ -32,7 +32,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas, goToMyReservat
   const [selectedPeriod, setSelectedPeriod] = useState(null);
   const [selectedHours, setSelectedHours] = useState([]); // Agregar selectedHours al estado
 
-  const isCoworking = spaceData?.coworking != "SI";
+  const isCoworking = spaceData?.coworking == "SI";
 
   useEffect(() => {
     if (spaceData && spaceData.reservas) {
@@ -146,12 +146,12 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas, goToMyReservat
     }
   };
 
-/*   const coworkingPeriods = [
+  const coworkingPeriods = [
     { id: 0, name: "Mañana", start: "07:00", end: "12:00" },
     { id: 1, name: "Tarde", start: "13:00", end: "17:00" },
     { id: 2, name: "Mañana-Tarde", start: "07:00", end: "17:00" },
     { id: 3, name: "Tarde-Noche", start: "17:00", end: "22:00" },
-  ]; */
+  ];
 
   const renderTimeSelector = () => {
     if (isCoworking) {

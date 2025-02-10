@@ -7,7 +7,7 @@ import SignOutButton from "./SSOComponents/SignOutButton";
 import { getUserData } from "../Services/SSOServices/graphService";
 import { fetchAuthToken } from "../Services/authService";
 
-const Header = () => {
+const Header = ({ onLoginSuccess, onLogout }) => {
     const { accounts } = useMsal();
     const [user, setUser] = useState(null);
 
@@ -33,15 +33,13 @@ const Header = () => {
     const handleLoginSuccess = async (accessToken) => {
         try {
             const userData = await getUserData(accessToken);
-            console.log("[Header] Usuario autenticado con SSO:", userData);
-    
+            console.log("Usuario autenticado:", userData);
+
             localStorage.setItem("userData", JSON.stringify(userData));
             setUser(userData);
-    
-            console.log("[Header] Registrando usuario en el backend si es necesario...");
-            await fetchAuthToken(); // Llamamos de inmediato para autenticar o registrar al usuario en el backend.
+            onLoginSuccess(userData); // Call the callback
         } catch (error) {
-            console.error("[Header] Error al obtener datos del usuario:", error);
+            console.error("Error al obtener datos del usuario:", error);
         }
     };
 
@@ -62,6 +60,7 @@ const Header = () => {
                         <SignOutButton onLogout={() => {
                             localStorage.removeItem("userData");
                             setUser(null);
+                            onLogout(); // Call the callback
                         }} />
                     </div>
                 ) : (
