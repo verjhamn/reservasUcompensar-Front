@@ -25,13 +25,22 @@ function App() {
     });
 
     const [view, setView] = useState("table"); 
-    const [showModal, setShowModal] = useState(true);
+    const [showModal, setShowModal] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
 
     // Verificar si hay un usuario autenticado en localStorage
     useEffect(() => {
         const storedUser = localStorage.getItem("userData");
         setIsLoggedIn(!!storedUser); // Si hay usuario, `isLoggedIn` será true
+    }, []);
+
+    // Verificar si el modal ya se ha mostrado
+    useEffect(() => {
+        const modalShown = localStorage.getItem("modalShown") ;
+        if (!modalShown) {
+            setShowModal(true);
+            localStorage.setItem("modalShown", "true");
+        }
     }, []);
 
     // Extraer código del espacio desde la URL
@@ -55,11 +64,19 @@ function App() {
         setView("Calendario");
     };
 
+    const handleLoginSuccess = (userData) => {
+        setIsLoggedIn(true);
+    };
+
+    const handleLogout = () => {
+        setIsLoggedIn(false);
+    };
+
     return (
         <MsalProvider instance={msalInstance}>
             <div className="min-h-screen flex flex-col">
                 {showModal && <InfoModal onClose={handleCloseModal} />}
-                <Header />
+                <Header onLoginSuccess={handleLoginSuccess} onLogout={handleLogout} />
                 <main className="flex-grow bg-gray-100">
                     <div className="container mx-auto py-6">
                         <div className="flex justify-center space-x-4 mb-6">

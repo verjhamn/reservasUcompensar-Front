@@ -15,7 +15,7 @@ const localizer = dateFnsLocalizer({
   locales,
 });
 
-const ReservationModal = ({ isOpen, onClose, spaceData, reservas, goToMyReservations }) => {
+const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) => {
   const [activeTab, setActiveTab] = useState("info");
   const [filteredEvents, setFilteredEvents] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -24,7 +24,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas, goToMyReservat
   const [reservationDescription, setReservationDescription] = useState("");
   const [selectedPeriod, setSelectedPeriod] = useState(null);
 
-  const isCoworking = spaceData?.coworking !== "SI";
+  const isCoworking = spaceData?.coworking_contenedor === "SI";
 
   useEffect(() => {
     if (spaceData && spaceData.reservas) {
@@ -41,19 +41,6 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas, goToMyReservat
     }
   }, [spaceData]);
 
-/*   const handleSlotSelect = (slotInfo) => {
-    const isSlotOccupied = filteredEvents.some(
-      (event) =>
-        new Date(slotInfo.start) < new Date(event.end) &&
-        new Date(slotInfo.end) > new Date(event.start)
-    );
-
-    if (!isSlotOccupied) {
-      setSelectedSlot(slotInfo);
-    } else {
-      alert("Este horario ya está ocupado. Por favor seleccione otro.");
-    }
-  }; */
   const handleSlotSelect = (slotInfo) => {
     const selectedStart = startOfDay(slotInfo.start); // Asegura que se seleccione el día completo
     const selectedEnd = addHours(selectedStart, 23); // Finaliza al final del día
@@ -169,11 +156,38 @@ const ReservationModal = ({ isOpen, onClose, spaceData, reservas, goToMyReservat
     setSelectedHours(prev => [...prev, time].sort());
   };
 
+  const handleHourClick = (hour) => {
+    const newSelectedHours = new Set(selectedHours);
+    const hourValue = parseInt(hour.split(':')[0]);
+
+    if (selectedHours.has(hour)) {
+      // Si se está deseleccionando una hora, eliminar todas las horas posteriores
+      const sortedHours = Array.from(selectedHours).sort();
+      const hourIndex = sortedHours.indexOf(hour);
+      
+      // Eliminar la hora actual y todas las posteriores
+      const updatedHours = sortedHours.slice(0, hourIndex);
+      setSelectedHours(new Set(updatedHours));
+    } else {
+      // Verificar si la nueva hora es consecutiva
+      const sortedHours = Array.from(selectedHours).sort();
+      
+      if (selectedHours.size === 0 || 
+          sortedHours.some(selectedHour => {
+            const selectedValue = parseInt(selectedHour.split(':')[0]);
+            return Math.abs(selectedValue - hourValue) === 1;
+          })) {
+        newSelectedHours.add(hour);
+        setSelectedHours(newSelectedHours);
+      }
+    }
+  };
+
   const coworkingPeriods = [
     { id: 0, name: "Mañana", start: "07:00", end: "12:00" },
-    { id: 1, name: "Mañana", start: "13:00", end: "17:00" },
+    { id: 1, name: "Tarde", start: "13:00", end: "17:00" },
     { id: 2, name: "Mañana-Tarde", start: "07:00", end: "17:00" },
-    { id: 3, name: "Tarde-Noche", start: "17:00", end: "22:00" },
+    { id: 3, name: "Noche", start: "18:00", end: "22:00" },
 
   ];
 
