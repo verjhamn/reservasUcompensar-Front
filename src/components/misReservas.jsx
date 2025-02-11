@@ -6,7 +6,6 @@ import es from "date-fns/locale/es";
 import { getMisReservas } from "../services/getMisReservas";
 import { deleteReserva } from "../services/deleteReservaService";
 
-// Configuración de localización en español
 const locales = { es: es };
 const localizer = dateFnsLocalizer({
   format,
@@ -17,22 +16,20 @@ const localizer = dateFnsLocalizer({
 });
 
 const BigCalendarView = () => {
-  const [events, setEvents] = useState([]); // Eventos cargados desde el backend
+  const [events, setEvents] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [filteredEvents, setFilteredEvents] = useState([]); // Eventos filtrados por fecha
+  const [filteredEvents, setFilteredEvents] = useState([]);
+  const [daysWithEvents, setDaysWithEvents] = useState(new Set());
 
-  // Obtener las reservas del usuario autenticado
   useEffect(() => {
     const fetchReservations = async () => {
       console.log("[misReservas] Cargando reservas del usuario...");
       try {
-        const response = await getMisReservas(); // Llamar al servicio
+        const response = await getMisReservas();
         console.log("[misReservas] Reservas obtenidas:", response);
 
         const formattedEvents = response.flatMap(item => {
-
           if (item.espacio === null) {
-            // Convertir reservas al formato del calendario
             return [{
               id: item.id,
               idEspacio: item.codigo,
@@ -52,7 +49,15 @@ const BigCalendarView = () => {
             }];
           }
         }).filter(Boolean);
+        
         setEvents(formattedEvents);
+        
+        // Crear un Set con las fechas que tienen eventos
+        const eventDays = new Set(
+          formattedEvents.map(event => format(new Date(event.start), "yyyy-MM-dd"))
+        );
+        setDaysWithEvents(eventDays);
+        
         console.log("[misReservas] Eventos formateados:", formattedEvents);
       } catch (error) {
         console.error("[misReservas] Error al cargar reservas:", error);
@@ -62,7 +67,6 @@ const BigCalendarView = () => {
     fetchReservations();
   }, []);
 
-  // Filtrar eventos según la fecha seleccionada
   useEffect(() => {
     const filtered = events.filter(
       (event) =>
@@ -93,14 +97,34 @@ const BigCalendarView = () => {
     }
   };
 
-  // Estilo personalizado para el día seleccionado
   const dayPropGetter = (date) => {
-    if (format(date, "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd")) {
+    const dateStr = format(date, "yyyy-MM-dd");
+    const isSelected = dateStr === format(selectedDate, "yyyy-MM-dd");
+    const hasEvents = daysWithEvents.has(dateStr);
+
+    if (isSelected && hasEvents) {
       return {
         style: {
           backgroundColor: "#00aab7",
           color: "#fff",
-        },
+          position: "relative",
+          border: "2px solid #008a94"
+        }
+      };
+    } else if (isSelected) {
+      return {
+        style: {
+          backgroundColor: "#00aab7",
+          color: "#fff"
+        }
+      };
+    } else if (hasEvents) {
+      return {
+        style: {
+          backgroundColor: "#a8e3ea",
+          color: "#00aab7",
+          fontWeight: "bold"
+        }
       };
     }
     return {};
@@ -108,15 +132,14 @@ const BigCalendarView = () => {
 
   return (
     <div className="p-4 bg-gris-sutil rounded-lg shadow-lg">
-      {/* Selector de fecha (calendario reducido) */}
       <div className="bg-white rounded-lg shadow-md mb-4">
         <Calendar
           localizer={localizer}
-          events={[]} // Sin mostrar eventos en el calendario
+          events={[]}
           selectable
           onSelectSlot={(slotInfo) => setSelectedDate(slotInfo.start)}
           date={selectedDate}
-          onNavigate={(date) => setSelectedDate(date)} // Cambiar la fecha seleccionada
+          onNavigate={(date) => setSelectedDate(date)}
           views={["month"]}
           style={{ height: 300 }}
           dayPropGetter={dayPropGetter}
@@ -134,14 +157,13 @@ const BigCalendarView = () => {
             noEventsInRange: "No hay eventos en este rango.",
           }}
           formats={{
-            monthHeaderFormat: "MMMM yyyy", // Nombre del mes y año en español
+            monthHeaderFormat: "MMMM yyyy",
             weekdayFormat: (date) => format(date, "EE", { locale: es }).toUpperCase(),
-            dayFormat: "d", // Día del mes
+            dayFormat: "d",
           }}
         />
       </div>
 
-      {/* Lista de eventos */}
       <div className="bg-white p-4 rounded-lg shadow-md">
         <h3 className="text-lg font-semibold text-turquesa mb-3">
           Reservas del {format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: es })}
@@ -165,14 +187,6 @@ const BigCalendarView = () => {
                     <p className="text-sm text-gris-medio">{event.desc}</p>
                   </div>
                   <div className="flex gap-2">
-                    {/* Botón de editar */}
-                    {/*         <button
-                      onClick={() => handleEdit(event.id)}
-                      className="text-sm text-white bg-turquesa px-3 py-1 rounded hover:bg-turquesa/90 transition"
-                    >
-                      Editar
-                    </button> */}
-                    {/* Botón de cancelar */}
                     <button
                       onClick={() => handleCancel(event.id)}
                       className="text-sm text-white bg-fucsia px-3 py-1 rounded hover:bg-fucsia/90 transition"
