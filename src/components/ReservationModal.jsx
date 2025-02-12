@@ -5,6 +5,7 @@ import { format, parse, startOfWeek, getDay, addHours, isBefore, startOfDay } fr
 import es from "date-fns/locale/es";
 import { createReservation } from "../Services/createReservationService";
 import { getUserId } from "../Services/authService";
+import { getDisponibilidad } from "../Services/getDisponibilidadService";
 
 const locales = { es: es };
 const localizer = dateFnsLocalizer({
@@ -23,6 +24,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
   const [reservationTitle, setReservationTitle] = useState("");
   const [reservationDescription, setReservationDescription] = useState("");
   const [selectedPeriod, setSelectedPeriod] = useState(null);
+  const [reservedHours, setReservedHours] = useState([]);
 
   const isCoworking = spaceData?.coworking_contenedor === "SI";
 
@@ -41,9 +43,37 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
     }
   }, [spaceData]);
 
+  useEffect(() => {
+    const fetchDisponibilidad = async () => {
+      if (selectedDate && spaceData?.id) {
+        try {
+          const formattedDate = format(selectedDate, "dd/MM/yyyy");
+          const disponibilidad = await getDisponibilidad(spaceData.id, formattedDate);
+          
+          // Procesar las reservas para obtener las horas ocupadas
+          const horasOcupadas = new Set();
+          disponibilidad.forEach(reserva => {
+            const inicio = new Date(reserva.hora_inicio);
+            const fin = new Date(reserva.hora_fin);
+            
+            for (let hora = inicio; hora < fin; hora = addHours(hora, 1)) {
+              horasOcupadas.add(format(hora, "HH:00"));
+            }
+          });
+          
+          setReservedHours(Array.from(horasOcupadas));
+        } catch (error) {
+          console.error("Error al obtener disponibilidad:", error);
+        }
+      }
+    };
+
+    fetchDisponibilidad();
+  }, [selectedDate, spaceData?.id]);
+
   const handleSlotSelect = (slotInfo) => {
-    const selectedStart = startOfDay(slotInfo.start); // Asegura que se seleccione el día completo
-    const selectedEnd = addHours(selectedStart, 23); // Finaliza al final del día
+    const selectedStart = startOfDay(slotInfo.start);
+    const selectedEnd = addHours(selectedStart, 23);
   
     const isSlotOccupied = filteredEvents.some(
       (event) =>
@@ -52,12 +82,14 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
     );
   
     if (!isSlotOccupied) {
-      setSelectedDate(selectedStart); // Selecciona el día completo
+      setSelectedDate(selectedStart);
+      setSelectedHours([]);
+      setSelectedPeriod(null);
     } else {
       alert("Este horario ya está ocupado. Por favor seleccione otro.");
     }
   };
-  
+
   const handleConfirmReservation = async () => {
     if (!reservationTitle.trim()) {
       alert("Por favor ingrese un título para la reserva");
@@ -127,12 +159,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
   };
 
   const isTimeSlotAvailable = (timeSlot) => {
-    const slotDate = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${timeSlot}`);
-
-    return !filteredEvents.some(event =>
-      slotDate >= new Date(event.start) &&
-      slotDate < new Date(event.end)
-    );
+    return !reservedHours.includes(timeSlot);
   };
 
   const handleTimeSelect = (time) => {
@@ -188,8 +215,20 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
     { id: 1, name: "Tarde", start: "13:00", end: "17:00" },
     { id: 2, name: "Mañana-Tarde", start: "07:00", end: "17:00" },
     { id: 3, name: "Noche", start: "18:00", end: "22:00" },
-
   ];
+
+  const isPeriodAvailable = (period) => {
+    const periodStart = parseInt(period.start.split(':')[0]);
+    const periodEnd = parseInt(period.end.split(':')[0]);
+
+    for (let hour = periodStart; hour < periodEnd; hour++) {
+      const timeSlot = `${hour.toString().padStart(2, '0')}:00`;
+      if (reservedHours.includes(timeSlot)) {
+        return false;
+      }
+    }
+    return true;
+  };
 
   const renderTimeSelector = () => {
     if (isCoworking) {
@@ -197,25 +236,31 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
         <div className="bg-white p-4 mt-4">
           <h3 className="text-lg font-semibold text-turquesa mb-3">Seleccionar período</h3>
           <div className="grid grid-cols-2 gap-4">
-            {coworkingPeriods.map((period) => (
-              <button
-                key={period.id}
-                onClick={() => setSelectedPeriod(period)}
-                className={`
-                  p-4 rounded-md text-sm
-                  ${selectedPeriod?.id === period.id
-                    ? 'bg-turquesa text-white'
-                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                  }
-                `}
-              >
-                {period.name}
-                <br />
-                <span className="text-xs">
-                  {period.start} - {period.end}
-                </span>
-              </button>
-            ))}
+            {coworkingPeriods.map((period) => {
+              const isAvailable = isPeriodAvailable(period);
+              return (
+                <button
+                  key={period.id}
+                  onClick={() => isAvailable && setSelectedPeriod(period)}
+                  disabled={!isAvailable}
+                  className={`
+                    p-4 rounded-md text-sm
+                    ${selectedPeriod?.id === period.id
+                      ? 'bg-turquesa text-white'
+                      : isAvailable
+                        ? 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    }
+                  `}
+                >
+                  {period.name}
+                  <br />
+                  <span className="text-xs">
+                    {period.start} - {period.end}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
       );

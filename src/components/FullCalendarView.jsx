@@ -38,9 +38,9 @@ const MobileCalendarView = () => {
   };
 
   const handleCancel = (eventId) => {
-    if (window.confirm("¿Estás seguro de que deseas cancelar esta reserva?")) {
+    if (window.confirm("¿Estás seguro de que deseas eliminar esta reserva?")) {
       setEvents((prevEvents) => prevEvents.filter((event) => event.id !== eventId));
-      alert("Reserva cancelada con éxito.");
+      alert("Reserva eliminada con éxito.");
     }
   };
 
@@ -124,7 +124,7 @@ const MobileCalendarView = () => {
                       onClick={() => handleCancel(event.id)}
                       className="text-sm text-white bg-fucsia px-3 py-1 rounded hover:bg-fucsia/90 transition"
                     >
-                      Cancelar
+                      Eliminar
                     </button>
                   </div>
                 </div>

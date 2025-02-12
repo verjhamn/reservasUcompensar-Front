@@ -83,16 +83,16 @@ const BigCalendarView = () => {
   };
 
   const handleCancel = async (eventId) => {
-    console.log("[misReservas] Intentando cancelar reserva con ID:", eventId);
-    if (window.confirm("¿Estás seguro de que deseas cancelar esta reserva?")) {
+    console.log("[misReservas] Intentando eliminar reserva con ID:", eventId);
+    if (window.confirm("¿Estás seguro de que deseas eliminar esta reserva?")) {
       try {
         await deleteReserva(eventId);
         setEvents((prevEvents) => prevEvents.filter((event) => event.id !== eventId));
         console.log("[misReservas] Reserva cancelada con éxito.");
         alert("Reserva cancelada con éxito.");
       } catch (error) {
-        console.error("[misReservas] Error al cancelar la reserva:", error);
-        alert("Hubo un error al cancelar la reserva. Por favor, inténtalo de nuevo.");
+        console.error("[misReservas] Error al eliminar la reserva:", error);
+        alert("Hubo un error al eliminar la reserva. Por favor, inténtalo de nuevo.");
       }
     }
   };
@@ -191,7 +191,7 @@ const BigCalendarView = () => {
                       onClick={() => handleCancel(event.id)}
                       className="text-sm text-white bg-fucsia px-3 py-1 rounded hover:bg-fucsia/90 transition"
                     >
-                      Cancelar
+                      Eliminar
                     </button>
                   </div>
                 </div>

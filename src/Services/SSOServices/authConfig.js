@@ -6,9 +6,9 @@ const tenantId_Produccion = '4bf38ea2-832d-4552-b508-421570da43ff'; // Tenant ID
 
 export const msalConfig = {
     auth: {
-        clientId: clientId_Pruebas, // ID de la app en Azure
+        clientId: clientId_Produccion, // ID de la app en Azure
         authority: "https://login.microsoftonline.com/4bf38ea2-832d-4552-b508-421570da43ff", // Tenant ID
-        redirectUri: "https://pruebas.reserva.ucompensar.edu.co/", // Cambia en producción
+        redirectUri: "https://reservas.ucompensar.edu.co/", // Cambia en producción
     }
 };
 
