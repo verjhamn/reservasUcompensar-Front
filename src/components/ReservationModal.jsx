@@ -7,6 +7,8 @@ import { createReservation } from "../Services/createReservationService";
 import { getUserId } from "../Services/authService";
 import { getDisponibilidad } from "../Services/getDisponibilidadService";
 
+import LoadingSpinner from './UtilComponents/LoadingSpinner';
+
 const locales = { es: es };
 const localizer = dateFnsLocalizer({
   format,
@@ -17,6 +19,9 @@ const localizer = dateFnsLocalizer({
 });
 
 const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) => {
+
+  const [loading, setLoading] = useState(false);
+
   const [activeTab, setActiveTab] = useState("info");
   const [filteredEvents, setFilteredEvents] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -49,18 +54,18 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
         try {
           const formattedDate = format(selectedDate, "dd/MM/yyyy");
           const disponibilidad = await getDisponibilidad(spaceData.id, formattedDate);
-          
+
           // Procesar las reservas para obtener las horas ocupadas
           const horasOcupadas = new Set();
           disponibilidad.forEach(reserva => {
             const inicio = new Date(reserva.hora_inicio);
             const fin = new Date(reserva.hora_fin);
-            
+
             for (let hora = inicio; hora < fin; hora = addHours(hora, 1)) {
               horasOcupadas.add(format(hora, "HH:00"));
             }
           });
-          
+
           setReservedHours(Array.from(horasOcupadas));
         } catch (error) {
           console.error("Error al obtener disponibilidad:", error);
@@ -74,13 +79,13 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
   const handleSlotSelect = (slotInfo) => {
     const selectedStart = startOfDay(slotInfo.start);
     const selectedEnd = addHours(selectedStart, 23);
-  
+
     const isSlotOccupied = filteredEvents.some(
       (event) =>
         new Date(selectedStart) < new Date(event.end) &&
         new Date(selectedEnd) > new Date(event.start)
     );
-  
+
     if (!isSlotOccupied) {
       setSelectedDate(selectedStart);
       setSelectedHours([]);
@@ -91,63 +96,75 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
   };
 
   const handleConfirmReservation = async () => {
-    if (!reservationTitle.trim()) {
-      alert("Por favor ingrese un título para la reserva");
-      return;
-    }
 
-    let startDateTime, endDateTime;
-
-    if (isCoworking) {
-      if (!selectedPeriod) {
-        alert("Por favor seleccione un período de tiempo");
-        return;
-      }
-      startDateTime = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${selectedPeriod.start}`);
-      endDateTime = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${selectedPeriod.end}`);
-    } else {
-      if (!selectedHours.length) {
-        alert("Por favor seleccione al menos una hora");
-        return;
-      }
-      startDateTime = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${selectedHours[0]}`);
-      endDateTime = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${selectedHours[selectedHours.length - 1]}`);
-      endDateTime.setHours(endDateTime.getHours() + 1);
-    }
-
-    const formattedDate = format(selectedDate, "dd/MM/yyyy");
-    const formattedStartTime = format(startDateTime, "HH:mm");
-    const formattedEndTime = format(endDateTime, "HH:mm");
-
-    const reservationData = {
-      espacio_id: spaceData.id,
-      espacio_type: "App\\Models\\basics\\EspacioCoworking",
-      user_id: getUserId() || "3816a79a-78e1-4dc1-ae3b-3c5e4533ff8f",
-      titulo: reservationTitle,
-      descripcion: reservationDescription || "",
-      fecha_reserva: formattedDate,
-      hora_inicio: formattedStartTime,
-      hora_fin: formattedEndTime,
-      observaciones: reservationDescription || ""
-    };
-
-    console.log("Intentando crear reserva con datos:", JSON.stringify(reservationData, null, 2));
-
+    setLoading(true);
     try {
-      const response = await createReservation(reservationData);
-      console.log("Respuesta del servidor:", response);
 
-      if (response.status === "success") {
-        alert(`Reserva confirmada con éxito para el día ${formattedDate} de ${formattedStartTime} a ${formattedEndTime}`);
-        onClose();
-        goToMyReservations();
-      } else {
-        throw new Error(response.message || 'Error al crear la reserva');
+      if (!reservationTitle.trim()) {
+        alert("Por favor ingrese un título para la reserva");
+        return;
       }
+
+      let startDateTime, endDateTime;
+
+      if (isCoworking) {
+        if (!selectedPeriod) {
+          alert("Por favor seleccione un período de tiempo");
+          return;
+        }
+        startDateTime = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${selectedPeriod.start}`);
+        endDateTime = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${selectedPeriod.end}`);
+      } else {
+        if (!selectedHours.length) {
+          alert("Por favor seleccione al menos una hora");
+          return;
+        }
+        startDateTime = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${selectedHours[0]}`);
+        endDateTime = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${selectedHours[selectedHours.length - 1]}`);
+        endDateTime.setHours(endDateTime.getHours() + 1);
+      }
+
+      const formattedDate = format(selectedDate, "dd/MM/yyyy");
+      const formattedStartTime = format(startDateTime, "HH:mm");
+      const formattedEndTime = format(endDateTime, "HH:mm");
+
+      const reservationData = {
+        espacio_id: spaceData.id,
+        espacio_type: "App\\Models\\basics\\EspacioCoworking",
+        user_id: getUserId() || "3816a79a-78e1-4dc1-ae3b-3c5e4533ff8f",
+        titulo: reservationTitle,
+        descripcion: reservationDescription || "",
+        fecha_reserva: formattedDate,
+        hora_inicio: formattedStartTime,
+        hora_fin: formattedEndTime,
+        observaciones: reservationDescription || ""
+      };
+
+      console.log("Intentando crear reserva con datos:", JSON.stringify(reservationData, null, 2));
+
+      try {
+        const response = await createReservation(reservationData);
+        console.log("Respuesta del servidor:", response);
+
+        if (response.status === "success") {
+          alert(`Reserva confirmada con éxito para el día ${formattedDate} de ${formattedStartTime} a ${formattedEndTime}`);
+          onClose();
+          goToMyReservations();
+        } else {
+          throw new Error(response.message || 'Error al crear la reserva');
+        }
+      } catch (error) {
+        console.error("Error al crear la reserva:", error);
+        alert(`Error al crear la reserva: ${error.message || 'Por favor, intente nuevamente.'}`);
+      }
+      setLoading(false);
+      onClose();
+      goToMyReservations();
     } catch (error) {
-      console.error("Error al crear la reserva:", error);
-      alert(`Error al crear la reserva: ${error.message || 'Por favor, intente nuevamente.'}`);
+      console.error("Error confirming reservation:", error);
+      setLoading(false);
     }
+
   };
 
   const generateTimeSlots = () => {
@@ -191,19 +208,19 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
       // Si se está deseleccionando una hora, eliminar todas las horas posteriores
       const sortedHours = Array.from(selectedHours).sort();
       const hourIndex = sortedHours.indexOf(hour);
-      
+
       // Eliminar la hora actual y todas las posteriores
       const updatedHours = sortedHours.slice(0, hourIndex);
       setSelectedHours(new Set(updatedHours));
     } else {
       // Verificar si la nueva hora es consecutiva
       const sortedHours = Array.from(selectedHours).sort();
-      
-      if (selectedHours.size === 0 || 
-          sortedHours.some(selectedHour => {
-            const selectedValue = parseInt(selectedHour.split(':')[0]);
-            return Math.abs(selectedValue - hourValue) === 1;
-          })) {
+
+      if (selectedHours.size === 0 ||
+        sortedHours.some(selectedHour => {
+          const selectedValue = parseInt(selectedHour.split(':')[0]);
+          return Math.abs(selectedValue - hourValue) === 1;
+        })) {
         newSelectedHours.add(hour);
         setSelectedHours(newSelectedHours);
       }
@@ -497,6 +514,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
           </div>
         )}
       </div>
+      <LoadingSpinner loading={loading} />
     </div>
   );
 };
