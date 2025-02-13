@@ -5,6 +5,9 @@ import { format, parse, startOfWeek, getDay } from "date-fns";
 import es from "date-fns/locale/es";
 import { getMisReservas } from "../services/getMisReservas";
 import { deleteReserva } from "../services/deleteReservaService";
+import { toast, Toaster } from 'react-hot-toast';
+import { showConfirmation, showSuccessToast, showErrorToast } from '../components/UtilComponents/Confirmation';
+
 
 const locales = { es: es };
 const localizer = dateFnsLocalizer({
@@ -79,21 +82,34 @@ const BigCalendarView = () => {
 
   const handleEdit = (eventId) => {
     console.log("[misReservas] Editar reserva con ID:", eventId);
-    alert(`Editar reserva con ID: ${eventId} (Funcionalidad en desarrollo...)`);
+    toast.info('Funcionalidad en desarrollo...', {
+      duration: 3000,
+      position: 'top-right',
+      style: {
+        background: '#f0f9ff',
+        color: '#0ea5e9',
+      },
+    });
   };
 
   const handleCancel = async (eventId) => {
-    console.log("[misReservas] Intentando eliminar reserva con ID:", eventId);
-    if (window.confirm("¿Estás seguro de que deseas eliminar esta reserva?")) {
-      try {
+    console.log("[misReservas] Intentando cancelar reserva con ID:", eventId);
+    
+    try {
+      const confirmed = await showConfirmation(
+        () => {}, 
+        "¿Estás seguro de que deseas cancelar esta reserva?"
+      );
+  
+      if (confirmed) {
         await deleteReserva(eventId);
         setEvents((prevEvents) => prevEvents.filter((event) => event.id !== eventId));
         console.log("[misReservas] Reserva cancelada con éxito.");
-        alert("Reserva cancelada con éxito.");
-      } catch (error) {
-        console.error("[misReservas] Error al eliminar la reserva:", error);
-        alert("Hubo un error al eliminar la reserva. Por favor, inténtalo de nuevo.");
+        showSuccessToast('Reserva cancelada con éxito');
       }
+    } catch (error) {
+      console.error("[misReservas] Error al cancelar la reserva:", error);
+      showErrorToast('Error al cancelar la reserva. Por favor, inténtalo de nuevo.');
     }
   };
 
@@ -132,6 +148,7 @@ const BigCalendarView = () => {
 
   return (
     <div className="p-4 bg-gris-sutil rounded-lg shadow-lg">
+      <Toaster />
       <div className="bg-white rounded-lg shadow-md mb-4">
         <Calendar
           localizer={localizer}
@@ -191,7 +208,7 @@ const BigCalendarView = () => {
                       onClick={() => handleCancel(event.id)}
                       className="text-sm text-white bg-fucsia px-3 py-1 rounded hover:bg-fucsia/90 transition"
                     >
-                      Eliminar
+                      Cancelar
                     </button>
                   </div>
                 </div>

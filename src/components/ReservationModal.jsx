@@ -3,6 +3,7 @@ import { Calendar, dateFnsLocalizer } from "react-big-calendar";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { format, parse, startOfWeek, getDay, addHours, isBefore, startOfDay } from "date-fns";
 import es from "date-fns/locale/es";
+import { toast, Toaster } from 'react-hot-toast';
 import { createReservation } from "../Services/createReservationService";
 import { getUserId } from "../Services/authService";
 import { getDisponibilidad } from "../Services/getDisponibilidadService";
@@ -91,17 +92,29 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
       setSelectedHours([]);
       setSelectedPeriod(null);
     } else {
-      alert("Este horario ya está ocupado. Por favor seleccione otro.");
+      toast.error('Este horario ya está ocupado. Por favor seleccione otro.', {
+        duration: 4000,
+        position: 'top-right',
+        style: {
+          background: '#fee2e2',
+          color: '#dc2626',
+        },
+      });
     }
   };
 
   const handleConfirmReservation = async () => {
-
     setLoading(true);
     try {
-
-      if (!reservationTitle.trim()) {
-        alert("Por favor ingrese un título para la reserva");
+      // Validation checks...
+      if (!reservationTitle.trim() || !reservationDescription.trim()) {
+        toast.error(!reservationTitle.trim() ? 
+          'Por favor ingrese un título para la reserva' : 
+          'Por favor ingrese una descripción para la reserva', {
+          duration: 4000,
+          position: 'top-right',
+        });
+        setLoading(false);
         return;
       }
 
@@ -109,14 +122,22 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
 
       if (isCoworking) {
         if (!selectedPeriod) {
-          alert("Por favor seleccione un período de tiempo");
+          toast.error('Por favor seleccione un período de tiempo', {
+            duration: 4000,
+            position: 'top-right',
+          });
+          setLoading(false);
           return;
         }
         startDateTime = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${selectedPeriod.start}`);
         endDateTime = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${selectedPeriod.end}`);
       } else {
         if (!selectedHours.length) {
-          alert("Por favor seleccione al menos una hora");
+          toast.error('Por favor seleccione al menos una hora', {
+            duration: 4000,
+            position: 'top-right',
+          });
+          setLoading(false);
           return;
         }
         startDateTime = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${selectedHours[0]}`);
@@ -147,7 +168,17 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
         console.log("Respuesta del servidor:", response);
 
         if (response.status === "success") {
-          alert(`Reserva confirmada con éxito para el día ${formattedDate} de ${formattedStartTime} a ${formattedEndTime}`);
+          toast.success(
+            `Reserva confirmada con éxito para el día ${formattedDate} de ${formattedStartTime} a ${formattedEndTime}`,
+            {
+              duration: 4000,
+              position: 'top-right',
+              style: {
+                background: '#dcfce7',
+                color: '#16a34a',
+              },
+            }
+          );
           onClose();
           goToMyReservations();
         } else {
@@ -155,16 +186,27 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
         }
       } catch (error) {
         console.error("Error al crear la reserva:", error);
-        alert(`Error al crear la reserva: ${error.message || 'Por favor, intente nuevamente.'}`);
+        toast.error(
+          `Error al crear la reserva: ${error.message || 'Por favor, intente nuevamente.'}`,
+          {
+            duration: 4000,
+            position: 'top-right',
+            style: {
+              background: '#fee2e2',
+              color: '#dc2626',
+            },
+          }
+        );
       }
-      setLoading(false);
-      onClose();
-      goToMyReservations();
     } catch (error) {
       console.error("Error confirming reservation:", error);
+      toast.error('Error al confirmar la reserva', {
+        duration: 4000,
+        position: 'top-right',
+      });
+    } finally {
       setLoading(false);
     }
-
   };
 
   const generateTimeSlots = () => {
@@ -193,7 +235,14 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
 
     // Verificamos si las horas son consecutivas
     if (max - min + 1 !== allHours.length) {
-      alert("Solo puedes seleccionar horas consecutivas");
+      toast.error('Solo puedes seleccionar horas consecutivas', {
+        duration: 4000,
+        position: 'top-right',
+        style: {
+          background: '#fee2e2',
+          color: '#dc2626',
+        },
+      });
       return;
     }
 
@@ -335,7 +384,14 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
 
   const handleNavigate = (date) => {
     if (isBefore(startOfDay(date), startOfDay(new Date()))) {
-      alert("No se puede reservar en días anteriores al actual.");
+      toast.error('No se puede reservar en días anteriores al actual.', {
+        duration: 4000,
+        position: 'top-right',
+        style: {
+          background: '#fee2e2',
+          color: '#dc2626',
+        },
+      });
       return;
     }
     setSelectedDate(date);
@@ -343,6 +399,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <Toaster />
       <div className="bg-white rounded-lg p-8 max-w-6xl w-full max-h-[95vh] overflow-auto">
         {/* Header del Modal */}
         <div className="flex justify-between items-start mb-6">
