@@ -24,7 +24,7 @@ const SearchFilters = ({ filters, setFilters, onFilterChange }) => {
   const staticOptions = {
     sedes: ["Campus Av. 68"],
     espaciosFisicos: ["3", "4"],
-    tipo: ["Coworking", "Laboratorio", "Espacios de reuniones", "Salas de clases", "Espacios de estudio","Espacio de eventos"],
+    tipo: ["Coworking", "Espacio de reuniones", "Espacio de estudio"],
     tiposRecurso: ["Personal", "Puesto en L"],
   };
 

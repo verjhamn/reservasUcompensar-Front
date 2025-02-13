@@ -55,7 +55,7 @@ const Header = ({ onLoginSuccess, onLogout }) => {
                         <FontAwesomeIcon icon={faUser} className="hidden md:inline text-gray-600" />
                         <div className="flex items-center justify-end px-2 py-4">
                             <span className="lg:inline text-stone-900 text-xxs md:text-ms">{user.givenName} {user.surname} </span>
-                            <span className="hidden text-xxs lg:text-ms lg:inline">({user.mail})</span>
+                            <span className="hidden text-xxs lg:text-ms lg:inline">( {user.mail})</span>
                         </div>
                         <SignOutButton onLogout={() => {
                             localStorage.removeItem("userData");

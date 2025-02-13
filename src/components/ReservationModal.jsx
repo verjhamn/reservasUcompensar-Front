@@ -3,8 +3,12 @@ import { Calendar, dateFnsLocalizer } from "react-big-calendar";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { format, parse, startOfWeek, getDay, addHours, isBefore, startOfDay } from "date-fns";
 import es from "date-fns/locale/es";
+import { toast, Toaster } from 'react-hot-toast';
 import { createReservation } from "../Services/createReservationService";
 import { getUserId } from "../Services/authService";
+import { getDisponibilidad } from "../Services/getDisponibilidadService";
+
+import LoadingSpinner from './UtilComponents/LoadingSpinner';
 
 const locales = { es: es };
 const localizer = dateFnsLocalizer({
@@ -16,6 +20,9 @@ const localizer = dateFnsLocalizer({
 });
 
 const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) => {
+
+  const [loading, setLoading] = useState(false);
+
   const [activeTab, setActiveTab] = useState("info");
   const [filteredEvents, setFilteredEvents] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -23,6 +30,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
   const [reservationTitle, setReservationTitle] = useState("");
   const [reservationDescription, setReservationDescription] = useState("");
   const [selectedPeriod, setSelectedPeriod] = useState(null);
+  const [reservedHours, setReservedHours] = useState([]);
 
   const isCoworking = spaceData?.coworking_contenedor === "SI";
 
@@ -41,80 +49,163 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
     }
   }, [spaceData]);
 
+  useEffect(() => {
+    const fetchDisponibilidad = async () => {
+      if (selectedDate && spaceData?.id) {
+        try {
+          const formattedDate = format(selectedDate, "dd/MM/yyyy");
+          const disponibilidad = await getDisponibilidad(spaceData.id, formattedDate);
+
+          // Procesar las reservas para obtener las horas ocupadas
+          const horasOcupadas = new Set();
+          disponibilidad.forEach(reserva => {
+            const inicio = new Date(reserva.hora_inicio);
+            const fin = new Date(reserva.hora_fin);
+
+            for (let hora = inicio; hora < fin; hora = addHours(hora, 1)) {
+              horasOcupadas.add(format(hora, "HH:00"));
+            }
+          });
+
+          setReservedHours(Array.from(horasOcupadas));
+        } catch (error) {
+          console.error("Error al obtener disponibilidad:", error);
+        }
+      }
+    };
+
+    fetchDisponibilidad();
+  }, [selectedDate, spaceData?.id]);
+
   const handleSlotSelect = (slotInfo) => {
-    const selectedStart = startOfDay(slotInfo.start); // Asegura que se seleccione el día completo
-    const selectedEnd = addHours(selectedStart, 23); // Finaliza al final del día
-  
+    const selectedStart = startOfDay(slotInfo.start);
+    const selectedEnd = addHours(selectedStart, 23);
+
     const isSlotOccupied = filteredEvents.some(
       (event) =>
         new Date(selectedStart) < new Date(event.end) &&
         new Date(selectedEnd) > new Date(event.start)
     );
-  
+
     if (!isSlotOccupied) {
-      setSelectedDate(selectedStart); // Selecciona el día completo
+      setSelectedDate(selectedStart);
+      setSelectedHours([]);
+      setSelectedPeriod(null);
     } else {
-      alert("Este horario ya está ocupado. Por favor seleccione otro.");
+      toast.error('Este horario ya está ocupado. Por favor seleccione otro.', {
+        duration: 4000,
+        position: 'top-right',
+        style: {
+          background: '#fee2e2',
+          color: '#dc2626',
+        },
+      });
     }
   };
-  
+
   const handleConfirmReservation = async () => {
-    if (!reservationTitle.trim()) {
-      alert("Por favor ingrese un título para la reserva");
-      return;
-    }
-
-    let startDateTime, endDateTime;
-
-    if (isCoworking) {
-      if (!selectedPeriod) {
-        alert("Por favor seleccione un período de tiempo");
-        return;
-      }
-      startDateTime = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${selectedPeriod.start}`);
-      endDateTime = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${selectedPeriod.end}`);
-    } else {
-      if (!selectedHours.length) {
-        alert("Por favor seleccione al menos una hora");
-        return;
-      }
-      startDateTime = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${selectedHours[0]}`);
-      endDateTime = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${selectedHours[selectedHours.length - 1]}`);
-      endDateTime.setHours(endDateTime.getHours() + 1);
-    }
-
-    const formattedDate = format(selectedDate, "dd/MM/yyyy");
-    const formattedStartTime = format(startDateTime, "HH:mm");
-    const formattedEndTime = format(endDateTime, "HH:mm");
-
-    const reservationData = {
-      espacio_id: spaceData.id,
-      espacio_type: "App\\Models\\basics\\EspacioCoworking",
-      user_id: getUserId() || "3816a79a-78e1-4dc1-ae3b-3c5e4533ff8f",
-      titulo: reservationTitle,
-      descripcion: reservationDescription || "",
-      fecha_reserva: formattedDate,
-      hora_inicio: formattedStartTime,
-      hora_fin: formattedEndTime,
-      observaciones: reservationDescription || ""
-    };
-
-    console.log("Intentando crear reserva con datos:", JSON.stringify(reservationData, null, 2));
-
+    setLoading(true);
     try {
-      const response = await createReservation(reservationData);
-      console.log("Respuesta del servidor:", response);
+      // Validation checks...
+      if (!reservationTitle.trim() || !reservationDescription.trim()) {
+        toast.error(!reservationTitle.trim() ? 
+          'Por favor ingrese un título para la reserva' : 
+          'Por favor ingrese una descripción para la reserva', {
+          duration: 4000,
+          position: 'top-right',
+        });
+        setLoading(false);
+        return;
+      }
 
-      if (response.status === "success") {
-        alert(`Reserva confirmada con éxito para el día ${formattedDate} de ${formattedStartTime} a ${formattedEndTime}`);
-        onClose();
-        goToMyReservations();
+      let startDateTime, endDateTime;
+
+      if (isCoworking) {
+        if (!selectedPeriod) {
+          toast.error('Por favor seleccione un período de tiempo', {
+            duration: 4000,
+            position: 'top-right',
+          });
+          setLoading(false);
+          return;
+        }
+        startDateTime = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${selectedPeriod.start}`);
+        endDateTime = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${selectedPeriod.end}`);
       } else {
-        throw new Error(response.message || 'Error al crear la reserva');
+        if (!selectedHours.length) {
+          toast.error('Por favor seleccione al menos una hora', {
+            duration: 4000,
+            position: 'top-right',
+          });
+          setLoading(false);
+          return;
+        }
+        startDateTime = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${selectedHours[0]}`);
+        endDateTime = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${selectedHours[selectedHours.length - 1]}`);
+        endDateTime.setHours(endDateTime.getHours() + 1);
+      }
+
+      const formattedDate = format(selectedDate, "dd/MM/yyyy");
+      const formattedStartTime = format(startDateTime, "HH:mm");
+      const formattedEndTime = format(endDateTime, "HH:mm");
+
+      const reservationData = {
+        espacio_id: spaceData.id,
+        espacio_type: "App\\Models\\basics\\EspacioCoworking",
+        user_id: getUserId() || "3816a79a-78e1-4dc1-ae3b-3c5e4533ff8f",
+        titulo: reservationTitle,
+        descripcion: reservationDescription || "",
+        fecha_reserva: formattedDate,
+        hora_inicio: formattedStartTime,
+        hora_fin: formattedEndTime,
+        observaciones: reservationDescription || ""
+      };
+
+      console.log("Intentando crear reserva con datos:", JSON.stringify(reservationData, null, 2));
+
+      try {
+        const response = await createReservation(reservationData);
+        console.log("Respuesta del servidor:", response);
+
+        if (response.status === "success") {
+          toast.success(
+            `Reserva confirmada con éxito para el día ${formattedDate} de ${formattedStartTime} a ${formattedEndTime}`,
+            {
+              duration: 4000,
+              position: 'top-right',
+              style: {
+                background: '#dcfce7',
+                color: '#16a34a',
+              },
+            }
+          );
+          onClose();
+          goToMyReservations();
+        } else {
+          throw new Error(response.message || 'Error al crear la reserva');
+        }
+      } catch (error) {
+        console.error("Error al crear la reserva:", error);
+        toast.error(
+          `Error al crear la reserva: ${error.message || 'Por favor, intente nuevamente.'}`,
+          {
+            duration: 4000,
+            position: 'top-right',
+            style: {
+              background: '#fee2e2',
+              color: '#dc2626',
+            },
+          }
+        );
       }
     } catch (error) {
-      console.error("Error al crear la reserva:", error);
-      alert(`Error al crear la reserva: ${error.message || 'Por favor, intente nuevamente.'}`);
+      console.error("Error confirming reservation:", error);
+      toast.error('Error al confirmar la reserva', {
+        duration: 4000,
+        position: 'top-right',
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -127,12 +218,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
   };
 
   const isTimeSlotAvailable = (timeSlot) => {
-    const slotDate = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${timeSlot}`);
-
-    return !filteredEvents.some(event =>
-      slotDate >= new Date(event.start) &&
-      slotDate < new Date(event.end)
-    );
+    return !reservedHours.includes(timeSlot);
   };
 
   const handleTimeSelect = (time) => {
@@ -149,7 +235,14 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
 
     // Verificamos si las horas son consecutivas
     if (max - min + 1 !== allHours.length) {
-      alert("Solo puedes seleccionar horas consecutivas");
+      toast.error('Solo puedes seleccionar horas consecutivas', {
+        duration: 4000,
+        position: 'top-right',
+        style: {
+          background: '#fee2e2',
+          color: '#dc2626',
+        },
+      });
       return;
     }
 
@@ -164,19 +257,19 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
       // Si se está deseleccionando una hora, eliminar todas las horas posteriores
       const sortedHours = Array.from(selectedHours).sort();
       const hourIndex = sortedHours.indexOf(hour);
-      
+
       // Eliminar la hora actual y todas las posteriores
       const updatedHours = sortedHours.slice(0, hourIndex);
       setSelectedHours(new Set(updatedHours));
     } else {
       // Verificar si la nueva hora es consecutiva
       const sortedHours = Array.from(selectedHours).sort();
-      
-      if (selectedHours.size === 0 || 
-          sortedHours.some(selectedHour => {
-            const selectedValue = parseInt(selectedHour.split(':')[0]);
-            return Math.abs(selectedValue - hourValue) === 1;
-          })) {
+
+      if (selectedHours.size === 0 ||
+        sortedHours.some(selectedHour => {
+          const selectedValue = parseInt(selectedHour.split(':')[0]);
+          return Math.abs(selectedValue - hourValue) === 1;
+        })) {
         newSelectedHours.add(hour);
         setSelectedHours(newSelectedHours);
       }
@@ -188,8 +281,20 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
     { id: 1, name: "Tarde", start: "13:00", end: "17:00" },
     { id: 2, name: "Mañana-Tarde", start: "07:00", end: "17:00" },
     { id: 3, name: "Noche", start: "18:00", end: "22:00" },
-
   ];
+
+  const isPeriodAvailable = (period) => {
+    const periodStart = parseInt(period.start.split(':')[0]);
+    const periodEnd = parseInt(period.end.split(':')[0]);
+
+    for (let hour = periodStart; hour < periodEnd; hour++) {
+      const timeSlot = `${hour.toString().padStart(2, '0')}:00`;
+      if (reservedHours.includes(timeSlot)) {
+        return false;
+      }
+    }
+    return true;
+  };
 
   const renderTimeSelector = () => {
     if (isCoworking) {
@@ -197,25 +302,31 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
         <div className="bg-white p-4 mt-4">
           <h3 className="text-lg font-semibold text-turquesa mb-3">Seleccionar período</h3>
           <div className="grid grid-cols-2 gap-4">
-            {coworkingPeriods.map((period) => (
-              <button
-                key={period.id}
-                onClick={() => setSelectedPeriod(period)}
-                className={`
-                  p-4 rounded-md text-sm
-                  ${selectedPeriod?.id === period.id
-                    ? 'bg-turquesa text-white'
-                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                  }
-                `}
-              >
-                {period.name}
-                <br />
-                <span className="text-xs">
-                  {period.start} - {period.end}
-                </span>
-              </button>
-            ))}
+            {coworkingPeriods.map((period) => {
+              const isAvailable = isPeriodAvailable(period);
+              return (
+                <button
+                  key={period.id}
+                  onClick={() => isAvailable && setSelectedPeriod(period)}
+                  disabled={!isAvailable}
+                  className={`
+                    p-4 rounded-md text-sm
+                    ${selectedPeriod?.id === period.id
+                      ? 'bg-turquesa text-white'
+                      : isAvailable
+                        ? 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    }
+                  `}
+                >
+                  {period.name}
+                  <br />
+                  <span className="text-xs">
+                    {period.start} - {period.end}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
       );
@@ -273,7 +384,14 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
 
   const handleNavigate = (date) => {
     if (isBefore(startOfDay(date), startOfDay(new Date()))) {
-      alert("No se puede reservar en días anteriores al actual.");
+      toast.error('No se puede reservar en días anteriores al actual.', {
+        duration: 4000,
+        position: 'top-right',
+        style: {
+          background: '#fee2e2',
+          color: '#dc2626',
+        },
+      });
       return;
     }
     setSelectedDate(date);
@@ -281,6 +399,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <Toaster />
       <div className="bg-white rounded-lg p-8 max-w-6xl w-full max-h-[95vh] overflow-auto">
         {/* Header del Modal */}
         <div className="flex justify-between items-start mb-6">
@@ -452,6 +571,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
           </div>
         )}
       </div>
+      <LoadingSpinner loading={loading} />
     </div>
   );
 };
