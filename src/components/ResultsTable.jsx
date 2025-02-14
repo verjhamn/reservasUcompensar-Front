@@ -44,7 +44,8 @@ const ResultsTable = ({ filters = {}, goToMyReservations }) => {
               piso: item.piso,
               cantidad_equipos: item.cantidad_equipos,
               espacio_id: item.id,
-              coworking_contenedor: "NO"  // Add this flag
+              coworking_contenedor: "NO",  // Add this flag
+              Titulo: "Espacio"
             }];
           } else {
             return item.espacios_coworking.map(coworking => ({
@@ -138,7 +139,7 @@ const ResultsTable = ({ filters = {}, goToMyReservations }) => {
                 <h3 className="text-lg font-bold text-gray-800">{item.Titulo} {item.codigo || "Código no disponible"}</h3>
                 <p className="text-gray-600 text-sm">Tipo: {item.tipo || "Tipo no disponible"}</p>
                 <p className="text-gray-600 text-sm">Piso: {item.piso || "No disponible"}</p>
-                <p className="text-gray-600 text-sm">Descripción: {item.descripcion || "Descripción no disponible"}</p>
+               {/*  <p className="text-gray-600 text-sm">Descripción: {item.descripcion || "Descripción no disponible"}</p> */}
               </div>
               <button
                 onClick={() => handleReserveClick(item)}
