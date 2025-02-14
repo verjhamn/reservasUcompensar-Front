@@ -8,7 +8,9 @@ import SearchFilters from "./components/SearchFilters";
 import ResultsTable from "./components/ResultsTable";
 import BigCalendarView from "./components/misReservas";
 import FullCalendarView from "./components/FullCalendarView";
+import ReportsView from "./components/Reports/ReportsView";
 import InfoModal from "./components/InfoModal";
+import { hasAdminAccess } from './utils/userHelper';
 
 const msalInstance = new PublicClientApplication(msalConfig);
 
@@ -21,12 +23,13 @@ function App() {
         horaInicio: "",
         horaFinal: "",
         palabra: "",
-        id:""
+        id: ""
     });
 
-    const [view, setView] = useState("table"); 
+    const [view, setView] = useState("table");
     const [showModal, setShowModal] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [isAdmin, setIsAdmin] = useState(false);
 
     // Verificar si hay un usuario autenticado en localStorage
     useEffect(() => {
@@ -36,7 +39,7 @@ function App() {
 
     // Verificar si el modal ya se ha mostrado
     useEffect(() => {
-        const modalShown = localStorage.getItem("modalShown") ;
+        const modalShown = localStorage.getItem("modalShown");
         if (!modalShown) {
             setShowModal(true);
             localStorage.setItem("modalShown", "true");
@@ -51,6 +54,20 @@ function App() {
             setFilters(prev => ({ ...prev, id: codigoEspacio }));
         }
     }, []);
+
+    useEffect(() => {
+        const checkAdminStatus = () => {
+            const isAdminUser = hasAdminAccess();
+            console.log('User Data:', localStorage.getItem("userData")); // Debug log
+            setIsAdmin(isAdminUser);
+        };
+
+        if (isLoggedIn) {
+            checkAdminStatus();
+        } else {
+            setIsAdmin(false);
+        }
+    }, [isLoggedIn]);
 
     const handleFilterChange = (newFilters) => {
         setFilters(newFilters);
@@ -89,12 +106,22 @@ function App() {
 
                             {/* 🔹 Solo mostrar botón "Mis Reservas" si el usuario está autenticado */}
                             {isLoggedIn && (
-                                <button
-                                    onClick={() => setView("Calendario")}
-                                    className={`py-2 px-4 rounded ${view === "Calendario" ? "bg-turquesa hover:bg-turquesa/90 text-white" : "bg-gray-300"}`}
-                                >
-                                    Mis Reservas
-                                </button>
+                                <>
+                                    <button
+                                        onClick={() => setView("Calendario")}
+                                        className={`py-2 px-4 rounded ${view === "Calendario" ? "bg-turquesa hover:bg-turquesa/90 text-white" : "bg-gray-300"}`}
+                                    >
+                                        Mis Reservas
+                                    </button>
+                                    {isAdmin && (
+                                        <button
+                                            onClick={() => setView("reports")}
+                                            className={`py-2 px-4 rounded ${view === "reports" ? "bg-turquesa hover:bg-turquesa/90 text-white" : "bg-gray-300"}`}
+                                        >
+                                            Reportes
+                                        </button>
+                                    )}
+                                </>
                             )}
                         </div>
 
@@ -110,6 +137,7 @@ function App() {
                         )}
                         {view === "Calendario" && <BigCalendarView />}
                         {view === "fullCalendar" && <FullCalendarView />}
+                        {view === "reports" && isAdmin && <ReportsView />}
                     </div>
                 </main>
                 <Footer />
