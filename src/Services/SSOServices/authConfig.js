@@ -7,9 +7,9 @@ const URL_Produccion = 'https://reservas.ucompensar.edu.co/'; // Cambia en produ
 
 export const msalConfig = {
     auth: {
-        clientId: clientId_Pruebas, // ID de la app en Azure
-        authority: "https://login.microsoftonline.com/4bf38ea2-832d-4552-b508-421570da43ff", // Tenant ID
-        redirectUri: URL_Pruebas, // Cambia en producción
+        clientId: import.meta.env.VITE_SSO_CLIENT_ID,
+        authority: `https://login.microsoftonline.com/${import.meta.env.VITE_TENANT_ID}`,
+        redirectUri: import.meta.env.VITE_REDIRECT_URI,
     }
 };
 

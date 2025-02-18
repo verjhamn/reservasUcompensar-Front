@@ -1,7 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = "https://backreservas.ucompensar.edu.co/api";
-const API_BASE_URL_2 = "https://qareservas.ucompensar.edu.co/api";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 // Obtener y almacenar token e ID del usuario
 export const getAuthToken = () => localStorage.getItem("authToken");

@@ -1,7 +1,6 @@
 import { axiosInstance } from "./authService";
 
-const API_BASE_URL = "https://backreservas.ucompensar.edu.co/api";
-const API_BASE_URL2 = "https://qareservas.ucompensar.edu.co/api";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 export const createReservation = async (reservationData) => {
     try {
