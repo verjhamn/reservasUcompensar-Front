@@ -119,12 +119,35 @@ const ResultsTable = ({ filters = {}, goToMyReservations }) => {
     }
   };
 
+  const renderInfoMessage = () => {
+    if (filters.tipo && filters.tipo !== "Coworking") {
+      return (
+        <div className="bg-amber-50 border-l-4 border-amber-400 p-4 mb-4 rounded">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-amber-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-amber-700">
+                Para reservar este tipo de espacio, por favor escribir al correo admon.campus@ucompensar.edu.co
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
   if (isLoading) return <p>Cargando...</p>;
   if (error) return <p>{error}</p>;
   if (data.length === 0) return <p>No se encontraron resultados para los filtros seleccionados.</p>;
 
   return (
     <div className="bg-white shadow-md p-4 md:p-6 rounded-xl">
+      {renderInfoMessage()}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {data.slice(page * itemsPerPage, (page + 1) * itemsPerPage).map((item, index) => (
           <div key={`${item.id}-${index}`} className="border rounded-lg overflow-hidden shadow hover:shadow-lg transition duration-300 flex flex-col">
