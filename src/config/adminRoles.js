@@ -11,7 +11,8 @@ export const AUTHORIZED_EMAILS = {
   ],
   admin: [
     'ndmartinezo@ucompensar.edu.co',
-    'admon.campus@ucompensar.edu.co'
+    'admon.campus@ucompensar.edu.co',
+    'jhmendezb@ucompensar.edu.co'
   ],
   reports_viewer: [
     'jhmendezb@ucompensar.edu.co',

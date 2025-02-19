@@ -37,26 +37,27 @@ const ResultsTable = ({ filters = {}, goToMyReservations }) => {
         const processedSpaces = response.flatMap(item => {
           if (item.coworking_contenedor === "NO") {
             return [{
-              id: item.id,
-              codigo: item.codigo,
-              tipo: item.tipo_espacio,
-              descripcion: item.descripcion,
-              piso: item.piso,
-              cantidad_equipos: item.cantidad_equipos,
-              espacio_id: item.id,
-              coworking_contenedor: "NO",  // Add this flag
-              Titulo: "Espacio"
+              ...item,
+              imagenes: item.imagenes,
+              coworking_contenedor: "NO",
+              Titulo: "Espacio",
+              tipo: item.key
             }];
           } else {
+            // Para espacios coworking, procesar cada espacio individual
             return item.espacios_coworking.map(coworking => ({
               ...coworking,
               piso: item.piso,
               Titulo: "Coworking",
-              coworking_contenedor: "SI"  // Add this flag
+              coworking_contenedor: "SI",
+              tipo: coworking.tipo || "Coworking", // Usar tipo del espacio coworking
+              // Usar las imágenes del espacio coworking específico
+              imagenes: coworking.imagenes || []
             }));
           }
-        }).filter(Boolean);
+        });
 
+        console.log('Espacios procesados:', processedSpaces); // Para debug
         setData(processedSpaces);
 
         if (processedSpaces.length === 1) {
@@ -72,14 +73,6 @@ const ResultsTable = ({ filters = {}, goToMyReservations }) => {
     fetchData();
   }, [filters]);
 
-  const images = [
-
-    "https://reservas.ucompensar.edu.co/img/2.webp",
-    "https://reservas.ucompensar.edu.co/img/3.webp",
-
-  ];
-
-  const getRandomImage = () => images[Math.floor(Math.random() * images.length)];
 
   const handleReserveClick = async (item) => {
     let userData = localStorage.getItem("userData");
@@ -108,7 +101,8 @@ const ResultsTable = ({ filters = {}, goToMyReservations }) => {
         }
 
         setIsLoggedIn(true);
-        setSelectedSpace({ ...item, image: getRandomImage() });
+        // Remover el getRandomImage y pasar el item directamente
+        setSelectedSpace(item);
         setIsModalOpen(true);
       } catch (error) {
         console.error("Error en el inicio de sesión con Microsoft:", error);
@@ -119,7 +113,8 @@ const ResultsTable = ({ filters = {}, goToMyReservations }) => {
       console.log("[ResultsTable] Verificando autenticación en backend...");
       await fetchAuthToken();
 
-      setSelectedSpace({ ...item, image: getRandomImage() });
+      // Remover el getRandomImage y pasar el item directamente
+      setSelectedSpace(item);
       setIsModalOpen(true);
     }
   };
@@ -133,7 +128,11 @@ const ResultsTable = ({ filters = {}, goToMyReservations }) => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {data.slice(page * itemsPerPage, (page + 1) * itemsPerPage).map((item, index) => (
           <div key={`${item.id}-${index}`} className="border rounded-lg overflow-hidden shadow hover:shadow-lg transition duration-300 flex flex-col">
-            <img src={getRandomImage()} alt="Espacio" className="h-48 w-full object-cover" />
+            <img 
+              src={item.imagenes[0]?.img_path} 
+              alt={item.codigo} 
+              className="h-48 w-full object-cover"
+            />
             <div className="p-4 flex flex-col flex-grow">
               <div className="flex-grow">
                 <h3 className="text-lg font-bold text-gray-800">{item.Titulo} {item.codigo || "Código no disponible"}</h3>
