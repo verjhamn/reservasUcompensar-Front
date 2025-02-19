@@ -7,6 +7,7 @@ import { toast, Toaster } from 'react-hot-toast';
 import { createReservation } from "../Services/createReservationService";
 import { getUserId } from "../Services/authService";
 import { getDisponibilidad } from "../Services/getDisponibilidadService";
+import { canReserveAnySpace } from '../utils/userHelper';
 
 import LoadingSpinner from './UtilComponents/LoadingSpinner';
 
@@ -104,6 +105,20 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
   };
 
   const handleConfirmReservation = async () => {
+    const userData = JSON.parse(localStorage.getItem("userData"));
+    const isAdmin = canReserveAnySpace(userData?.mail);
+
+    if (!isAdmin && spaceData.coworking_contenedor !== "SI") {
+      toast.error(
+        'Por favor para reservar este espacio escribir al correo admon.campus@ucompensar.edu.co',
+        {
+          duration: 5000,
+          position: 'top-right',
+        }
+      );
+      return; // Solo retornamos sin cerrar el modal
+    }
+
     setLoading(true);
     try {
       // Validation checks...
