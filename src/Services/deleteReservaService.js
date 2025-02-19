@@ -1,7 +1,6 @@
 import { axiosInstance } from "./authService";
 
-const API_URL2 = "https://qareservas.ucompensar.edu.co/api";
-const API_URL = "https://backreservas.ucompensar.edu.co/api";
+const API_URL = import.meta.env.VITE_API_URL;
 
 export const deleteReserva = async (idEspacio) => {
   try {

@@ -27,13 +27,25 @@ export const hasAdminAccess = () => {
 };
 
 export const getUserRole = (email) => {
-  if (!email) return null;
+  if (!email) return ADMIN_ROLES.USER;
   
   if (AUTHORIZED_EMAILS.super_admin.includes(email)) {
     return ADMIN_ROLES.SUPER_ADMIN;
   } else if (AUTHORIZED_EMAILS.admin.includes(email)) {
     return ADMIN_ROLES.ADMIN;
+  } else if (AUTHORIZED_EMAILS.reports_viewer.includes(email)) {
+    return ADMIN_ROLES.REPORTS_VIEWER;
   }
   
-  return 'user';
+  return ADMIN_ROLES.USER;
+};
+
+export const canAccessReports = (email) => {
+  const role = getUserRole(email);
+  return [ADMIN_ROLES.SUPER_ADMIN, ADMIN_ROLES.ADMIN, ADMIN_ROLES.REPORTS_VIEWER].includes(role);
+};
+
+export const canReserveAnySpace = (email) => {
+  const role = getUserRole(email);
+  return [ADMIN_ROLES.SUPER_ADMIN, ADMIN_ROLES.ADMIN].includes(role);
 };
