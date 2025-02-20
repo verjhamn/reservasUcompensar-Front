@@ -12,11 +12,19 @@ export const AUTHORIZED_EMAILS = {
   admin: [
     'ndmartinezo@ucompensar.edu.co',
     'admon.campus@ucompensar.edu.co',
-    'jhmendezb@ucompensar.edu.co'
+    'jhmendezb@ucompensar.edu.co',
+    'grocha@ucompensar.edu.co',
+    'lccarrillom@ucompensar.edu.co',
+    'mazapatah@ucompensar.edu.co',
+    'oaroddriguezr@ucompensar.edu.co'
   ],
   reports_viewer: [
     'jhmendezb@ucompensar.edu.co',
     'dsbordac@ucompensar.edu.co',
-    'eaacevedoo@ucompensar.edu.co'
+    'eaacevedoo@ucompensar.edu.co',
+    'damanriquem@ucompensar.edu.co',
+    'luftorresr@ucompensar.edu.co',
+    'cotalorar@ucompensar.edu.co',
+    'tecnologia@ucompensar.edu.co'
   ]
 };

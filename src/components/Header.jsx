@@ -47,6 +47,8 @@ const Header = ({ onLoginSuccess, onLogout }) => {
         return 'Super Admin';
       case ADMIN_ROLES.ADMIN:
         return 'Administrador';
+      case ADMIN_ROLES.REPORTS_VIEWER:
+        return 'Reportes';
       default:
         return 'Usuario';
     }
@@ -59,6 +61,8 @@ const Header = ({ onLoginSuccess, onLogout }) => {
         return 'text-pink-600';
       case ADMIN_ROLES.ADMIN:
         return 'text-teal-600';
+      case ADMIN_ROLES.REPORTS_VIEWER:
+        return 'text-purple-600';
       default:
         return 'text-gray-600';
     }

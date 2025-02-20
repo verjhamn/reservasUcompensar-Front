@@ -10,7 +10,7 @@ import BigCalendarView from "./components/misReservas";
 import FullCalendarView from "./components/FullCalendarView";
 import ReportsView from "./components/Reports/ReportsView";
 import InfoModal from "./components/InfoModal";
-import { hasAdminAccess } from './utils/userHelper';
+import { hasAdminAccess, canAccessReports } from './utils/userHelper';
 
 const msalInstance = new PublicClientApplication(msalConfig);
 
@@ -30,6 +30,7 @@ function App() {
     const [showModal, setShowModal] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
+    const [canViewReports, setCanViewReports] = useState(false);
 
     // Verificar si hay un usuario autenticado en localStorage
     useEffect(() => {
@@ -56,16 +57,20 @@ function App() {
     }, []);
 
     useEffect(() => {
-        const checkAdminStatus = () => {
+        const checkUserPermissions = () => {
+            const userData = JSON.parse(localStorage.getItem("userData") || "{}");
             const isAdminUser = hasAdminAccess();
-            console.log('User Data:', localStorage.getItem("userData")); // Debug log
+            const canViewReportsUser = canAccessReports(userData?.mail);
+            
             setIsAdmin(isAdminUser);
+            setCanViewReports(canViewReportsUser);
         };
 
         if (isLoggedIn) {
-            checkAdminStatus();
+            checkUserPermissions();
         } else {
             setIsAdmin(false);
+            setCanViewReports(false);
         }
     }, [isLoggedIn]);
 
@@ -113,7 +118,7 @@ function App() {
                                     >
                                         Mis Reservas
                                     </button>
-                                    {isAdmin && (
+                                    {(isAdmin || canViewReports) && (
                                         <button
                                             onClick={() => setView("reports")}
                                             className={`py-2 px-4 rounded ${view === "reports" ? "bg-turquesa hover:bg-turquesa/90 text-white" : "bg-gray-300"}`}
@@ -137,7 +142,7 @@ function App() {
                         )}
                         {view === "Calendario" && <BigCalendarView />}
                         {view === "fullCalendar" && <FullCalendarView />}
-                        {view === "reports" && isAdmin && <ReportsView />}
+                        {view === "reports" && (isAdmin || canViewReports) && <ReportsView />}
                     </div>
                 </main>
                 <Footer />
