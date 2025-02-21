@@ -18,7 +18,7 @@ export const showConfirmation = (onConfirm, message = "¿Estás seguro de que de
                 }}
                 className="bg-fucsia text-white px-4 py-2 rounded-md hover:bg-fucsia/90 transition-colors"
               >
-                Si
+                Sí
               </button>
               <button
                 onClick={() => {

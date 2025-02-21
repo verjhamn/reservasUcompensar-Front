@@ -7,7 +7,8 @@ export const ADMIN_ROLES = {
 
 export const AUTHORIZED_EMAILS = {
   super_admin: [
-    'afurianv@ucompensar.edu.co'
+    'afurianv@ucompensar.edu.co',
+    'tecnologia@ucompensar.edu.co'
   ],
   admin: [
     'ndmartinezo@ucompensar.edu.co',
@@ -19,6 +20,7 @@ export const AUTHORIZED_EMAILS = {
     'oaroddriguezr@ucompensar.edu.co'
   ],
   reports_viewer: [
+    'jcjimeneza@ucompensar.edu.co',
     'jhmendezb@ucompensar.edu.co',
     'dsbordac@ucompensar.edu.co',
     'eaacevedoo@ucompensar.edu.co',

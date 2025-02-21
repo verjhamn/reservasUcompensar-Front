@@ -57,19 +57,42 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
         try {
           const formattedDate = format(selectedDate, "dd/MM/yyyy");
           const disponibilidad = await getDisponibilidad(spaceData.id, formattedDate);
+          
+          console.log('Disponibilidad raw:', disponibilidad); // Debug
 
-          // Procesar las reservas para obtener las horas ocupadas
           const horasOcupadas = new Set();
           disponibilidad.forEach(reserva => {
-            const inicio = new Date(reserva.hora_inicio);
-            const fin = new Date(reserva.hora_fin);
+            let inicio, fin;
+            
+            // Manejar ambos formatos de fecha
+            if (reserva.hora_inicio) {
+              // Formato no-coworking: "HH:mm"
+              inicio = new Date(selectedDate);
+              fin = new Date(selectedDate);
+              const [horaInicio, minInicio] = reserva.hora_inicio.split(':');
+              const [horaFin, minFin] = reserva.hora_fin.split(':');
+              inicio.setHours(parseInt(horaInicio), parseInt(minInicio));
+              fin.setHours(parseInt(horaFin), parseInt(minFin));
+            } else if (reserva.inicio) {
+              // Formato coworking: "dd/MM/yyyy HH:mm"
+              inicio = new Date(reserva.inicio.replace(/(\d{2})\/(\d{2})\/(\d{4}) (\d{2}:\d{2})/, '$3-$2-$1 $4'));
+              fin = new Date(reserva.fin.replace(/(\d{2})\/(\d{2})\/(\d{4}) (\d{2}:\d{2})/, '$3-$2-$1 $4'));
+            }
 
-            for (let hora = inicio; hora < fin; hora = addHours(hora, 1)) {
-              horasOcupadas.add(format(hora, "HH:00"));
+            console.log('Procesando reserva:', { inicio, fin }); // Debug
+
+            if (inicio && fin) {
+              for (let hora = inicio; hora < fin; hora = addHours(hora, 1)) {
+                const horaFormateada = format(hora, "HH:00");
+                horasOcupadas.add(horaFormateada);
+                console.log('Agregando hora ocupada:', horaFormateada); // Debug
+              }
             }
           });
 
-          setReservedHours(Array.from(horasOcupadas));
+          const horasArray = Array.from(horasOcupadas);
+          console.log('Todas las horas ocupadas:', horasArray); // Debug
+          setReservedHours(horasArray);
         } catch (error) {
           console.error("Error al obtener disponibilidad:", error);
         }
@@ -167,7 +190,9 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
 
       const reservationData = {
         espacio_id: spaceData.id,
-        espacio_type: "App\\Models\\basics\\EspacioCoworking",
+        espacio_type: spaceData.coworking_contenedor === "SI" 
+          ? "App\\Models\\basics\\EspacioCoworking"
+          : "App\\Models\\basics\\Espacio",
         user_id: getUserId() || "3816a79a-78e1-4dc1-ae3b-3c5e4533ff8f",
         titulo: reservationTitle,
         descripcion: reservationDescription || "",
@@ -228,12 +253,14 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
   const generateTimeSlots = () => {
     const slots = [];
     for (let hour = 7; hour <= 21; hour++) {
-      slots.push(`${hour.toString().padStart(2, '0')}:00`);
+      const timeSlot = `${hour.toString().padStart(2, '0')}:00`;
+      slots.push(timeSlot);
     }
     return slots;
   };
 
   const isTimeSlotAvailable = (timeSlot) => {
+    console.log('Checking slot:', timeSlot, 'Reserved hours:', reservedHours); // Debug
     return !reservedHours.includes(timeSlot);
   };
 
@@ -352,24 +379,28 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
       <div className="bg-white p-4 mt-4">
         <h3 className="text-lg font-semibold text-turquesa mb-3">Seleccionar horario</h3>
         <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
-          {generateTimeSlots().map((time) => (
-            <button
-              key={time}
-              onClick={() => handleTimeSelect(time)}
-              disabled={!isTimeSlotAvailable(time)}
-              className={`
-                p-2 rounded-md text-sm
-                ${selectedHours.includes(time)
-                  ? 'bg-turquesa text-white'
-                  : isTimeSlotAvailable(time)
-                    ? 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                }
-              `}
-            >
-              {time}
-            </button>
-          ))}
+          {generateTimeSlots().map((time) => {
+            const isAvailable = isTimeSlotAvailable(time);
+            console.log(`Slot ${time} availability:`, isAvailable); // Debug
+            return (
+              <button
+                key={time}
+                onClick={() => isAvailable && handleTimeSelect(time)}
+                disabled={!isAvailable}
+                className={`
+                  p-2 rounded-md text-sm
+                  ${selectedHours.includes(time)
+                    ? 'bg-turquesa text-white'
+                    : isAvailable
+                      ? 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  }
+                `}
+              >
+                {time}
+              </button>
+            );
+          })}
         </div>
       </div>
     );
