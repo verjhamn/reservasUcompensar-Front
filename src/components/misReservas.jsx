@@ -35,6 +35,7 @@ const BigCalendarView = () => {
           if (item.espacio === null) {
             return [{
               id: item.id,
+              type: item.key,
               idEspacio: item.codigo,
               title: item.titulo,
               start: new Date(item.hora_inicio),
@@ -44,6 +45,7 @@ const BigCalendarView = () => {
           } else {
             return [{
               id: item.id,
+              type: item.espacio.key || 'Coworking',
               idEspacio: item.espacio.codigo,
               title: item.titulo,
               start: new Date(item.hora_inicio),
@@ -193,15 +195,16 @@ const BigCalendarView = () => {
                 <div className="flex justify-between items-start">
                   <div>
                     <h4 className="text-base font-semibold text-gris-medio">
-                      {event.title}
+                      Espacio: {event.idEspacio}
                     </h4>
                     <p className="text-sm text-gris-medio">ID Reserva: {event.id}</p>
-                    <p className="text-sm text-gris-medio">Codigo Espacio: {event.idEspacio}</p>
+                    <p className="text-sm text-gris-medio">Tipo: {event.type}</p>
                     <p className="text-sm text-gris-medio">
                       {format(new Date(event.start), "HH:mm")} -{" "}
                       {format(new Date(event.end), "HH:mm")}
                     </p>
-                    <p className="text-sm text-gris-medio">{event.desc}</p>
+                    <p className="text-sm text-gris-medio">Título: {event.title}</p>
+                    <p className="text-sm text-gris-medio">Descripción: {event.desc}</p>
                   </div>
                   <div className="flex gap-2">
                     <button

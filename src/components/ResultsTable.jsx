@@ -131,7 +131,7 @@ const ResultsTable = ({ filters = {}, goToMyReservations }) => {
             </div>
             <div className="ml-3">
               <p className="text-sm text-amber-700">
-                Para reservar este tipo de espacio, por favor escribir al correo admon.campus@ucompensar.edu.co
+                Para reservar este tipo de espacio, por favor escribir al correo admon.campus@ucompensar.edu.co.
               </p>
             </div>
           </div>

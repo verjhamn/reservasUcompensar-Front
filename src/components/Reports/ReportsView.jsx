@@ -177,7 +177,7 @@ const ReportsView = () => {
           <select
             value={perPage}
             onChange={(e) => setPerPage(Number(e.target.value))}
-            className="border rounded px-3 py-1"
+            className="border rounded px-3 py-1 w-32"
           >
             <option value={10}>10 / pág</option>
             <option value={20}>20 / pág</option>

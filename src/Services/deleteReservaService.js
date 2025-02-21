@@ -12,7 +12,7 @@ export const deleteReserva = async (idEspacio) => {
     console.log("[deleteReserva] Respuesta del servidor:", response.data);
 
     // Verificar si la respuesta es exitosa
-    if (response.data.success || response.data.message === "Reserva eliminada con éxito.") {
+    if (response.data.success || response.data.message === "Reserva cancelada con éxito.") {
       return response.data.data; // Retornar los datos de la reserva eliminada
     } else {
       console.error("[deleteReserva] Error en la respuesta:", response.data);
