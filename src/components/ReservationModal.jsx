@@ -58,40 +58,78 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
           const formattedDate = format(selectedDate, "dd/MM/yyyy");
           const disponibilidad = await getDisponibilidad(spaceData.id, formattedDate);
           
-          console.log('Disponibilidad raw:', disponibilidad); // Debug
+          console.log('Respuesta disponibilidad:', disponibilidad);
 
           const horasOcupadas = new Set();
-          disponibilidad.forEach(reserva => {
-            let inicio, fin;
-            
-            // Manejar ambos formatos de fecha
-            if (reserva.hora_inicio) {
-              // Formato no-coworking: "HH:mm"
-              inicio = new Date(selectedDate);
-              fin = new Date(selectedDate);
-              const [horaInicio, minInicio] = reserva.hora_inicio.split(':');
-              const [horaFin, minFin] = reserva.hora_fin.split(':');
-              inicio.setHours(parseInt(horaInicio), parseInt(minInicio));
-              fin.setHours(parseInt(horaFin), parseInt(minFin));
-            } else if (reserva.inicio) {
-              // Formato coworking: "dd/MM/yyyy HH:mm"
-              inicio = new Date(reserva.inicio.replace(/(\d{2})\/(\d{2})\/(\d{4}) (\d{2}:\d{2})/, '$3-$2-$1 $4'));
-              fin = new Date(reserva.fin.replace(/(\d{2})\/(\d{2})\/(\d{4}) (\d{2}:\d{2})/, '$3-$2-$1 $4'));
-            }
 
-            console.log('Procesando reserva:', { inicio, fin }); // Debug
+          // Procesar reservas (diferente estructura para coworking y no-coworking)
+          if (Array.isArray(disponibilidad)) {
+            // Para espacios coworking, las reservas vienen directamente en el array
+            disponibilidad.forEach(reserva => {
+              const inicio = new Date(reserva.hora_inicio);
+              const fin = new Date(reserva.hora_fin);
 
-            if (inicio && fin) {
-              for (let hora = inicio; hora < fin; hora = addHours(hora, 1)) {
-                const horaFormateada = format(hora, "HH:00");
+              console.log('Procesando reserva coworking:', { 
+                inicio: format(inicio, 'HH:mm'), 
+                fin: format(fin, 'HH:mm') 
+              });
+
+              let horaActual = new Date(inicio);
+              while (horaActual < fin) {
+                const horaFormateada = format(horaActual, "HH:00");
                 horasOcupadas.add(horaFormateada);
-                console.log('Agregando hora ocupada:', horaFormateada); // Debug
+                console.log('Agregando hora ocupada coworking:', horaFormateada);
+                horaActual = addHours(horaActual, 1);
               }
-            }
-          });
+            });
+          } else if (disponibilidad.espacio?.reservas) {
+            // Para espacios no-coworking
+            disponibilidad.espacio.reservas.forEach(reserva => {
+              const inicio = new Date(reserva.hora_inicio);
+              const fin = new Date(reserva.hora_fin);
+
+              console.log('Procesando reserva no-coworking:', { 
+                inicio: format(inicio, 'HH:mm'), 
+                fin: format(fin, 'HH:mm') 
+              });
+
+              let horaActual = new Date(inicio);
+              while (horaActual < fin) {
+                const horaFormateada = format(horaActual, "HH:00");
+                horasOcupadas.add(horaFormateada);
+                console.log('Agregando hora ocupada no-coworking:', horaFormateada);
+                horaActual = addHours(horaActual, 1);
+              }
+            });
+          }
+
+          // Procesar horarioSIAF (igual para ambos tipos)
+          if (disponibilidad.horarioSIAF) {
+            disponibilidad.horarioSIAF.forEach(horario => {
+              const diaHorario = format(new Date(horario.clseFechainicio), 'EEEE', { locale: es });
+              const diaSeleccionado = format(selectedDate, 'EEEE', { locale: es });
+
+              if (diaHorario.toLowerCase() === diaSeleccionado.toLowerCase()) {
+                const [horaInicio] = horario.horainicio.split(':');
+                const [horaFin] = horario.horafinal.split(':');
+
+                console.log('Procesando horario SIAF:', {
+                  dia: diaHorario,
+                  inicio: horaInicio,
+                  fin: horaFin
+                });
+
+                for (let hora = parseInt(horaInicio); hora <= parseInt(horaFin); hora++) {
+                  const horaFormateada = `${hora.toString().padStart(2, '0')}:00`;
+                  horasOcupadas.add(horaFormateada);
+                  console.log('Agregando hora SIAF:', horaFormateada);
+                }
+              }
+            });
+          }
 
           const horasArray = Array.from(horasOcupadas);
-          console.log('Todas las horas ocupadas:', horasArray); // Debug
+          console.log('Horas ocupadas finales:', horasArray);
           setReservedHours(horasArray);
         } catch (error) {
           console.error("Error al obtener disponibilidad:", error);

@@ -10,14 +10,16 @@ import {
 } from "@heroicons/react/24/outline";
 import { getGeneralReport } from "../../Services/reportsService";
 import { downloadReport } from "../../Services/DownloadReport";
+import { format, parse, parseISO } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 const ReportsView = () => {
   // Definir las columnas exactamente como aparecen en la UI
   const columns = [
     { key: 'fecha_hora_registro', label: 'FECHA Y HORA DE REGISTRO' },
     { key: 'fecha_reserva', label: 'FECHA DE RESERVA' },
-    { key: 'hora_inicio_reserva', label: 'HORA DE INICIO DE RESERVA' },
-    { key: 'hora_fin_reserva', label: 'HORA DE FIN DE RESERVA' },
+    { key: 'hora_inicio_reserva', label: 'HORA INICIO' },
+    { key: 'hora_fin_reserva', label: 'HORA FIN' },
     { key: 'codigo_espacio', label: 'CÓDIGO DE ESPACIO' },
     { key: 'usuario', label: 'USUARIO' },
     { key: 'cargo_rol', label: 'CARGO/ROL' },
@@ -55,6 +57,38 @@ const ReportsView = () => {
     }
   };
 
+  // Función auxiliar para normalizar fechas
+  const normalizeFecha = (fecha) => {
+    try {
+      if (!fecha) return '';
+      
+      // Si la fecha está en formato "Viernes, 21 de febrero"
+      if (fecha.includes('de')) {
+        // Extraer el año del conjunto de datos si está disponible
+        const year = new Date().getFullYear(); // O usar el año actual como fallback
+        const fullFecha = `${fecha} ${year}`; // Agregar el año
+        const parsedDate = parse(fullFecha, "EEEE, d 'de' MMMM yyyy", new Date(), { 
+          locale: es,
+          // Asegurarnos de que la fecha se mantenga exacta
+          weekStartsOn: 1
+        });
+        return format(parsedDate, 'dd/MM/yyyy');
+      }
+      
+      // Si la fecha viene en formato yyyy-MM-dd (del input type="date")
+      if (fecha.includes('-')) {
+        const [year, month, day] = fecha.split('-');
+        return `${day}/${month}/${year}`;
+      }
+
+      // Si la fecha ya está en formato dd/MM/yyyy
+      return fecha;
+    } catch (error) {
+      console.error('Error normalizando fecha:', error);
+      return fecha;
+    }
+  };
+
   // Aplicar filtros y ordenamiento
   useEffect(() => {
     let result = [...allData];
@@ -62,9 +96,20 @@ const ReportsView = () => {
     // Aplicar filtros
     Object.entries(filters).forEach(([key, value]) => {
       if (value && value.toString().trim() !== '') {
-        result = result.filter(item => 
-          item[key]?.toString().toLowerCase().includes(value.toLowerCase())
-        );
+        if (key === 'fecha_reserva') {
+          const normalizedFilterDate = normalizeFecha(value);
+          console.log('Buscando fecha:', normalizedFilterDate); // Debug
+
+          result = result.filter(item => {
+            const normalizedItemDate = normalizeFecha(item[key]);
+            console.log('Comparando con:', normalizedItemDate); // Debug
+            return normalizedItemDate === normalizedFilterDate;
+          });
+        } else {
+          result = result.filter(item => 
+            item[key]?.toString().toLowerCase().includes(value.toLowerCase())
+          );
+        }
       }
     });
 
@@ -123,6 +168,15 @@ const ReportsView = () => {
     return 'text';
   };
 
+  const generateHourOptions = () => {
+    const hours = [];
+    for (let i = 7; i <= 21; i++) {
+      const hour = i.toString().padStart(2, '0');
+      hours.push(`${hour}:00`);
+    }
+    return hours;
+  };
+
   const renderFilterInput = (key, label) => {
     const type = getFilterType(key);
     
@@ -141,6 +195,27 @@ const ReportsView = () => {
         );
       
       case 'time':
+        // Modificación especial para hora_inicio_reserva
+        if (key === 'hora_inicio_reserva') {
+          return (
+            <div className="relative">
+              <select
+                className="w-20 px-2 py-1 text-sm border rounded pl-8 focus:ring-2 focus:ring-turquesa focus:border-transparent"
+                value={filters[key] || ''}
+                onChange={(e) => handleFilterChange(key, e.target.value)}
+              >
+                <option value="">Todas</option>
+                {generateHourOptions().map(hour => (
+                  <option key={hour} value={hour}>
+                    {hour}
+                  </option>
+                ))}
+              </select>
+              <ClockIcon className="w-4 h-4 text-gray-400 absolute left-2 top-1/2 transform -translate-y-1/2" />
+            </div>
+          );
+        }
+        // Mantener el input time original para otros campos de hora
         return (
           <div className="relative">
             <input
