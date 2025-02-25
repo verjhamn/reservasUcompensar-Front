@@ -6,7 +6,7 @@ import es from "date-fns/locale/es";
 import { toast, Toaster } from 'react-hot-toast';
 import { createReservation } from "../Services/createReservationService";
 import { getUserId } from "../Services/authService";
-import { getDisponibilidad } from "../Services/getDisponibilidadService";
+import { getDisponibilidad, processOccupiedHours } from "../Services/getDisponibilidadService";
 import { canReserveAnySpace } from '../utils/userHelper';
 
 import LoadingSpinner from './UtilComponents/LoadingSpinner';
@@ -60,75 +60,9 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
           
           console.log('Respuesta disponibilidad:', disponibilidad);
 
-          const horasOcupadas = new Set();
-
-          // Procesar reservas (diferente estructura para coworking y no-coworking)
-          if (Array.isArray(disponibilidad)) {
-            // Para espacios coworking, las reservas vienen directamente en el array
-            disponibilidad.forEach(reserva => {
-              const inicio = new Date(reserva.hora_inicio);
-              const fin = new Date(reserva.hora_fin);
-
-              console.log('Procesando reserva coworking:', { 
-                inicio: format(inicio, 'HH:mm'), 
-                fin: format(fin, 'HH:mm') 
-              });
-
-              let horaActual = new Date(inicio);
-              while (horaActual < fin) {
-                const horaFormateada = format(horaActual, "HH:00");
-                horasOcupadas.add(horaFormateada);
-                console.log('Agregando hora ocupada coworking:', horaFormateada);
-                horaActual = addHours(horaActual, 1);
-              }
-            });
-          } else if (disponibilidad.espacio?.reservas) {
-            // Para espacios no-coworking
-            disponibilidad.espacio.reservas.forEach(reserva => {
-              const inicio = new Date(reserva.hora_inicio);
-              const fin = new Date(reserva.hora_fin);
-
-              console.log('Procesando reserva no-coworking:', { 
-                inicio: format(inicio, 'HH:mm'), 
-                fin: format(fin, 'HH:mm') 
-              });
-
-              let horaActual = new Date(inicio);
-              while (horaActual < fin) {
-                const horaFormateada = format(horaActual, "HH:00");
-                horasOcupadas.add(horaFormateada);
-                console.log('Agregando hora ocupada no-coworking:', horaFormateada);
-                horaActual = addHours(horaActual, 1);
-              }
-            });
-          }
-
-          // Procesar horarioSIAF (igual para ambos tipos)
-          if (disponibilidad.horarioSIAF) {
-            disponibilidad.horarioSIAF.forEach(horario => {
-              const diaHorario = format(new Date(horario.clseFechainicio), 'EEEE', { locale: es });
-              const diaSeleccionado = format(selectedDate, 'EEEE', { locale: es });
-
-              if (diaHorario.toLowerCase() === diaSeleccionado.toLowerCase()) {
-                const [horaInicio] = horario.horainicio.split(':');
-                const [horaFin] = horario.horafinal.split(':');
-
-                console.log('Procesando horario SIAF:', {
-                  dia: diaHorario,
-                  inicio: horaInicio,
-                  fin: horaFin
-                });
-
-                for (let hora = parseInt(horaInicio); hora <= parseInt(horaFin); hora++) {
-                  const horaFormateada = `${hora.toString().padStart(2, '0')}:00`;
-                  horasOcupadas.add(horaFormateada);
-                  console.log('Agregando hora SIAF:', horaFormateada);
-                }
-              }
-            });
-          }
-
-          const horasArray = Array.from(horasOcupadas);
+          // Usar la nueva función de procesamiento
+          const horasArray = processOccupiedHours(disponibilidad, selectedDate);
+          
           console.log('Horas ocupadas finales:', horasArray);
           setReservedHours(horasArray);
         } catch (error) {
@@ -298,7 +232,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
   };
 
   const isTimeSlotAvailable = (timeSlot) => {
-    console.log('Checking slot:', timeSlot, 'Reserved hours:', reservedHours); // Debug
+    /* console.log('Checking slot:', timeSlot, 'Reserved hours:', reservedHours); // Debug */
     return !reservedHours.includes(timeSlot);
   };
 
@@ -586,7 +520,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
                 >
                   <path
                     fillRule="evenodd"
-                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a 1 1 0 01-1.414 0z"
                     clipRule="evenodd"
                   />
                 </svg>

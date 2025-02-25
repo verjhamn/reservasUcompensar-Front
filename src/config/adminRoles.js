@@ -28,7 +28,6 @@ export const AUTHORIZED_EMAILS = {
     'cotalorar@ucompensar.edu.co',
     'afurianv@ucompensar.edu.co',
     'crnunezv@ucompensar.edu.co',
-    'joacruzvh@ucompensar.edu.co',
     'yutsantanas@ucompensar.edu.co',
     'edcentenop@ucompensar.edu.co',
     'daflequizamonm@ucompensar.edu.co',
@@ -36,6 +35,7 @@ export const AUTHORIZED_EMAILS = {
     'meycastanedav@ucompensar.edu.co',
     'lajherrac@ucompensar.edu.co',
     'cjhernandezm@ucompensar.edu.co',
-    'mcvillarragag@ucompensar.edu.co'
+    'mcvillarragag@ucompensar.edu.co',
+    'joacruzh@ucompensar.edu.co'
   ]
 };
