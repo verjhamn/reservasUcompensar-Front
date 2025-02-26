@@ -10,16 +10,21 @@ import {
 } from "@heroicons/react/24/outline";
 import { getGeneralReport } from "../../Services/reportsService";
 import { downloadReport } from "../../Services/DownloadReport";
-import { format, parse, parseISO } from 'date-fns';
+import { format, parse } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 const ReportsView = () => {
-  // Definir las columnas exactamente como aparecen en la UI
+  // Modificar la definición de columnas para incluir estado al inicio
   const columns = [
+    { 
+      key: 'estado', 
+      label: 'ESTADO',
+      options: ['Creada', 'Cancelada'] // Opciones para el filtro dropdown
+    },
     { key: 'fecha_hora_registro', label: 'FECHA Y HORA DE REGISTRO' },
     { key: 'fecha_reserva', label: 'FECHA DE RESERVA' },
-    { key: 'hora_inicio_reserva', label: 'HORA INICIO' },
-    { key: 'hora_fin_reserva', label: 'HORA FIN' },
+    { key: 'hora_inicio_reserva', label: 'HORA DE INICIO DE RESERVA' },
+    { key: 'hora_fin_reserva', label: 'HORA DE FIN DE RESERVA' },
     { key: 'codigo_espacio', label: 'CÓDIGO DE ESPACIO' },
     { key: 'usuario', label: 'USUARIO' },
     { key: 'cargo_rol', label: 'CARGO/ROL' },
@@ -57,21 +62,14 @@ const ReportsView = () => {
     }
   };
 
-  // Función auxiliar para normalizar fechas
+  // Agregar función para normalizar fechas
   const normalizeFecha = (fecha) => {
     try {
       if (!fecha) return '';
       
       // Si la fecha está en formato "Viernes, 21 de febrero"
       if (fecha.includes('de')) {
-        // Extraer el año del conjunto de datos si está disponible
-        const year = new Date().getFullYear(); // O usar el año actual como fallback
-        const fullFecha = `${fecha} ${year}`; // Agregar el año
-        const parsedDate = parse(fullFecha, "EEEE, d 'de' MMMM yyyy", new Date(), { 
-          locale: es,
-          // Asegurarnos de que la fecha se mantenga exacta
-          weekStartsOn: 1
-        });
+        const parsedDate = parse(fecha, "EEEE, d 'de' MMMM", new Date(), { locale: es });
         return format(parsedDate, 'dd/MM/yyyy');
       }
       
@@ -98,11 +96,8 @@ const ReportsView = () => {
       if (value && value.toString().trim() !== '') {
         if (key === 'fecha_reserva') {
           const normalizedFilterDate = normalizeFecha(value);
-          console.log('Buscando fecha:', normalizedFilterDate); // Debug
-
           result = result.filter(item => {
             const normalizedItemDate = normalizeFecha(item[key]);
-            console.log('Comparando con:', normalizedItemDate); // Debug
             return normalizedItemDate === normalizedFilterDate;
           });
         } else {
@@ -168,16 +163,33 @@ const ReportsView = () => {
     return 'text';
   };
 
-  const generateHourOptions = () => {
-    const hours = [];
-    for (let i = 7; i <= 21; i++) {
-      const hour = i.toString().padStart(2, '0');
-      hours.push(`${hour}:00`);
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'Creada':
+        return 'bg-green-100 text-green-800';
+      case 'Cancelada':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
-    return hours;
   };
 
-  const renderFilterInput = (key, label) => {
+  const renderFilterInput = (key, label, options) => {
+    if (key === 'estado') {
+      return (
+        <select
+          className="w-full px-2 py-1 text-sm border rounded focus:ring-2 focus:ring-turquesa focus:border-transparent"
+          value={filters[key] || ''}
+          onChange={(e) => handleFilterChange(key, e.target.value)}
+        >
+          <option value="">Todos</option>
+          {options.map(option => (
+            <option key={option} value={option}>{option}</option>
+          ))}
+        </select>
+      );
+    }
+
     const type = getFilterType(key);
     
     switch (type) {
@@ -195,27 +207,6 @@ const ReportsView = () => {
         );
       
       case 'time':
-        // Modificación especial para hora_inicio_reserva
-        if (key === 'hora_inicio_reserva') {
-          return (
-            <div className="relative">
-              <select
-                className="w-20 px-2 py-1 text-sm border rounded pl-8 focus:ring-2 focus:ring-turquesa focus:border-transparent"
-                value={filters[key] || ''}
-                onChange={(e) => handleFilterChange(key, e.target.value)}
-              >
-                <option value="">Todas</option>
-                {generateHourOptions().map(hour => (
-                  <option key={hour} value={hour}>
-                    {hour}
-                  </option>
-                ))}
-              </select>
-              <ClockIcon className="w-4 h-4 text-gray-400 absolute left-2 top-1/2 transform -translate-y-1/2" />
-            </div>
-          );
-        }
-        // Mantener el input time original para otros campos de hora
         return (
           <div className="relative">
             <input
@@ -280,7 +271,7 @@ const ReportsView = () => {
         <table className="min-w-full divide-y divide-gray-200">
           <thead>
             <tr>
-              {columns.map(({ key, label }) => (
+              {columns.map(({ key, label, options }) => (
                 <th key={key} className="px-6 py-3 bg-gray-50">
                   <div className="flex flex-col gap-3">
                     <div
@@ -296,7 +287,7 @@ const ReportsView = () => {
                       />
                     </div>
                     <div className="relative">
-                      {renderFilterInput(key, label)}
+                      {renderFilterInput(key, label, options)}
                     </div>
                   </div>
                 </th>
@@ -324,7 +315,11 @@ const ReportsView = () => {
                 <tr key={index} className="hover:bg-gray-50">
                   {columns.map(({ key }) => (
                     <td key={key} className="px-6 py-4 whitespace-nowrap text-sm">
-                      {row[key]}
+                      {key === 'estado' ? (
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(row[key])}`}>
+                          {row[key]}
+                        </span>
+                      ) : row[key]}
                     </td>
                   ))}
                 </tr>
