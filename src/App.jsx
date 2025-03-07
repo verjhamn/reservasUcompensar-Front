@@ -11,6 +11,7 @@ import FullCalendarView from "./components/FullCalendarView";
 import ReportsView from "./components/Reports/ReportsView";
 import InfoModal from "./components/InfoModal";
 import { hasAdminAccess, canAccessReports } from './utils/userHelper';
+import AdminReservationsView from './components/AdminReservations/AdminReservationsView';
 
 const msalInstance = new PublicClientApplication(msalConfig);
 
@@ -118,6 +119,14 @@ function App() {
                                     >
                                         Mis Reservas
                                     </button>
+                                    {isAdmin && (
+                                        <button
+                                            onClick={() => setView("adminReservations")}
+                                            className={`py-2 px-4 rounded ${view === "adminReservations" ? "bg-turquesa hover:bg-turquesa/90 text-white" : "bg-gray-300"}`}
+                                        >
+                                            Administrar Reservas
+                                        </button>
+                                    )}
                                     {(isAdmin || canViewReports) && (
                                         <button
                                             onClick={() => setView("reports")}
@@ -143,6 +152,7 @@ function App() {
                         {view === "Calendario" && <BigCalendarView />}
                         {view === "fullCalendar" && <FullCalendarView />}
                         {view === "reports" && (isAdmin || canViewReports) && <ReportsView />}
+                        {view === "adminReservations" && isAdmin && <AdminReservationsView />}
                     </div>
                 </main>
                 <Footer />

@@ -130,10 +130,7 @@ const SearchFilters = ({ filters, setFilters, onFilterChange }) => {
             onChange={handleChange}
             className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
           >
-            <option value="">Seleccionar</option>
-            {staticOptions.sedes.map((sede, index) => (
-              <option key={index} value={sede}>{sede}</option>
-            ))}
+            <option value="Campus Av. 68">Campus Av. 68</option>
           </select>
         </div>
 

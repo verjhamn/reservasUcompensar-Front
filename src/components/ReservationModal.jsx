@@ -6,7 +6,7 @@ import es from "date-fns/locale/es";
 import { toast, Toaster } from 'react-hot-toast';
 import { createReservation } from "../Services/createReservationService";
 import { getUserId } from "../Services/authService";
-import { getDisponibilidad } from "../Services/getDisponibilidadService";
+import { getDisponibilidad, processOccupiedHours } from "../Services/getDisponibilidadService";
 import { canReserveAnySpace } from '../utils/userHelper';
 
 import LoadingSpinner from './UtilComponents/LoadingSpinner';
@@ -58,40 +58,12 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
           const formattedDate = format(selectedDate, "dd/MM/yyyy");
           const disponibilidad = await getDisponibilidad(spaceData.id, formattedDate);
           
-          console.log('Disponibilidad raw:', disponibilidad); // Debug
+          console.log('Respuesta disponibilidad:', disponibilidad);
 
-          const horasOcupadas = new Set();
-          disponibilidad.forEach(reserva => {
-            let inicio, fin;
-            
-            // Manejar ambos formatos de fecha
-            if (reserva.hora_inicio) {
-              // Formato no-coworking: "HH:mm"
-              inicio = new Date(selectedDate);
-              fin = new Date(selectedDate);
-              const [horaInicio, minInicio] = reserva.hora_inicio.split(':');
-              const [horaFin, minFin] = reserva.hora_fin.split(':');
-              inicio.setHours(parseInt(horaInicio), parseInt(minInicio));
-              fin.setHours(parseInt(horaFin), parseInt(minFin));
-            } else if (reserva.inicio) {
-              // Formato coworking: "dd/MM/yyyy HH:mm"
-              inicio = new Date(reserva.inicio.replace(/(\d{2})\/(\d{2})\/(\d{4}) (\d{2}:\d{2})/, '$3-$2-$1 $4'));
-              fin = new Date(reserva.fin.replace(/(\d{2})\/(\d{2})\/(\d{4}) (\d{2}:\d{2})/, '$3-$2-$1 $4'));
-            }
-
-            console.log('Procesando reserva:', { inicio, fin }); // Debug
-
-            if (inicio && fin) {
-              for (let hora = inicio; hora < fin; hora = addHours(hora, 1)) {
-                const horaFormateada = format(hora, "HH:00");
-                horasOcupadas.add(horaFormateada);
-                console.log('Agregando hora ocupada:', horaFormateada); // Debug
-              }
-            }
-          });
-
-          const horasArray = Array.from(horasOcupadas);
-          console.log('Todas las horas ocupadas:', horasArray); // Debug
+          // Usar la nueva función de procesamiento
+          const horasArray = processOccupiedHours(disponibilidad, selectedDate);
+          
+          console.log('Horas ocupadas finales:', horasArray);
           setReservedHours(horasArray);
         } catch (error) {
           console.error("Error al obtener disponibilidad:", error);
@@ -260,7 +232,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
   };
 
   const isTimeSlotAvailable = (timeSlot) => {
-    console.log('Checking slot:', timeSlot, 'Reserved hours:', reservedHours); // Debug
+    /* console.log('Checking slot:', timeSlot, 'Reserved hours:', reservedHours); // Debug */
     return !reservedHours.includes(timeSlot);
   };
 
@@ -548,7 +520,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
                 >
                   <path
                     fillRule="evenodd"
-                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a 1 1 0 01-1.414 0z"
                     clipRule="evenodd"
                   />
                 </svg>
