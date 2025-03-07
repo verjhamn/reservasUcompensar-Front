@@ -1,216 +1,90 @@
 import React, { useState, useEffect } from "react";
-import { Calendar, dateFnsLocalizer } from "react-big-calendar";
-import "react-big-calendar/lib/css/react-big-calendar.css";
-import { format, parse, startOfWeek, getDay } from "date-fns";
-import es from "date-fns/locale/es";
+import { Toaster } from 'react-hot-toast';
 import { getMisReservas } from "../services/getMisReservas";
 import { deleteReserva } from "../services/deleteReservaService";
-import { toast, Toaster } from 'react-hot-toast';
-import { showConfirmation, showSuccessToast, showErrorToast } from '../components/UtilComponents/Confirmation';
-
-
-const locales = { es: es };
-const localizer = dateFnsLocalizer({
-  format,
-  parse,
-  startOfWeek: () => startOfWeek(new Date(), { weekStartsOn: 1 }),
-  getDay,
-  locales,
-});
+import { showConfirmation, showSuccessToast, showErrorToast } from './UtilComponents/Confirmation';
+import MyReservationList from './Calendar/MyReservationList';
+import ReservationCalendar from './Calendar/ReservationCalendar';
+import { format } from 'date-fns';
 
 const BigCalendarView = () => {
   const [events, setEvents] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [filteredEvents, setFilteredEvents] = useState([]);
-  const [daysWithEvents, setDaysWithEvents] = useState(new Set());
 
   useEffect(() => {
     const fetchReservations = async () => {
-      console.log("[misReservas] Cargando reservas del usuario...");
       try {
         const response = await getMisReservas();
-        console.log("[misReservas] Reservas obtenidas:", response);
+        const formattedEvents = response.map(item => ({
+          id: item.id,
+          type: item.espacio.key || 'Coworking',
+          idEspacio: item.espacio.codigo,
+          title: item.titulo,
+          descripcion: item.descripcion,
+          start: new Date(item.hora_inicio),
+          end: new Date(item.hora_fin),
+          hora_inicio: item.hora_inicio,
+          hora_fin: item.hora_fin
+        }));
 
-        const formattedEvents = response.flatMap(item => {
-
-            return [{
-              id: item.id,
-              type: item.espacio.key || 'Coworking',
-              idEspacio: item.espacio.codigo,
-              title: item.titulo,
-              start: new Date(item.hora_inicio),
-              end: new Date(item.hora_fin),
-              desc: item.descripcion,
-            }];
-          
-        }).filter(Boolean);
-        
         setEvents(formattedEvents);
-        
-        // Crear un Set con las fechas que tienen eventos
-        const eventDays = new Set(
-          formattedEvents.map(event => format(new Date(event.start), "yyyy-MM-dd"))
-        );
-        setDaysWithEvents(eventDays);
-        
-        console.log("[misReservas] Eventos formateados:", formattedEvents);
       } catch (error) {
         console.error("[misReservas] Error al cargar reservas:", error);
+        showErrorToast('Error al cargar las reservas');
       }
     };
 
     fetchReservations();
   }, []);
 
-  useEffect(() => {
-    const filtered = events.filter(
-      (event) =>
-        format(new Date(event.start), "yyyy-MM-dd") ===
-        format(selectedDate, "yyyy-MM-dd")
-    );
-    setFilteredEvents(filtered);
-    console.log("[misReservas] Eventos filtrados por fecha:", filtered);
-  }, [selectedDate, events]);
-
-  const handleEdit = (eventId) => {
-    console.log("[misReservas] Editar reserva con ID:", eventId);
-    toast.info('Funcionalidad en desarrollo...', {
-      duration: 3000,
-      position: 'top-right',
-      style: {
-        background: '#f0f9ff',
-        color: '#0ea5e9',
-      },
-    });
-  };
-
   const handleCancel = async (eventId) => {
-    console.log("[misReservas] Intentando cancelar reserva con ID:", eventId);
-    
     try {
       const confirmed = await showConfirmation(
-        () => {}, 
+        () => { },
         "¿Estás seguro de que deseas cancelar esta reserva?"
       );
-  
+
       if (confirmed) {
         await deleteReserva(eventId);
-        setEvents((prevEvents) => prevEvents.filter((event) => event.id !== eventId));
-        console.log("[misReservas] Reserva cancelada con éxito.");
+        setEvents(prevEvents => prevEvents.filter(event => event.id !== eventId));
         showSuccessToast('Reserva cancelada con éxito');
       }
     } catch (error) {
       console.error("[misReservas] Error al cancelar la reserva:", error);
-      showErrorToast('Error al cancelar la reserva. Por favor, inténtalo de nuevo.');
+      showErrorToast('Error al cancelar la reserva');
     }
   };
 
-  const dayPropGetter = (date) => {
-    const dateStr = format(date, "yyyy-MM-dd");
-    const isSelected = dateStr === format(selectedDate, "yyyy-MM-dd");
-    const hasEvents = daysWithEvents.has(dateStr);
-
-    if (isSelected && hasEvents) {
-      return {
-        style: {
-          backgroundColor: "#00aab7",
-          color: "#fff",
-          position: "relative",
-          border: "2px solid #008a94"
-        }
-      };
-    } else if (isSelected) {
-      return {
-        style: {
-          backgroundColor: "#00aab7",
-          color: "#fff"
-        }
-      };
-    } else if (hasEvents) {
-      return {
-        style: {
-          backgroundColor: "#a8e3ea",
-          color: "#00aab7",
-          fontWeight: "bold"
-        }
-      };
-    }
-    return {};
-  };
+  const filteredEvents = events.filter(event =>
+    format(new Date(event.start), "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd")
+  );
 
   return (
-    <div className="p-4 bg-gris-sutil rounded-lg shadow-lg max-w-4xl mx-auto">
+    <div className="p-4 bg-gris-sutil rounded-lg shadow-lg">
       <Toaster />
-      <div className="p-2 bg-white rounded-lg shadow-md mb-4">
-        <Calendar
-          localizer={localizer}
-          events={[]}
-          selectable
-          onSelectSlot={(slotInfo) => setSelectedDate(slotInfo.start)}
-          date={selectedDate}
-          onNavigate={(date) => setSelectedDate(date)}
-          views={["month"]}
-          style={{ height: 300 }}
-          dayPropGetter={dayPropGetter}
-          messages={{
-            next: "Siguiente",
-            previous: "Anterior",
-            today: "Hoy",
-            month: "Mes",
-            week: "Semana",
-            day: "Día",
-            agenda: "Agenda",
-            date: "Fecha",
-            time: "Hora",
-            event: "Evento",
-            noEventsInRange: "No hay eventos en este rango.",
-          }}
-          formats={{
-            monthHeaderFormat: "MMMM yyyy",
-            weekdayFormat: (date) => format(date, "EE", { locale: es }).toUpperCase(),
-            dayFormat: "d",
-          }}
-        />
-      </div>
+      <div className="flex flex-col lg:flex-row gap-4">
 
-      <div className="bg-white p-4 rounded-lg shadow-md">
-        <h3 className="text-lg font-semibold text-turquesa mb-3">
-          Reservas del {format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: es })}
-        </h3>
+        <div className="w-full lg:w-1/3">
+          <div className="sticky top-4">
+            <ReservationCalendar
+              events={events}
+              selectedDate={selectedDate}
+              onSelectDate={setSelectedDate}
+              onCancelReservation={handleCancel}
+              showStatus={false}
 
-        {filteredEvents.length > 0 ? (
-          <ul className="space-y-4">
-            {filteredEvents.map((event) => (
-              <li key={event.id} className="border-b pb-2">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h4 className="text-base font-semibold text-gris-medio">
-                      Espacio: {event.idEspacio}
-                    </h4>
-                    <p className="text-sm text-gris-medio">ID Reserva: {event.id}</p>
-                    <p className="text-sm text-gris-medio">Tipo: {event.type}</p>
-                    <p className="text-sm text-gris-medio">
-                      {format(new Date(event.start), "HH:mm")} -{" "}
-                      {format(new Date(event.end), "HH:mm")}
-                    </p>
-                    <p className="text-sm text-gris-medio">Título: {event.title}</p>
-                    <p className="text-sm text-gris-medio">Descripción: {event.desc}</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleCancel(event.id)}
-                      className="text-sm text-white bg-fucsia px-3 py-1 rounded hover:bg-fucsia/90 transition"
-                    >
-                      Cancelar
-                    </button>
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-sm text-gris-medio">No hay reservas para este día.</p>
-        )}
+            />
+          </div>
+        </div>
+
+
+        <div className="w-full lg:w-2/3">
+          <MyReservationList
+            selectedDate={selectedDate}
+            events={filteredEvents}
+            onCancelReservation={handleCancel}
+          />
+        </div>
       </div>
     </div>
   );
