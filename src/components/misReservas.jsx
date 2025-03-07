@@ -32,17 +32,7 @@ const BigCalendarView = () => {
         console.log("[misReservas] Reservas obtenidas:", response);
 
         const formattedEvents = response.flatMap(item => {
-          if (item.espacio === null) {
-            return [{
-              id: item.id,
-              type: item.key,
-              idEspacio: item.codigo,
-              title: item.titulo,
-              start: new Date(item.hora_inicio),
-              end: new Date(item.hora_fin),
-              desc: item.descripcion,
-            }];
-          } else {
+
             return [{
               id: item.id,
               type: item.espacio.key || 'Coworking',
@@ -52,7 +42,7 @@ const BigCalendarView = () => {
               end: new Date(item.hora_fin),
               desc: item.descripcion,
             }];
-          }
+          
         }).filter(Boolean);
         
         setEvents(formattedEvents);
@@ -149,9 +139,9 @@ const BigCalendarView = () => {
   };
 
   return (
-    <div className="p-4 bg-gris-sutil rounded-lg shadow-lg">
+    <div className="p-4 bg-gris-sutil rounded-lg shadow-lg max-w-4xl mx-auto">
       <Toaster />
-      <div className="bg-white rounded-lg shadow-md mb-4">
+      <div className="p-2 bg-white rounded-lg shadow-md mb-4">
         <Calendar
           localizer={localizer}
           events={[]}
