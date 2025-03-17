@@ -27,7 +27,9 @@ const MyReservationList = ({ selectedDate, events, onCancelReservation }) => {
                                     <p className="text-sm text-gris-medio">Título: {event.title}</p>
                                     <p className="text-sm text-gris-medio">Descripción: {event.descripcion}</p>
                                 </div>
-                                <CancelButton onClick={() => onCancelReservation(event.id)} />
+                                {event.estado !== "Cancelada" && (
+                                    <CancelButton onClick={() => onCancelReservation(event.id)} />
+                                )}
                             </div>
                         </li>
                     ))}

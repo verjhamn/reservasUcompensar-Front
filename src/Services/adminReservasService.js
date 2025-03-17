@@ -8,9 +8,9 @@ export const getAllReservations = async (filters = {}) => {
             horaInicio: filters.horaInicio || "",
             horaFin: filters.horaFin || "",
             tipo: filters.tipo || "",
-            fecha_creacion: filters.fecha_creacion || "",
+            piso: filters.piso || "",
             email: filters.email || "",
-            // No incluimos id_usuario ya que no se usará
+            estado: filters.estado || ""
         });
 
         if (response.data.success) {
