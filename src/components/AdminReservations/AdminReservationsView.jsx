@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
-import SearchFilters from '../SearchFilters';
+import AdminSearchFilters from '../AdminFilters/AdminSearchFilters';
 import ReservationCalendar from '../Calendar/ReservationCalendar';
 import { getAllReservations } from '../../Services/adminReservasService';
 import { deleteReserva } from '../../Services/deleteReservaService';
@@ -9,7 +9,13 @@ import ReservationList from '../Calendar/ReservationList';
 import { format } from 'date-fns';
 
 const AdminReservationsView = () => {
-    const [filters, setFilters] = useState({});
+    const [filters, setFilters] = useState({
+        palabra: "",
+        email: "",
+        tipo: "",
+        estado: "",
+        piso: ""
+    });
     const [reservations, setReservations] = useState([]);
     const [selectedDate, setSelectedDate] = useState(new Date());
 
@@ -22,25 +28,30 @@ const AdminReservationsView = () => {
         try {
             const data = await getAllReservations(filters); // No incluir fecha en los filtros
             
-            const formattedReservations = data.map(reservation => ({
-                id: reservation.id,
-                titulo: reservation.titulo,
-                descripcion: reservation.descripcion,
-                estado: reservation.estado,
-                usuario: reservation.usuario,
-                type: reservation.espacio?.key || 'Coworking',
-                idEspacio: reservation.espacio?.codigo,
-                espacio: {
-                    codigo: reservation.espacio?.codigo,
-                    key: reservation.espacio?.key,
-                    tipo: reservation.espacio?.tipo_espacio,
-                    nombre: reservation.espacio?.nombre
-                },
-                start: new Date(reservation.hora_inicio),
-                end: new Date(reservation.hora_fin),
-                hora_inicio: reservation.hora_inicio,
-                hora_fin: reservation.hora_fin
-            }));
+            const formattedReservations = data.map(reservation => {
+                const startDate = new Date(reservation.hora_inicio);
+                const endDate = new Date(reservation.hora_fin);
+                
+                return {
+                    id: reservation.id,
+                    titulo: reservation.titulo,
+                    descripcion: reservation.descripcion,
+                    estado: reservation.estado,
+                    usuario: reservation.usuario,
+                    type: reservation.espacio?.key || 'Coworking',
+                    idEspacio: reservation.espacio?.codigo,
+                    espacio: {
+                        codigo: reservation.espacio?.codigo,
+                        key: reservation.espacio?.key,
+                        tipo: reservation.espacio?.tipo_espacio,
+                        nombre: reservation.espacio?.nombre
+                    },
+                    start: startDate,
+                    end: endDate,
+                    hora_inicio: startDate,
+                    hora_fin: endDate
+                };
+            });
 
             setReservations(formattedReservations);
         } catch (error) {
@@ -74,11 +85,10 @@ const AdminReservationsView = () => {
         <div className="container mx-auto">
             <Toaster />
             <div className="flex flex-col lg:flex-row gap-6">
-                <div className=" sticky top-4 w-full lg:w-1/4">
-                    <SearchFilters
+                <div className="w-full lg:w-1/4">
+                    <AdminSearchFilters
                         filters={filters}
                         setFilters={setFilters}
-                        isAdminView={true}
                     />
                 </div>
                 <div className="w-full lg:flex-1 flex flex-col gap-4">

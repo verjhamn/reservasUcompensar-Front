@@ -75,9 +75,11 @@ const ReservationList = ({ selectedDate, events, onCancelReservation, showStatus
 
                                         {/* Sección de Botón - Derecha */}
                                         <div className="flex items-center">
-                                            <CancelButton 
-                                                onClick={() => onCancelReservation(event.id)}
-                                            />
+                                            {event.estado !== "Cancelada" && (
+                                                <CancelButton 
+                                                    onClick={() => onCancelReservation(event.id)}
+                                                />
+                                            )}
                                         </div>
                                     </div>
                                 </li>
