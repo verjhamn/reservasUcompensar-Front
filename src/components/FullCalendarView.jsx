@@ -1,156 +1,142 @@
-import React, { useState, useEffect } from 'react';
-import FullCalendar from '@fullcalendar/react';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import timeGridPlugin from '@fullcalendar/timegrid';
-import interactionPlugin from '@fullcalendar/interaction';
-import esLocale from '@fullcalendar/core/locales/es';
-import { generateRandomEvents, salas } from '../services/eventGenerator';
-import EventsTable from './EventsTable';
+import React, { useState, useEffect } from "react";
+import { Calendar, dateFnsLocalizer } from "react-big-calendar";
+import "react-big-calendar/lib/css/react-big-calendar.css";
+import { format, parse, startOfWeek, getDay } from "date-fns";
+import es from "date-fns/locale/es";
+/* import { generateRandomEvents } from "../services/eventGenerator"; */
 
-const FullCalendarView = () => {
+// Configuración de localización en español
+const locales = { es: es };
+const localizer = dateFnsLocalizer({
+  format,
+  parse,
+  startOfWeek: () => startOfWeek(new Date(), { weekStartsOn: 1 }), // La semana comienza el lunes
+  getDay,
+  locales,
+});
+
+const MobileCalendarView = () => {
   const [events, setEvents] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const eventsPerPage = 7;
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [filteredEvents, setFilteredEvents] = useState([]);
 
   useEffect(() => {
     const generatedEvents = generateRandomEvents();
     setEvents(generatedEvents);
   }, []);
 
-  const handleDateSelect = (selectInfo) => {
-    const title = prompt('Por favor seleccione una sala:', salas.join('\n'));
-    if (title && salas.includes(title)) {
-      const newEvent = {
-        title,
-        start: selectInfo.startStr,
-        end: selectInfo.endStr,
-        allDay: selectInfo.allDay,
+  useEffect(() => {
+    const filtered = events.filter((event) =>
+      format(new Date(event.start), "yyyy-MM-dd") ===
+      format(selectedDate, "yyyy-MM-dd")
+    );
+    setFilteredEvents(filtered);
+  }, [selectedDate, events]);
+
+  const handleEdit = (eventId) => {
+    alert(`Editar reserva con ID: ${eventId}`);
+  };
+
+  const handleCancel = (eventId) => {
+    if (window.confirm("¿Estás seguro de que deseas eliminar esta reserva?")) {
+      setEvents((prevEvents) => prevEvents.filter((event) => event.id !== eventId));
+      alert("Reserva eliminada con éxito.");
+    }
+  };
+
+  // Estilo personalizado para el día seleccionado
+  const dayPropGetter = (date) => {
+    if (format(date, "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd")) {
+      return {
+        style: {
+          backgroundColor: "#00aab7",
+          color: "#fff",
+          /* borderRadius: "50%", */
+        },
       };
-      setEvents([...events, newEvent]);
-    } else if (title) {
-      alert('Por favor seleccione una sala válida');
     }
-  };
-
-  const handleEventClick = (clickInfo) => {
-    if (confirm(`¿Desea eliminar la reserva de ${clickInfo.event.title}?`)) {
-      clickInfo.event.remove();
-      const updatedEvents = events.filter(event =>
-        event.title !== clickInfo.event.title ||
-        event.start !== clickInfo.event.startStr
-      );
-      setEvents(updatedEvents);
-    }
-  };
-
-  const filteredEvents = events.filter(event =>
-    event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    event.location?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const sortedEvents = [...filteredEvents].sort((a, b) =>
-    new Date(a.start) - new Date(b.start)
-  );
-
-  const totalPages = Math.ceil(sortedEvents.length / eventsPerPage);
-  const indexOfLastEvent = currentPage * eventsPerPage;
-  const indexOfFirstEvent = indexOfLastEvent - eventsPerPage;
-  const currentEvents = sortedEvents.slice(indexOfFirstEvent, indexOfLastEvent);
-
-  const handlePageChange = (pageNumber) => {
-    setCurrentPage(pageNumber);
+    return {};
   };
 
   return (
-    <div className="p-8 bg-white rounded-xl shadow-lg">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-turquesa mb-2">Calendario de Reservas</h2>
-        <p className="text-gris-medio">Haga clic en una fecha para crear una reserva</p>
-      </div>
-      
-      <div className="grid grid-cols-[1fr_auto] gap-4">
-        {/* Columna del Calendario */}
-        <div className="bg-white rounded-lg overflow-hidden">
-          <FullCalendar
-            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-            headerToolbar={{
-              left: 'prev,next today',
-              center: 'title',
-              right: 'dayGridMonth,timeGridWeek,timeGridDay'
-            }}
-            initialView="dayGridMonth"
-            selectable={true}
-            selectMirror={true}
-            dayMaxEvents={true}
-            weekends={true}
-            events={events}
-            select={handleDateSelect}
-            eventClick={handleEventClick}
-            locale={esLocale}
-            slotMinTime="07:00:00"
-            slotMaxTime="21:00:00"
-            allDaySlot={false}
-            slotDuration="00:30:00"
-            eventTimeFormat={{
-              hour: '2-digit',
-              minute: '2-digit',
-              hour12: false
-            }}
-            buttonText={{
-              today: 'Hoy',
-              month: 'Mes',
-              week: 'Semana',
-              day: 'Día',
-            }}
-            height="auto"
-            /** Estilos personalizados para eventos */
-            eventContent={(eventInfo) => {
-              // Vista mensual
-              if (eventInfo.view.type === 'dayGridMonth') {
-                return (
-                  <div
-                    className="bg-turquesa text-gris-claro font-bold rounded-md text-xs p-1 shadow-md"
-                  >
-                    {eventInfo.event.title}
-                  </div>
-                );
-              }
-
-              // Otras vistas (semana/día)
-              return (
-                <div
-                  className="bg-turquesa text-gris-claro font-semibold rounded-md text-sm p-2"
-                >
-                  <div>{eventInfo.event.title}</div>
-                  {eventInfo.event.extendedProps && (
-                    <div className="text-xs">
-                      <div>Capacidad: {eventInfo.event.extendedProps.capacity} personas</div>
-                      <div>Ubicación: {eventInfo.event.extendedProps.location}</div>
-                    </div>
-                  )}
-                </div>
-              );
-            }}
-          />
-        </div>
-
-        {/* Columna de la Agenda */}
-        <EventsTable 
-          events={currentEvents}
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          currentPage={currentPage}
-          setCurrentPage={setCurrentPage}
-          totalPages={totalPages}
-          indexOfFirstEvent={indexOfFirstEvent}
-          indexOfLastEvent={indexOfLastEvent}
-          totalEvents={sortedEvents.length}
-          handlePageChange={handlePageChange}
+    <div className="p-4 bg-gris-sutil rounded-lg shadow-lg">
+      {/* Selector de fecha (calendario reducido) */}
+      <div className="bg-white rounded-lg shadow-md mb-4">
+        <Calendar
+          localizer={localizer}
+          events={[]} // Sin mostrar eventos en el calendario
+          date={selectedDate}
+          onNavigate={(date) => setSelectedDate(date)} // Cambiar la fecha seleccionada
+          views={["month"]}
+          style={{ height: 300 }}
+          dayPropGetter={dayPropGetter}
+          messages={{
+            next: "Siguiente",
+            previous: "Anterior",
+            today: "Hoy",
+            month: "Mes",
+            week: "Semana",
+            day: "Día",
+            agenda: "Agenda",
+            date: "Fecha",
+            time: "Hora",
+            event: "Evento",
+            noEventsInRange: "No hay eventos en este rango.",
+          }}
+          formats={{
+            monthHeaderFormat: "MMMM yyyy", // Nombre del mes y año en español
+            weekdayFormat: (date) => format(date, "EE", { locale: es }).toUpperCase(), // Días abreviados (LU, MA...)
+            dayFormat: "d", // Día del mes
+          }}
         />
+      </div>
+
+      {/* Lista de eventos */}
+      <div className="bg-white p-4 rounded-lg shadow-md">
+        <h3 className="text-lg font-semibold text-turquesa mb-3">
+          Reservas del {format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: es })}
+        </h3>
+
+        {filteredEvents.length > 0 ? (
+          <ul className="space-y-4">
+            {filteredEvents.map((event) => (
+              <li key={event.id} className="border-b pb-2">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h4 className="text-base font-semibold text-gris-medio">
+                      {event.title}
+                    </h4>
+                    <p className="text-sm text-gris-medio">
+                      {format(new Date(event.start), "HH:mm")} - {format(new Date(event.end), "HH:mm")}
+                    </p>
+                    <p className="text-sm text-gris-medio">{event.desc}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    {/* Botón de editar */}
+                    <button
+                      onClick={() => handleEdit(event.id)}
+                      className="text-sm text-white bg-turquesa px-3 py-1 rounded hover:bg-turquesa/90 transition"
+                    >
+                      Editar
+                    </button>
+                    {/* Botón de cancelar */}
+                    <button
+                      onClick={() => handleCancel(event.id)}
+                      className="text-sm text-white bg-fucsia px-3 py-1 rounded hover:bg-fucsia/90 transition"
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-gris-medio">No hay reservas para este día.</p>
+        )}
       </div>
     </div>
   );
 };
 
-export default FullCalendarView;
+export default MobileCalendarView;
