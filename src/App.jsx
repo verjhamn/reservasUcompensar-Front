@@ -10,8 +10,13 @@ import BigCalendarView from "./components/misReservas";
 import FullCalendarView from "./components/FullCalendarView";
 import ReportsView from "./components/Reports/ReportsView";
 import InfoModal from "./components/InfoModal";
+import CheckInModal from "./components/CheckInModal";
 import { hasAdminAccess, canAccessReports } from './utils/userHelper';
 import AdminReservationsView from './components/AdminReservations/AdminReservationsView';
+import { getDisponibilidad, verificarReservaUsuario } from './Services/getDisponibilidadService';
+import { getUserId } from './Services/authService';
+import { format } from 'date-fns';
+import { getDisponibilidadCheckIn } from './Services/getDisponibilidadService';
 
 const msalInstance = new PublicClientApplication(msalConfig);
 
@@ -29,14 +34,16 @@ function App() {
 
     const [view, setView] = useState("table");
     const [showModal, setShowModal] = useState(false);
+    const [showCheckInModal, setShowCheckInModal] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
     const [canViewReports, setCanViewReports] = useState(false);
+    const [reservaCheckIn, setReservaCheckIn] = useState(null);
 
     // Verificar si hay un usuario autenticado en localStorage
     useEffect(() => {
         const storedUser = localStorage.getItem("userData");
-        setIsLoggedIn(!!storedUser); // Si hay usuario, `isLoggedIn` será true
+        setIsLoggedIn(!!storedUser);
     }, []);
 
     // Verificar si el modal ya se ha mostrado
@@ -48,14 +55,41 @@ function App() {
         }
     }, []);
 
-    // Extraer código del espacio desde la URL
+    // Extraer código del espacio desde la URL y verificar check-in
     useEffect(() => {
-        const pathParts = window.location.pathname.split("/");
-        if (pathParts.length === 3 && pathParts[1] === "espacio") {
-            const codigoEspacio = pathParts[2];
-            setFilters(prev => ({ ...prev, id: codigoEspacio }));
-        }
-    }, []);
+        const verificarCheckIn = async () => {
+            const pathParts = window.location.pathname.split("/");
+            if (pathParts.length === 3 && pathParts[1] === "espacio") {
+                const codigoEspacio = pathParts[2];
+                setFilters(prev => ({ ...prev, id: codigoEspacio }));
+
+                if (isLoggedIn) {
+                    try {
+                        const userId = getUserId();
+                        const fecha = format(new Date(), "dd/MM/yyyy");
+                        const disponibilidad = await getDisponibilidadCheckIn(codigoEspacio, fecha, userId);
+                        
+                        const reservaUsuario = verificarReservaUsuario(disponibilidad.reservas, userId);
+                        
+                        if (reservaUsuario) {
+                            if (reservaUsuario.estado === "Confirmada") {
+                                // Si ya está confirmada, continuar con el flujo normal
+                                return;
+                            } else {
+                                // Si tiene reserva pero no está confirmada, mostrar modal de check-in
+                                setReservaCheckIn({ ...reservaUsuario, espacio: disponibilidad.espacio });
+                                setShowCheckInModal(true);
+                            }
+                        }
+                    } catch (error) {
+                        console.error("Error al verificar check-in:", error);
+                    }
+                }
+            }
+        };
+
+        verificarCheckIn();
+    }, [isLoggedIn]);
 
     useEffect(() => {
         const checkUserPermissions = () => {
@@ -83,6 +117,14 @@ function App() {
         setShowModal(false);
     };
 
+    const handleCloseCheckInModal = (checkInSuccess) => {
+        setShowCheckInModal(false);
+        if (checkInSuccess) {
+            // Si el check-in fue exitoso, continuar con el flujo normal
+            setReservaCheckIn(null);
+        }
+    };
+
     const goToMyReservations = () => {
         setView("Calendario");
     };
@@ -99,7 +141,14 @@ function App() {
         <MsalProvider instance={msalInstance}>
             <div className="min-h-screen flex flex-col">
                 {showModal && <InfoModal onClose={handleCloseModal} />}
-                <Header onLoginSuccess={handleLoginSuccess} onLogout={handleLogout} />
+                <Header 
+                    onLoginSuccess={handleLoginSuccess}
+                    onLogout={handleLogout}
+                    isLoggedIn={isLoggedIn}
+                    isAdmin={isAdmin}
+                    canViewReports={canViewReports}
+                    onMyReservationsClick={goToMyReservations}
+                />
                 <main className="flex-grow bg-gray-100">
                     <div className="container mx-auto py-6">
                         <div className="flex justify-center space-x-4 mb-6">
@@ -156,6 +205,14 @@ function App() {
                     </div>
                 </main>
                 <Footer />
+
+                {showCheckInModal && (
+                    <CheckInModal
+                        isOpen={showCheckInModal}
+                        onClose={handleCloseCheckInModal}
+                        reservaData={reservaCheckIn}
+                    />
+                )}
             </div>
         </MsalProvider>
     );

@@ -22,7 +22,7 @@ const generateTimeOptions = (start, end) => {
 const AdminSearchFilters = ({ filters, setFilters }) => {
   const staticOptions = {
     tipos: ["Coworking", "Espacio multipropósito", "Laboratorio", "Espacio de eventos", "Sala de clases"],
-    estados: ["Creada", "Cancelada"],
+    estados: ["Creada", "Confirmada", "Cancelada"],
     pisos: ["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]
   };
 
