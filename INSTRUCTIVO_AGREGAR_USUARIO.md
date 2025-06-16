@@ -2,6 +2,8 @@
 
 **Repositorio:** [https://github.com/verjhamn/reservasUcompensar-Front.git](https://github.com/verjhamn/reservasUcompensar-Front.git)
 
+> **IMPORTANTE:** Todos los cambios relacionados con usuarios y despliegue deben realizarse y subirse usando la rama `updateUsers`. **No uses la rama `main` para estos cambios.**
+
 Este instructivo explica cómo agregar un nuevo usuario a los diferentes roles del sistema, compilar la aplicación y desplegarla en el servidor. Los usuarios y roles están definidos en el archivo `src/utils/adminRoles.js`.
 
 ---
@@ -90,6 +92,8 @@ Esto generará la carpeta `dist` usando las variables de `.env.production`.
 
 ## 5. Subir la carpeta `dist` al servidor
 
+> **IMPORTANTE:** Usa siempre la rama `updateUsers` para subir y desplegar los cambios en el servidor. No uses la rama `main`.
+
 Conéctate al servidor donde se aloja la aplicación (por ejemplo, por FTP, SFTP o SSH) y reemplaza la carpeta `dist` antigua por la nueva.
 
 ### Ejemplo para servidor de **producción**
@@ -120,4 +124,4 @@ Abre la aplicación en el navegador y verifica que todo funcione correctamente.
 
 ---
 
-**¡Listo! Así puedes agregar usuarios, compilar y desplegar la aplicación.** 
+**¡Listo! Así puedes agregar usuarios, compilar y desplegar la aplicación usando la rama correcta.** 
