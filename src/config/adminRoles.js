@@ -16,7 +16,8 @@ export const AUTHORIZED_EMAILS = {
     'grocha@ucompensar.edu.co',
     'lccarrillom@ucompensar.edu.co',
     'mazapatah@ucompensar.edu.co',
-    'oaroddriguezr@ucompensar.edu.co'
+    'oaroddriguezr@ucompensar.edu.co',
+    'joacruzh@ucompensar.edu.co'
   ],
   reports_viewer: [
     'jcjimeneza@ucompensar.edu.co',

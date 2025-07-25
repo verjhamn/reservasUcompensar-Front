@@ -4,6 +4,13 @@ import es from 'date-fns/locale/es';
 import Pagination from '../UtilComponents/Pagination';
 import CancelButton from '../UtilComponents/CancelButton';
 
+const estadoStyles = {
+    'Creada': 'bg-gray-300 text-gray-800',
+    'Cancelada': 'bg-red-100 text-red-800',
+    'Confirmada': 'bg-green-100 text-green-800',
+    // Puedes agregar más estados aquí
+};
+
 const ReservationList = ({ selectedDate, events, onCancelReservation, showStatus = false }) => {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 5;
@@ -55,11 +62,7 @@ const ReservationList = ({ selectedDate, events, onCancelReservation, showStatus
                                                     Espacio: {espacio.codigo}
                                                 </h4>
                                                 {showStatus && event.estado && (
-                                                    <span className={`px-2 text-xs rounded-full ${
-                                                        event.estado === 'Creada' 
-                                                            ? 'bg-green-100 text-green-800' 
-                                                            : 'bg-red-100 text-red-800'
-                                                    }`}>
+                                                    <span className={`px-2 text-xs rounded-full ${estadoStyles[event.estado] || ''}`}>
                                                         {event.estado}
                                                     </span>
                                                 )}
