@@ -46,6 +46,29 @@ export const getDisponibilidadCheckIn = async (espacio_id, fecha, userId) => {
     }
 };
 
+// Para el check-out (con user_id)
+export const getDisponibilidadCheckOut = async (espacio_id, fecha, userId) => {
+    try {
+        const response = await axiosInstance.post("/reservas/disponibilidad", {
+            user_id: userId,
+            espacio_id: espacio_id,
+            fecha: fecha
+        });
+
+        if (response.data.success) {
+            return {
+                reservas: response.data.espacio.reservas || [],
+                espacio: response.data.espacio
+            };
+        } else {
+            throw new Error("No se pudo obtener la disponibilidad del espacio.");
+        }
+    } catch (error) {
+        console.error("Error al consultar disponibilidad para check-out:", error.response?.data || error.message);
+        throw error;
+    }
+};
+
 export const processOccupiedHours = (disponibilidad) => {
     const horasOcupadas = new Set();
     const { reservas, horarioSIAF } = disponibilidad;
@@ -83,6 +106,16 @@ export const verificarReservaUsuario = (reservas, userId) => {
     const ahora = new Date();
     return reservas.find(reserva => 
         reserva.user_id === userId && 
+        new Date(reserva.hora_inicio) <= ahora && 
+        new Date(reserva.hora_fin) >= ahora
+    );
+};
+
+export const verificarReservaConCheckIn = (reservas, userId) => {
+    const ahora = new Date();
+    return reservas.find(reserva => 
+        reserva.user_id === userId && 
+        reserva.estado === "Confirmada" &&
         new Date(reserva.hora_inicio) <= ahora && 
         new Date(reserva.hora_fin) >= ahora
     );

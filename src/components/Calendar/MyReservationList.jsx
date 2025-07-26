@@ -3,7 +3,32 @@ import { format } from 'date-fns';
 import es from 'date-fns/locale/es';
 import CancelButton from '../UtilComponents/CancelButton';
 
-const MyReservationList = ({ selectedDate, events, onCancelReservation }) => {
+const MyReservationList = ({ selectedDate, events, onCancelReservation, onCheckOut }) => {
+    const getEstadoColor = (estado) => {
+        switch (estado) {
+            case "Creada":
+                return "text-yellow-600 bg-yellow-100";
+            case "Confirmada":
+                return "text-green-600 bg-green-100";
+            case "Completada":
+                return "text-blue-600 bg-blue-100";
+            case "Cancelada":
+                return "text-red-600 bg-red-100";
+            default:
+                return "text-gray-600 bg-gray-100";
+        }
+    };
+
+    const puedeHacerCheckOut = (event) => {
+        const ahora = new Date();
+        const inicioReserva = new Date(event.hora_inicio);
+        const finReserva = new Date(event.hora_fin);
+        
+        return event.estado === "Confirmada" && 
+               inicioReserva <= ahora && 
+               finReserva >= ahora;
+    };
+
     return (
         <div className="bg-white p-4 rounded-lg shadow-md h-full">
             <h3 className="text-lg font-semibold text-turquesa mb-3 border-b">
@@ -15,7 +40,7 @@ const MyReservationList = ({ selectedDate, events, onCancelReservation }) => {
                     {events.map((event) => (
                         <li key={event.id} className="border-b pb-4">
                             <div className="flex justify-between items-start">
-                                <div className="space-y-1">
+                                <div className="space-y-1 flex-1">
                                     <h4 className="text-base font-semibold text-gris-700">
                                         Espacio: {event.idEspacio}
                                     </h4>
@@ -26,10 +51,32 @@ const MyReservationList = ({ selectedDate, events, onCancelReservation }) => {
                                     </p>
                                     <p className="text-sm text-gris-medio">Título: {event.title}</p>
                                     <p className="text-sm text-gris-medio">Descripción: {event.descripcion}</p>
+                                    
+                                    {/* Estado de la reserva */}
+                                    <div className="mt-2">
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getEstadoColor(event.estado)}`}>
+                                            {event.estado}
+                                        </span>
+                                    </div>
                                 </div>
-                                {event.estado !== "Cancelada" && (
-                                    <CancelButton onClick={() => onCancelReservation(event.id)} />
-                                )}
+                                
+                                <div className="flex flex-col space-y-2 ml-4">
+                                    {/* Botón de Check-out */}
+                                    {puedeHacerCheckOut(event) && (
+                                        <button
+                                            onClick={() => onCheckOut(event)}
+                                            className="px-3 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600 transition-colors"
+                                            title="Hacer Check-out"
+                                        >
+                                            Check-out
+                                        </button>
+                                    )}
+                                    
+                                    {/* Botón de Cancelar - solo si NO puede hacer check-out y no está cancelada/completada */}
+                                    {!puedeHacerCheckOut(event) && event.estado !== "Cancelada" && event.estado !== "Completada" && (
+                                        <CancelButton onClick={() => onCancelReservation(event.id)} />
+                                    )}
+                                </div>
                             </div>
                         </li>
                     ))}

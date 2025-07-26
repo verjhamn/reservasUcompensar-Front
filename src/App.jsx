@@ -11,12 +11,12 @@ import FullCalendarView from "./components/FullCalendarView";
 import ReportsView from "./components/Reports/ReportsView";
 import InfoModal from "./components/InfoModal";
 import CheckInModal from "./components/CheckInModal";
+import CheckOutModal from "./components/CheckOutModal";
 import { hasAdminAccess, canAccessReports } from './utils/userHelper';
 import AdminReservationsView from './components/AdminReservations/AdminReservationsView';
-import { getDisponibilidad, verificarReservaUsuario } from './Services/getDisponibilidadService';
+import { getDisponibilidad, verificarReservaUsuario, getDisponibilidadCheckIn, getDisponibilidadCheckOut, verificarReservaConCheckIn } from './Services/getDisponibilidadService';
 import { getUserId } from './Services/authService';
 import { format } from 'date-fns';
-import { getDisponibilidadCheckIn } from './Services/getDisponibilidadService';
 
 const msalInstance = new PublicClientApplication(msalConfig);
 
@@ -35,10 +35,12 @@ function App() {
     const [view, setView] = useState("table");
     const [showModal, setShowModal] = useState(false);
     const [showCheckInModal, setShowCheckInModal] = useState(false);
+    const [showCheckOutModal, setShowCheckOutModal] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
     const [canViewReports, setCanViewReports] = useState(false);
     const [reservaCheckIn, setReservaCheckIn] = useState(null);
+    const [reservaCheckOut, setReservaCheckOut] = useState(null);
 
     // Verificar si hay un usuario autenticado en localStorage
     useEffect(() => {
@@ -91,6 +93,35 @@ function App() {
         verificarCheckIn();
     }, [isLoggedIn]);
 
+    // Verificar check-out automático desde URL
+    useEffect(() => {
+        const verificarCheckOut = async () => {
+            const pathParts = window.location.pathname.split("/");
+            if (pathParts.length === 3 && pathParts[1] === "espacio") {
+                const codigoEspacio = pathParts[2];
+                
+                if (isLoggedIn) {
+                    try {
+                        const userId = getUserId();
+                        const fecha = format(new Date(), "dd/MM/yyyy");
+                        const disponibilidad = await getDisponibilidadCheckOut(codigoEspacio, fecha, userId);
+                        
+                        const reservaUsuario = verificarReservaConCheckIn(disponibilidad.reservas, userId);
+                        
+                        if (reservaUsuario) {
+                            setReservaCheckOut({ ...reservaUsuario, espacio: disponibilidad.espacio });
+                            setShowCheckOutModal(true);
+                        }
+                    } catch (error) {
+                        console.error("Error al verificar check-out:", error);
+                    }
+                }
+            }
+        };
+
+        verificarCheckOut();
+    }, [isLoggedIn]);
+
     useEffect(() => {
         const checkUserPermissions = () => {
             const userData = JSON.parse(localStorage.getItem("userData") || "{}");
@@ -122,6 +153,14 @@ function App() {
         if (checkInSuccess) {
             // Si el check-in fue exitoso, continuar con el flujo normal
             setReservaCheckIn(null);
+        }
+    };
+
+    const handleCloseCheckOutModal = (checkOutSuccess) => {
+        setShowCheckOutModal(false);
+        if (checkOutSuccess) {
+            // Si el check-out fue exitoso, limpiar el estado
+            setReservaCheckOut(null);
         }
     };
 
@@ -211,6 +250,14 @@ function App() {
                         isOpen={showCheckInModal}
                         onClose={handleCloseCheckInModal}
                         reservaData={reservaCheckIn}
+                    />
+                )}
+
+                {showCheckOutModal && (
+                    <CheckOutModal
+                        isOpen={showCheckOutModal}
+                        onClose={handleCloseCheckOutModal}
+                        reservaData={reservaCheckOut}
                     />
                 )}
             </div>
