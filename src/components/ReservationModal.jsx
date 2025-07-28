@@ -78,6 +78,19 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
     const selectedStart = startOfDay(slotInfo.start);
     const selectedEnd = addHours(selectedStart, 23);
 
+    // Verificar que la fecha seleccionada no sea anterior al día actual
+    if (isBefore(selectedStart, startOfDay(new Date()))) {
+      toast.error('No se puede reservar en días anteriores al actual.', {
+        duration: 4000,
+        position: 'top-right',
+        style: {
+          background: '#fee2e2',
+          color: '#dc2626',
+        },
+      });
+      return;
+    }
+
     const isSlotOccupied = filteredEvents.some(
       (event) =>
         new Date(selectedStart) < new Date(event.end) &&
@@ -174,8 +187,6 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
         observaciones: reservationDescription || ""
       };
 
-      console.log("Intentando crear reserva con datos:", JSON.stringify(reservationData, null, 2));
-
       try {
         const response = await createReservation(reservationData);
         console.log("Respuesta del servidor:", response);
@@ -198,7 +209,6 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
           throw new Error(response.message || 'Error al crear la reserva');
         }
       } catch (error) {
-        console.error("Error al crear la reserva:", error);
         toast.error(
           `Error al crear la reserva: ${error.message || 'Por favor, intente nuevamente.'}`,
           {
@@ -212,7 +222,6 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
         );
       }
     } catch (error) {
-      console.error("Error confirming reservation:", error);
       toast.error('Error al confirmar la reserva', {
         duration: 4000,
         position: 'top-right',
@@ -292,10 +301,14 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
   };
 
   const coworkingPeriods = [
-    { id: 0, name: "Mañana", start: "07:00", end: "12:00" },
-    { id: 1, name: "Tarde", start: "13:00", end: "17:00" },
-    { id: 2, name: "Mañana-Tarde", start: "07:00", end: "17:00" },
-    { id: 3, name: "Noche", start: "18:00", end: "22:00" },
+    { id: 6, name: "Jornada Completa 1", start: "07:00", end: "17:00" },
+    { id: 7, name: "Jornada Completa 2", start: "08:00", end: "17:00" },
+    { id: 8, name: "Jornada Completa 3", start: "09:00", end: "18:00" },
+    { id: 0, name: "Mañana 1", start: "07:00", end: "12:00" },
+    { id: 2, name: "Mañana 2", start: "08:00", end: "12:00" },
+    { id: 3, name: "Mañana 3", start: "10:00", end: "14:00" },
+    { id: 4, name: "Tarde", start: "13:00", end: "17:00" },
+    { id: 5, name: "Noche", start: "18:00", end: "22:00" },
   ];
 
   const isPeriodAvailable = (period) => {
@@ -353,7 +366,6 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
         <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
           {generateTimeSlots().map((time) => {
             const isAvailable = isTimeSlotAvailable(time);
-            console.log(`Slot ${time} availability:`, isAvailable); // Debug
             return (
               <button
                 key={time}
@@ -396,6 +408,22 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
           color: "#d3d3d3",
           pointerEvents: "none",
         },
+        className: "rbc-off-range-bg",
+      };
+    }
+    return {};
+  };
+
+  const slotPropGetter = (date) => {
+    if (isBefore(startOfDay(date), startOfDay(new Date()))) {
+      return {
+        style: {
+          backgroundColor: "#f0f0f0",
+          color: "#d3d3d3",
+          pointerEvents: "none",
+          cursor: "not-allowed",
+        },
+        className: "rbc-off-range-bg",
       };
     }
     return {};
@@ -534,13 +562,14 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
             <Calendar
               localizer={localizer}
               events={filteredEvents}
-              selectable
+              selectable="ignoreEvents"
               onSelectSlot={handleSlotSelect}
               date={selectedDate}
               onNavigate={handleNavigate}
               views={["month"]}
               style={{ height: 300 }}
               dayPropGetter={dayPropGetter}
+              slotPropGetter={slotPropGetter}
               messages={{
                 next: "Siguiente",
                 previous: "Anterior",

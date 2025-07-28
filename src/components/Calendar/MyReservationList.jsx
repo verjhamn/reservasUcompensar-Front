@@ -45,7 +45,7 @@ const MyReservationList = ({ selectedDate, events, onCancelReservation, onCheckO
                                         Espacio: {event.idEspacio}
                                     </h4>
                                     <p className="text-sm text-gris-medio">ID Reserva: {event.id}</p>
-                                    <p className="text-sm text-gris-medio">Tipo: {event.type}</p>
+                                    <p className="text-sm text-gris-medio"> {event.type}</p>
                                     <p className="text-sm text-gris-medio">
                                         Horario: {format(new Date(event.start), "HH:mm")} - {format(new Date(event.end), "HH:mm")}
                                     </p>

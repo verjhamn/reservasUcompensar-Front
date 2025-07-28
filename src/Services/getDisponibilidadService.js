@@ -73,16 +73,19 @@ export const processOccupiedHours = (disponibilidad) => {
     const horasOcupadas = new Set();
     const { reservas, horarioSIAF } = disponibilidad;
 
-    // Procesar reservas
+    // Procesar reservas (excluir "Completada" y "Cancelada")
     if (Array.isArray(reservas)) {
         reservas.forEach(reserva => {
-            const inicio = new Date(reserva.hora_inicio);
-            const fin = new Date(reserva.hora_fin);
-            
-            let horaActual = new Date(inicio);
-            while (horaActual < fin) {
-                horasOcupadas.add(format(horaActual, "HH:00"));
-                horaActual = addHours(horaActual, 1);
+            // Solo considerar reservas activas (no completadas ni canceladas)
+            if (reserva.estado !== "Completada" && reserva.estado !== "Cancelada") {
+                const inicio = new Date(reserva.hora_inicio);
+                const fin = new Date(reserva.hora_fin);
+                
+                let horaActual = new Date(inicio);
+                while (horaActual < fin) {
+                    horasOcupadas.add(format(horaActual, "HH:00"));
+                    horaActual = addHours(horaActual, 1);
+                }
             }
         });
     }

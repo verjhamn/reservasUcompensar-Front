@@ -74,7 +74,7 @@ function App() {
                         const reservaUsuario = verificarReservaUsuario(disponibilidad.reservas, userId);
                         
                         if (reservaUsuario) {
-                            if (reservaUsuario.estado === "Confirmada") {
+                            if (reservaUsuario.estado === "Confirmada" || reservaUsuario.estado === "Completada") {
                                 // Si ya está confirmada, continuar con el flujo normal
                                 return;
                             } else {
