@@ -32,7 +32,6 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
   const [selectedHours, setSelectedHours] = useState([]);
   const [reservationTitle, setReservationTitle] = useState("");
   const [reservationDescription, setReservationDescription] = useState("");
-  const [selectedPeriod, setSelectedPeriod] = useState(null);
   const [reservedHours, setReservedHours] = useState([]);
   const [monthAvailability, setMonthAvailability] = useState({});
 
@@ -171,7 +170,6 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
     if (!isSlotOccupied) {
       setSelectedDate(selectedStart);
       setSelectedHours([]);
-      setSelectedPeriod(null);
     } else {
       toast.error('Este horario ya está ocupado. Por favor seleccione otro.', {
         duration: 4000,
@@ -215,30 +213,18 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
 
       let startDateTime, endDateTime;
 
-      if (isCoworking) {
-        if (!selectedPeriod) {
-          toast.error('Por favor seleccione un período de tiempo', {
-            duration: 4000,
-            position: 'top-right',
-          });
-          setLoading(false);
-          return;
-        }
-        startDateTime = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${selectedPeriod.start}`);
-        endDateTime = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${selectedPeriod.end}`);
-      } else {
-        if (!selectedHours.length) {
-          toast.error('Por favor seleccione al menos una hora', {
-            duration: 4000,
-            position: 'top-right',
-          });
-          setLoading(false);
-          return;
-        }
-        startDateTime = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${selectedHours[0]}`);
-        endDateTime = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${selectedHours[selectedHours.length - 1]}`);
-        endDateTime.setHours(endDateTime.getHours() + 1);
+      if (!selectedHours.length) {
+        toast.error('Por favor seleccione al menos una hora', {
+          duration: 4000,
+          position: 'top-right',
+        });
+        setLoading(false);
+        return;
       }
+      
+      startDateTime = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${selectedHours[0]}`);
+      endDateTime = new Date(`${format(selectedDate, "yyyy-MM-dd")}T${selectedHours[selectedHours.length - 1]}`);
+      endDateTime.setHours(endDateTime.getHours() + 1);
 
       const formattedDate = format(selectedDate, "dd/MM/yyyy");
       const formattedStartTime = format(startDateTime, "HH:mm");
@@ -371,69 +357,12 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
     }
   };
 
-  const coworkingPeriods = [
-    { id: 6, name: "Jornada Completa 1", start: "07:00", end: "17:00" },
-    { id: 7, name: "Jornada Completa 2", start: "08:00", end: "17:00" },
-    { id: 8, name: "Jornada Completa 3", start: "09:00", end: "18:00" },
-    { id: 0, name: "Mañana 1", start: "07:00", end: "12:00" },
-    { id: 2, name: "Mañana 2", start: "08:00", end: "12:00" },
-    { id: 3, name: "Mañana 3", start: "10:00", end: "14:00" },
-    { id: 4, name: "Tarde", start: "13:00", end: "17:00" },
-    { id: 5, name: "Noche", start: "18:00", end: "22:00" },
-  ];
-
-  const isPeriodAvailable = (period) => {
-    const periodStart = parseInt(period.start.split(':')[0]);
-    const periodEnd = parseInt(period.end.split(':')[0]);
-
-    for (let hour = periodStart; hour < periodEnd; hour++) {
-      const timeSlot = `${hour.toString().padStart(2, '0')}:00`;
-      if (reservedHours.includes(timeSlot)) {
-        return false;
-      }
-    }
-    return true;
-  };
-
   const renderTimeSelector = () => {
-    if (isCoworking) {
-      return (
-        <div className="bg-white p-4 mt-4">
-          <h3 className="text-lg font-semibold text-turquesa mb-3">Seleccionar período</h3>
-          <div className="grid grid-cols-2 gap-4">
-            {coworkingPeriods.map((period) => {
-              const isAvailable = isPeriodAvailable(period);
-              return (
-                <button
-                  key={period.id}
-                  onClick={() => isAvailable && setSelectedPeriod(period)}
-                  disabled={!isAvailable}
-                  className={`
-                    p-4 rounded-md text-sm
-                    ${selectedPeriod?.id === period.id
-                      ? 'bg-turquesa text-white'
-                      : isAvailable
-                        ? 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                    }
-                  `}
-                >
-                  {period.name}
-                  <br />
-                  <span className="text-xs">
-                    {period.start} - {period.end}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      );
-    }
-
     return (
       <div className="bg-white p-4 mt-4">
-        <h3 className="text-lg font-semibold text-turquesa mb-3">Seleccionar horario</h3>
+        <h3 className="text-lg font-semibold text-turquesa mb-3">
+          {isCoworking ? "Seleccionar período" : "Seleccionar horario"}
+        </h3>
         <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
           {generateTimeSlots().map((time) => {
             const isAvailable = isTimeSlotAvailable(time);
@@ -479,23 +408,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
       return true;
     }
 
-    // Si es coworking, verificar si al menos un período está disponible
-    if (isCoworking) {
-      return coworkingPeriods.some(period => {
-        const periodStart = parseInt(period.start.split(':')[0]);
-        const periodEnd = parseInt(period.end.split(':')[0]);
-        
-        for (let hour = periodStart; hour < periodEnd; hour++) {
-          const timeSlot = `${hour.toString().padStart(2, '0')}:00`;
-          if (dayReservedHours.includes(timeSlot)) {
-            return false;
-          }
-        }
-        return true;
-      });
-    }
-
-    // Para espacios normales, verificar si al menos una hora está disponible
+    // Para todos los tipos de espacios, verificar si al menos una hora está disponible
     const timeSlots = generateTimeSlots();
     return timeSlots.some(timeSlot => !dayReservedHours.includes(timeSlot));
   };
