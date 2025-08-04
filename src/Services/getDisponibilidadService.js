@@ -23,6 +23,32 @@ export const getDisponibilidad = async (espacio_id, fecha) => {
     }
 };
 
+// Nueva función para consultar disponibilidad por mes
+export const getDisponibilidadMes = async (espacio_id, mes, año) => {
+    try {
+        // Formatear la fecha como DD/MM/AAAA (usando el primer día del mes)
+        const fecha = `01/${mes.toString().padStart(2, '0')}/${año}`;
+        
+        const response = await axiosInstance.post("/reservas/disponibilidad", {
+            espacio_id,
+            fecha,
+            mes: true
+        });
+
+        if (response.data.success) {
+            return {
+                reservas: response.data.espacio.reservas || [],
+                horarioSIAF: response.data.horarioSIAF || []
+            };
+        } else {
+            throw new Error("No se pudo obtener la disponibilidad del mes.");
+        }
+    } catch (error) {
+        console.error("Error al consultar disponibilidad del mes:", error.response?.data || error.message);
+        throw error;
+    }
+};
+
 // Para el check-in (con user_id)
 export const getDisponibilidadCheckIn = async (espacio_id, fecha, userId) => {
     try {
@@ -90,8 +116,9 @@ export const processOccupiedHours = (disponibilidad) => {
         });
     }
 
-    // Procesar horarioSIAF
+    // Procesar horarioSIAF - puede venir como array o como objeto
     if (Array.isArray(horarioSIAF)) {
+        // Formato antiguo: array de horarios
         horarioSIAF.forEach(horario => {
             const [horasInicio] = horario.horainicio.split(':');
             const [horasFin] = horario.horafinal.split(':');
@@ -100,9 +127,58 @@ export const processOccupiedHours = (disponibilidad) => {
                 horasOcupadas.add(`${hora.toString().padStart(2, '0')}:00`);
             }
         });
+    } else if (horarioSIAF && typeof horarioSIAF === 'object') {
+        // Formato nuevo: objeto con fechas como claves
+        // En este caso, horarioSIAF ya viene procesado por el backend
+        // No necesitamos agregar horas adicionales
+        console.log('horarioSIAF recibido como objeto:', horarioSIAF);
     }
 
     return Array.from(horasOcupadas).sort();
+};
+
+// Nueva función para procesar disponibilidad del mes
+export const processOccupiedHoursMes = (disponibilidadMes) => {
+    const availabilityData = {};
+    const { dias, horarioSIAF } = disponibilidadMes;
+
+    if (Array.isArray(dias)) {
+        dias.forEach(dia => {
+            const horasOcupadas = new Set();
+            
+            // Procesar reservas del día
+            if (Array.isArray(dia.reservas)) {
+                dia.reservas.forEach(reserva => {
+                    if (reserva.estado !== "Completada" && reserva.estado !== "Cancelada") {
+                        const inicio = new Date(reserva.hora_inicio);
+                        const fin = new Date(reserva.hora_fin);
+                        
+                        let horaActual = new Date(inicio);
+                        while (horaActual < fin) {
+                            horasOcupadas.add(format(horaActual, "HH:00"));
+                            horaActual = addHours(horaActual, 1);
+                        }
+                    }
+                });
+            }
+
+            // Procesar horarioSIAF del día
+            if (Array.isArray(horarioSIAF)) {
+                horarioSIAF.forEach(horario => {
+                    const [horasInicio] = horario.horainicio.split(':');
+                    const [horasFin] = horario.horafinal.split(':');
+                    
+                    for (let hora = parseInt(horasInicio); hora <= parseInt(horasFin); hora++) {
+                        horasOcupadas.add(`${hora.toString().padStart(2, '0')}:00`);
+                    }
+                });
+            }
+
+            availabilityData[dia.fecha] = Array.from(horasOcupadas).sort();
+        });
+    }
+
+    return availabilityData;
 };
 
 export const verificarReservaUsuario = (reservas, userId) => {

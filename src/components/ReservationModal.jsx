@@ -8,6 +8,7 @@ import { createReservation } from "../Services/createReservationService";
 import { getUserId } from "../Services/authService";
 import { getDisponibilidad, processOccupiedHours } from "../Services/getDisponibilidadService";
 import { canReserveAnySpace } from '../utils/userHelper';
+import { getDisponibilidadMes } from "../Services/getDisponibilidadService";
 
 import LoadingSpinner from './UtilComponents/LoadingSpinner';
 import Carousel from './UtilComponents/Carousel';
@@ -33,6 +34,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
   const [reservationDescription, setReservationDescription] = useState("");
   const [selectedPeriod, setSelectedPeriod] = useState(null);
   const [reservedHours, setReservedHours] = useState([]);
+  const [monthAvailability, setMonthAvailability] = useState({});
 
   const isCoworking = spaceData?.coworking_contenedor === "SI";
 
@@ -50,6 +52,62 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
       setFilteredEvents(eventsForSpace);
     }
   }, [spaceData]);
+
+  // Cargar disponibilidad del mes cuando cambie el espacio o el mes
+  useEffect(() => {
+    const fetchMonthAvailability = async () => {
+      if (selectedDate && spaceData?.id) {
+        try {
+          const month = selectedDate.getMonth() + 1;
+          const year = selectedDate.getFullYear();
+          
+          const disponibilidadMes = await getDisponibilidadMes(spaceData.id, month, year);
+          const horasArray = processOccupiedHours(disponibilidadMes);
+          
+          // Crear objeto con disponibilidad del mes
+          // Para el mes completo, necesitamos procesar las reservas por día
+          const availabilityData = {};
+          
+          // Procesar cada día del mes
+          const daysInMonth = new Date(year, month, 0).getDate();
+          for (let day = 1; day <= daysInMonth; day++) {
+            const currentDate = new Date(year, month - 1, day);
+            const dateKey = format(currentDate, "yyyy-MM-dd");
+            
+            // Filtrar reservas para este día específico
+            const dayReservas = disponibilidadMes.reservas.filter(reserva => {
+              const reservaDate = new Date(reserva.hora_inicio);
+              return format(reservaDate, "yyyy-MM-dd") === dateKey;
+            });
+            
+            // Procesar horas ocupadas para este día
+            const horasOcupadas = new Set();
+            dayReservas.forEach(reserva => {
+              if (reserva.estado !== "Completada" && reserva.estado !== "Cancelada") {
+                const inicio = new Date(reserva.hora_inicio);
+                const fin = new Date(reserva.hora_fin);
+                
+                let horaActual = new Date(inicio);
+                while (horaActual < fin) {
+                  horasOcupadas.add(format(horaActual, "HH:00"));
+                  horaActual = addHours(horaActual, 1);
+                }
+              }
+            });
+            
+            availabilityData[dateKey] = Array.from(horasOcupadas).sort();
+          }
+          
+          setMonthAvailability(availabilityData);
+          console.log('Disponibilidad del mes cargada:', availabilityData);
+        } catch (error) {
+          console.error("Error al cargar disponibilidad del mes:", error);
+        }
+      }
+    };
+
+    fetchMonthAvailability();
+  }, [spaceData?.id, selectedDate.getMonth(), selectedDate.getFullYear()]);
 
   useEffect(() => {
     const fetchDisponibilidad = async () => {
@@ -81,6 +139,19 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
     // Verificar que la fecha seleccionada no sea anterior al día actual
     if (isBefore(selectedStart, startOfDay(new Date()))) {
       toast.error('No se puede reservar en días anteriores al actual.', {
+        duration: 4000,
+        position: 'top-right',
+        style: {
+          background: '#fee2e2',
+          color: '#dc2626',
+        },
+      });
+      return;
+    }
+
+    // Verificar si el día seleccionado tiene disponibilidad
+    if (!hasAvailabilityForDate(selectedStart)) {
+      toast.error('Este día no tiene disponibilidad. Por favor seleccione otro día.', {
         duration: 4000,
         position: 'top-right',
         style: {
@@ -392,15 +463,45 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
 
   if (!isOpen || !spaceData) return null;
 
-  const dayPropGetter = (date) => {
-    if (format(date, "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd")) {
-      return {
-        style: {
-          backgroundColor: "#00aab7",
-          color: "#fff",
-        },
-      };
+  // Función para verificar si un día tiene disponibilidad
+  const hasAvailabilityForDate = (date) => {
+    // Si es una fecha anterior al día actual, no tiene disponibilidad
+    if (isBefore(startOfDay(date), startOfDay(new Date()))) {
+      return false;
     }
+
+    // Usar datos del mes si están disponibles, sino usar datos del día
+    const dateKey = format(date, "yyyy-MM-dd");
+    const dayReservedHours = monthAvailability[dateKey] || reservedHours;
+
+    // Si no hay datos de disponibilidad cargados aún, asumir que tiene disponibilidad
+    if (dayReservedHours.length === 0) {
+      return true;
+    }
+
+    // Si es coworking, verificar si al menos un período está disponible
+    if (isCoworking) {
+      return coworkingPeriods.some(period => {
+        const periodStart = parseInt(period.start.split(':')[0]);
+        const periodEnd = parseInt(period.end.split(':')[0]);
+        
+        for (let hour = periodStart; hour < periodEnd; hour++) {
+          const timeSlot = `${hour.toString().padStart(2, '0')}:00`;
+          if (dayReservedHours.includes(timeSlot)) {
+            return false;
+          }
+        }
+        return true;
+      });
+    }
+
+    // Para espacios normales, verificar si al menos una hora está disponible
+    const timeSlots = generateTimeSlots();
+    return timeSlots.some(timeSlot => !dayReservedHours.includes(timeSlot));
+  };
+
+  const dayPropGetter = (date) => {
+    // Primero verificar si es una fecha anterior al día actual
     if (isBefore(startOfDay(date), startOfDay(new Date()))) {
       return {
         style: {
@@ -411,6 +512,45 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
         className: "rbc-off-range-bg",
       };
     }
+    
+    // Luego verificar si el día no tiene disponibilidad
+    if (!hasAvailabilityForDate(date)) {
+      // Si es el día seleccionado y no tiene disponibilidad, usar rojo más oscuro
+      if (format(date, "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd")) {
+        return {
+          style: {
+            backgroundColor: "#d32f2f",
+            color: "#fff",
+            border: "2px solid #b71c1c",
+            borderRadius: "4px",
+            fontWeight: "bold",
+          },
+          className: "rbc-day-no-availability-selected",
+        };
+      }
+      
+      // Si no está seleccionado, usar el estilo normal de sin disponibilidad
+      return {
+        style: {
+          backgroundColor: "#ffebee",
+          color: "#d32f2f",
+          border: "2px solid #f44336",
+          borderRadius: "4px",
+        },
+        className: "rbc-day-no-availability",
+      };
+    }
+    
+    // Finalmente, si es el día seleccionado y tiene disponibilidad
+    if (format(date, "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd")) {
+      return {
+        style: {
+          backgroundColor: "#00aab7",
+          color: "#fff",
+        },
+      };
+    }
+    
     return {};
   };
 
@@ -557,9 +697,36 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
           </div>
         )}
 
-        {activeTab === "availability" && (
-          <div>
-            <Calendar
+                 {activeTab === "availability" && (
+           <div>
+             {/* Leyenda del calendario */}
+                           <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                <h4 className="text-sm font-semibold text-gray-700 mb-2">Leyenda del calendario:</h4>
+                <div className="flex flex-wrap gap-4 text-xs">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-[#00aab7] rounded"></div>
+                    <span>Día seleccionado</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-[#d32f2f] border-2 border-[#b71c1c] rounded"></div>
+                    <span>Día seleccionado sin disponibilidad</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-[#f0f0f0] rounded"></div>
+                    <span>Días anteriores (no disponibles)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-[#ffebee] border-2 border-[#f44336] rounded"></div>
+                    <span>Sin disponibilidad</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-white border border-gray-300 rounded"></div>
+                    <span>Con disponibilidad</span>
+                  </div>
+                </div>
+              </div>
+             
+             <Calendar
               localizer={localizer}
               events={filteredEvents}
               selectable="ignoreEvents"
