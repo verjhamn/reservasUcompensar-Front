@@ -72,8 +72,14 @@ const ReservationList = ({ selectedDate, events, onCancelReservation, showStatus
                                             <p className="text-sm text-gris-medio">
                                                 Horario: {format(new Date(event.hora_inicio), "HH:mm")} - {format(new Date(event.hora_fin), "HH:mm")}
                                             </p>
-                                            <p className="text-sm text-gris-medio">Título: {event.titulo || 'Sin título'}</p>
-                                            <p className="text-sm text-gris-medio">Descripción: {event.descripcion || 'Sin descripción'}</p>
+                                            {espacio.key === 'Coworking' ? (
+                                                <p className="text-sm text-gris-medio">Observaciones: {event.observaciones || 'Sin observaciones'}</p>
+                                            ) : (
+                                                <>
+                                                    <p className="text-sm text-gris-medio">Título: {event.titulo || 'Sin título'}</p>
+                                                    <p className="text-sm text-gris-medio">Descripción: {event.descripcion || 'Sin descripción'}</p>
+                                                </>
+                                            )}
                                         </div>
 
                                         {/* Sección de Botón - Derecha */}

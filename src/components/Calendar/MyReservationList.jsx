@@ -49,8 +49,14 @@ const MyReservationList = ({ selectedDate, events, onCancelReservation, onCheckO
                                     <p className="text-sm text-gris-medio">
                                         Horario: {format(new Date(event.start), "HH:mm")} - {format(new Date(event.end), "HH:mm")}
                                     </p>
-                                    <p className="text-sm text-gris-medio">Título: {event.title}</p>
-                                    <p className="text-sm text-gris-medio">Descripción: {event.descripcion}</p>
+                                    {event.type === 'Coworking' ? (
+                                        <p className="text-sm text-gris-medio">Observaciones: {event.observaciones || 'Sin observaciones'}</p>
+                                    ) : (
+                                        <>
+                                            <p className="text-sm text-gris-medio">Título: {event.title || 'Sin título'}</p>
+                                            <p className="text-sm text-gris-medio">Descripción: {event.descripcion || 'Sin descripción'}</p>
+                                        </>
+                                    )}
                                     
                                     {/* Estado de la reserva */}
                                     <div className="mt-2">

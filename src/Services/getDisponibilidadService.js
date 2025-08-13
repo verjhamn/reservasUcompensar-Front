@@ -183,19 +183,29 @@ export const processOccupiedHoursMes = (disponibilidadMes) => {
 
 export const verificarReservaUsuario = (reservas, userId) => {
     const ahora = new Date();
-    return reservas.find(reserva => 
-        reserva.user_id === userId && 
-        new Date(reserva.hora_inicio) <= ahora && 
-        new Date(reserva.hora_fin) >= ahora
-    );
+    return reservas.find(reserva => {
+        const horaInicio = new Date(reserva.hora_inicio);
+        const horaFin = new Date(reserva.hora_fin);
+        
+        // Permitir check-in 15 minutos antes del inicio de la reserva
+        const tiempoAntesPermitido = 15 * 60 * 1000; // 15 minutos en milisegundos
+        const horaCheckInPermitida = new Date(horaInicio.getTime() - tiempoAntesPermitido);
+        
+        return reserva.user_id === userId && 
+               ahora >= horaCheckInPermitida && 
+               ahora <= horaFin;
+    });
 };
 
 export const verificarReservaConCheckIn = (reservas, userId) => {
     const ahora = new Date();
-    return reservas.find(reserva => 
-        reserva.user_id === userId && 
-        reserva.estado === "Confirmada" &&
-        new Date(reserva.hora_inicio) <= ahora && 
-        new Date(reserva.hora_fin) >= ahora
-    );
+    return reservas.find(reserva => {
+        const horaInicio = new Date(reserva.hora_inicio);
+        const horaFin = new Date(reserva.hora_fin);
+        
+        return reserva.user_id === userId && 
+               reserva.estado === "Confirmada" &&
+               ahora >= horaInicio && 
+               ahora <= horaFin;
+    });
 };

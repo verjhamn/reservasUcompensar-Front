@@ -142,7 +142,8 @@ export const ADMIN_ROLES = {
 1. **Check-in automático:**
    - Usuario accede via URL `/espacio/{codigo}`
    - Sistema verifica si tiene reserva para hoy
-   - Si tiene reserva → modal de check-in
+   - Verifica si es momento de check-in (15 minutos antes o durante la reserva)
+   - Si tiene reserva y es momento → modal de check-in
    - Confirmación → estado "Confirmada"
 2. **Check-out automático:**
    - Al finalizar horario de reserva

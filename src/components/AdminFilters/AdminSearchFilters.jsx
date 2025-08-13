@@ -46,7 +46,9 @@ const AdminSearchFilters = ({ filters, setFilters }) => {
     }
 
     if (name === "periodo") {
-      const period = coworkingPeriods.find(p => p.id === parseInt(value));
+      // Extraer el nombre del período del string seleccionado
+      const periodName = value.split(' (')[0];
+      const period = coworkingPeriods.find(p => p.name === periodName);
       if (period) {
         setFilters(prev => ({
           ...prev,
@@ -139,15 +141,12 @@ const AdminSearchFilters = ({ filters, setFilters }) => {
             label="Franja horaria"
             name="periodo"
             value={filters.horaInicio ? 
-              coworkingPeriods.find(p => p.start === filters.horaInicio)?.id.toString() : ""
+              coworkingPeriods.find(p => p.start === filters.horaInicio)?.name + ` (${filters.horaInicio} - ${filters.horaFin})` : ""
             }
             onChange={handleChange}
             type="select"
             placeholder="Seleccionar franja horaria..."
-            options={coworkingPeriods.map(period => ({
-              value: period.id.toString(),
-              label: `${period.name} (${period.start} - ${period.end})`
-            }))}
+            options={coworkingPeriods.map(period => `${period.name} (${period.start} - ${period.end})`)}
           />
         ) : (
           <>

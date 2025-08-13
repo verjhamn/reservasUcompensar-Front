@@ -78,6 +78,10 @@ Verificar disponibilidad del espacio
          ↓ NO
 Continuar flujo normal
          ↓ SÍ
+¿Es momento de check-in? (15 min antes o durante la reserva)
+         ↓ NO
+Continuar flujo normal
+         ↓ SÍ
 ¿Estado de reserva es "Creada"?
          ↓ NO
 Continuar flujo normal

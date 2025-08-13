@@ -200,16 +200,27 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
     setLoading(true);
     try {
       // Validation checks...
-      if (!reservationTitle.trim() || !reservationDescription.trim()) {
-        toast.error(!reservationTitle.trim() ? 
-          'Por favor ingrese un título para la reserva' : 
-          'Por favor ingrese una descripción para la reserva', {
-          duration: 4000,
-          position: 'top-right',
-        });
-        setLoading(false);
-        return;
+      if (!isCoworking) {
+        // Para espacios NO coworking: validar título y descripción
+        if (!reservationTitle.trim()) {
+          toast.error('Por favor ingrese un título para la reserva', {
+            duration: 4000,
+            position: 'top-right',
+          });
+          setLoading(false);
+          return;
+        }
+        
+        if (!reservationDescription.trim()) {
+          toast.error('Por favor ingrese una descripción para la reserva', {
+            duration: 4000,
+            position: 'top-right',
+          });
+          setLoading(false);
+          return;
+        }
       }
+      // Para espacios coworking: no se requieren validaciones de título y descripción
 
       let startDateTime, endDateTime;
 
@@ -236,12 +247,12 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
           ? "App\\Models\\basics\\EspacioCoworking"
           : "App\\Models\\basics\\Espacio",
         user_id: getUserId() || "3816a79a-78e1-4dc1-ae3b-3c5e4533ff8f",
-        titulo: reservationTitle,
-        descripcion: reservationDescription || "",
+        titulo: isCoworking ? `Reserva ${spaceData.codigo} - ${formattedDate}` : reservationTitle, // Título automático para coworking, manual para otros
+        descripcion: isCoworking ? "" : reservationDescription, // Solo para espacios NO coworking
         fecha_reserva: formattedDate,
         hora_inicio: formattedStartTime,
         hora_fin: formattedEndTime,
-        observaciones: reservationDescription || ""
+        observaciones: isCoworking ? reservationDescription : "" // Solo para espacios coworking
       };
 
       try {
@@ -303,31 +314,60 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
   };
 
   const handleTimeSelect = (time) => {
+    const timeValue = parseInt(time.split(':')[0]);
+    
     if (selectedHours.includes(time)) {
-      // Si la hora ya está seleccionada, la quitamos
-      setSelectedHours(prev => prev.filter(hour => hour !== time));
+      // Si la hora ya está seleccionada, verificar si es una hora de extremo
+      const sortedHours = selectedHours.map(h => parseInt(h.split(':')[0])).sort();
+      const minHour = Math.min(...sortedHours);
+      const maxHour = Math.max(...sortedHours);
+      
+      // Solo permitir desmarcar si es la hora mínima o máxima
+      if (timeValue === minHour || timeValue === maxHour) {
+        // Si es la hora mínima, eliminar todas las horas hasta la siguiente
+        if (timeValue === minHour) {
+          const nextHour = sortedHours.find(h => h > timeValue);
+          if (nextHour) {
+            setSelectedHours(prev => prev.filter(h => parseInt(h.split(':')[0]) >= nextHour));
+          } else {
+            setSelectedHours(prev => prev.filter(h => h !== time));
+          }
+        } else {
+          // Si es la hora máxima, eliminar todas las horas desde la anterior
+          const prevHour = sortedHours.find(h => h < timeValue);
+          if (prevHour) {
+            setSelectedHours(prev => prev.filter(h => parseInt(h.split(':')[0]) <= prevHour));
+          } else {
+            setSelectedHours(prev => prev.filter(h => h !== time));
+          }
+        }
+      } else {
+        // Mostrar mensaje de error si intenta desmarcar una hora intermedia
+        toast.error('No puedes desmarcar horas intermedias. Solo puedes desmarcar las horas de los extremos.', {
+          duration: 4000,
+          position: 'top-right',
+          style: {
+            background: '#fee2e2',
+            color: '#dc2626',
+          },
+        });
+      }
       return;
     }
 
-    // Convertimos todas las horas a números para ordenarlas
-    const allHours = [...selectedHours, time].map(h => parseInt(h.split(':')[0]));
+    // Si no está seleccionada, agregar la hora y completar el rango
+    const currentHours = selectedHours.map(h => parseInt(h.split(':')[0]));
+    const allHours = [...currentHours, timeValue].sort();
     const min = Math.min(...allHours);
     const max = Math.max(...allHours);
-
-    // Verificamos si las horas son consecutivas
-    if (max - min + 1 !== allHours.length) {
-      toast.error('Solo puedes seleccionar horas consecutivas', {
-        duration: 4000,
-        position: 'top-right',
-        style: {
-          background: '#fee2e2',
-          color: '#dc2626',
-        },
-      });
-      return;
+    
+    // Generar todas las horas del rango
+    const rangeHours = [];
+    for (let i = min; i <= max; i++) {
+      rangeHours.push(`${i.toString().padStart(2, '0')}:00`);
     }
-
-    setSelectedHours(prev => [...prev, time].sort());
+    
+    setSelectedHours(rangeHours);
   };
 
   const handleHourClick = (hour) => {
@@ -672,23 +712,40 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
             {renderTimeSelector()}
             {/* Campo de título y descripción de la reserva */}
             <div className="bg-white p-4 mt-1">
-              <h3 className="text-lg font-semibold text-turquesa mb-1">Título de la reserva</h3>
-              <input
-                type="text"
-                value={reservationTitle}
-                onChange={(e) => setReservationTitle(e.target.value)}
-                placeholder="Ingrese el título de la reserva"
-                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-turquesa mb-4"
-              />
+              {isCoworking ? (
+                // Para espacios coworking: solo observaciones
+                <>
+                  <h3 className="text-lg font-semibold text-turquesa mb-3">Observaciones (opcional)</h3>
+                  <textarea
+                    value={reservationDescription}
+                    onChange={(e) => setReservationDescription(e.target.value)}
+                    placeholder="Ingrese observaciones adicionales (opcional)"
+                    className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-turquesa"
+                    rows="3"
+                  />
+                </>
+              ) : (
+                // Para otros espacios: título y descripción
+                <>
+                  <h3 className="text-lg font-semibold text-turquesa mb-1">Título de la reserva</h3>
+                  <input
+                    type="text"
+                    value={reservationTitle}
+                    onChange={(e) => setReservationTitle(e.target.value)}
+                    placeholder="Ingrese el título de la reserva"
+                    className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-turquesa mb-4"
+                  />
 
-              <h3 className="text-lg font-semibold text-turquesa mb-3">Descripción de la reserva</h3>
-              <textarea
-                value={reservationDescription}
-                onChange={(e) => setReservationDescription(e.target.value)}
-                placeholder="Ingrese la descripción de la reserva"
-                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-turquesa"
-                rows="3"
-              />
+                  <h3 className="text-lg font-semibold text-turquesa mb-3">Descripción de la reserva</h3>
+                  <textarea
+                    value={reservationDescription}
+                    onChange={(e) => setReservationDescription(e.target.value)}
+                    placeholder="Ingrese la descripción de la reserva"
+                    className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-turquesa"
+                    rows="3"
+                  />
+                </>
+              )}
             </div>
 
             {/* Botón de confirmación */}

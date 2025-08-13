@@ -36,6 +36,7 @@ const AdminReservationsView = () => {
                     id: reservation.id,
                     titulo: reservation.titulo,
                     descripcion: reservation.descripcion,
+                    observaciones: reservation.observaciones,
                     estado: reservation.estado,
                     usuario: reservation.usuario,
                     type: reservation.espacio?.key || 'Coworking',

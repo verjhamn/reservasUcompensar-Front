@@ -27,7 +27,7 @@ const CheckOutModal = ({ isOpen, onClose, reservaData }) => {
       <Toaster />
       <div className="bg-white rounded-lg p-8 max-w-md w-full">
         <div className="flex justify-between items-start mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">Check-out de Reserva</h2>
+          <h2 className="text-2xl font-bold text-gray-800">check-out de Reserva</h2>
           <button
             onClick={() => onClose(false)}
             className="text-gray-500 hover:text-gray-700 transition-colors"
@@ -52,8 +52,14 @@ const CheckOutModal = ({ isOpen, onClose, reservaData }) => {
             <p className="text-gray-600">Espacio: {reservaData.espacio?.codigo}</p>
             <p className="text-gray-600">Fecha: {format(new Date(reservaData.hora_inicio), "dd 'de' MMMM 'de' yyyy", { locale: es })}</p>
             <p className="text-gray-600">Hora: {format(new Date(reservaData.hora_inicio), "HH:mm")} - {format(new Date(reservaData.hora_fin), "HH:mm")}</p>
-            <p className="text-gray-600">Título: {reservaData.titulo || 'Sin título'}</p>
-            <p className="text-gray-600">Descripción: {reservaData.descripcion || 'Sin descripción'}</p>
+            {reservaData.type === 'Coworking' ? (
+                <p className="text-gray-600">Observaciones: {reservaData.observaciones || 'Sin observaciones'}</p>
+            ) : (
+                <>
+                    <p className="text-gray-600">Título: {reservaData.titulo || 'Sin título'}</p>
+                    <p className="text-gray-600">Descripción: {reservaData.descripcion || 'Sin descripción'}</p>
+                </>
+            )}
           </div>
 
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
