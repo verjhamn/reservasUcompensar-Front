@@ -36,6 +36,7 @@ const ReportsView = () => {
   const [filteredData, setFilteredData] = useState([]); // Datos filtrados
   const [displayData, setDisplayData] = useState([]); // Datos paginados
   const [loading, setLoading] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [filters, setFilters] = useState({});
@@ -150,10 +151,13 @@ const ReportsView = () => {
   };
 
   const handleDownload = async () => {
+    setDownloading(true);
     try {
       await downloadReport();
     } catch (error) {
       console.error("Error al descargar:", error);
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -251,10 +255,15 @@ const ReportsView = () => {
           </select>
           <button
             onClick={handleDownload}
-            className="flex items-center gap-2 px-4 py-1 border rounded hover:bg-gray-50 bg-turquesa text-white hover:bg-turquesa/90"
+            disabled={downloading}
+            className="flex items-center gap-2 px-4 py-1 border rounded hover:bg-gray-50 bg-turquesa text-white hover:bg-turquesa/90 disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
-            <ArrowDownTrayIcon className="w-5 h-5" />
-            Descargar Excel
+            {downloading ? (
+              <ArrowPathIcon className="w-5 h-5 animate-spin" />
+            ) : (
+              <ArrowDownTrayIcon className="w-5 h-5" />
+            )}
+            {downloading ? 'Descargando...' : 'Exportar .xlsx'}
           </button>
           <button
             onClick={fetchData}

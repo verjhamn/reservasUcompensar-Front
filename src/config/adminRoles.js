@@ -37,6 +37,9 @@ export const AUTHORIZED_EMAILS = {
     'lajherrac@ucompensar.edu.co',
     'cjhernandezm@ucompensar.edu.co',
     'mcvillarragag@ucompensar.edu.co',
-    'joacruzh@ucompensar.edu.co'
+    'joacruzh@ucompensar.edu.co',
+    'lajherrerac@ucompensar.edu.co',
+    'yugutierrezh@ucompensar.edu.co',
+    'oarodriguezr@ucompensar.edu.co'
   ]
 };

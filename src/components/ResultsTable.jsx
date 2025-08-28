@@ -50,7 +50,8 @@ const ResultsTable = ({ filters = {}, goToMyReservations }) => {
               piso: item.piso,
               Titulo: "Coworking",
               coworking_contenedor: "SI",
-              tipo: coworking.tipo || "Coworking", // Usar tipo del espacio coworking
+              tipo: item.key, // Usar el tipo general del espacio (Coworking)
+              tipoEspecifico: coworking.tipo || "Coworking", // Tipo específico del coworking
               // Usar las imágenes del espacio coworking específico
               imagenes: coworking.imagenes || []
             }));

@@ -551,7 +551,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
       <div className="bg-white rounded-lg p-8 max-w-6xl w-full max-h-[95vh] overflow-auto">
         {/* Header del Modal */}
         <div className="flex justify-between items-start mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">Detalles del Espacio</h2>
+          <h2 className="text-2xl font-bold text-gray-800">{spaceData.tipo}: {spaceData.codigo}</h2>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700 transition-colors"
@@ -607,7 +607,12 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
                 </div>
                 <div className="min-w-0">
                   <h3 className="font-semibold text-gray-700 text-lg truncate">Tipo</h3>
-                  <p className="text-gray-600 text-base truncate">{spaceData.tipo}</p>
+                  <p className="text-gray-600 text-base truncate">
+                    {spaceData.tipo}
+                    {spaceData.tipoEspecifico && spaceData.tipoEspecifico !== spaceData.tipo && (
+                      <span className="text-gray-500"> - {spaceData.tipoEspecifico}</span>
+                    )}
+                  </p>
                 </div>
                 <div className="min-w-0">
                   <h3 className="font-semibold text-gray-700 text-lg truncate">Piso</h3>
