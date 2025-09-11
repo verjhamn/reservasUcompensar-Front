@@ -181,19 +181,15 @@ export const processOccupiedHoursMes = (disponibilidadMes) => {
     return availabilityData;
 };
 
+import { canUserCheckIn } from '../utils/checkinRules';
+import { RESERVATION_STATES } from '../utils/constants';
+
 export const verificarReservaUsuario = (reservas, userId) => {
     const ahora = new Date();
     return reservas.find(reserva => {
-        const horaInicio = new Date(reserva.hora_inicio);
-        const horaFin = new Date(reserva.hora_fin);
-        
-        // Permitir check-in 15 minutos antes del inicio de la reserva
-        const tiempoAntesPermitido = 15 * 60 * 1000; // 15 minutos en milisegundos
-        const horaCheckInPermitida = new Date(horaInicio.getTime() - tiempoAntesPermitido);
-        
-        return reserva.user_id === userId && 
-               ahora >= horaCheckInPermitida && 
-               ahora <= horaFin;
+        // El usuario debe ser dueño de la reserva y cumplir regla de check-in centralizada
+        if (reserva.user_id !== userId) return false;
+        return canUserCheckIn(reserva);
     });
 };
 

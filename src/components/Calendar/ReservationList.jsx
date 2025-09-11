@@ -4,6 +4,8 @@ import es from 'date-fns/locale/es';
 import Pagination from '../UtilComponents/Pagination';
 import CancelButton from '../UtilComponents/CancelButton';
 import CheckInButton from '../UtilComponents/CheckInButton';
+import { RESERVATION_STATES } from '../../utils/constants';
+import { canAdminCheckIn, canUserCheckIn } from '../../utils/checkinRules';
 
 const estadoStyles = {
     'Creada': 'bg-gray-300 text-gray-800',
@@ -17,21 +19,9 @@ const ReservationList = ({ selectedDate, events, onCancelReservation, onCheckIn,
     const itemsPerPage = 5;
     const isEmpty = (obj) => !obj || Object.keys(obj).length === 0;
 
-    // Función para validar si se puede hacer check-in
-    // - Admin: sin restricción de tiempo, mientras la reserva esté "Creada"
-    // - No admin: 15 minutos antes del inicio hasta la hora fin
+    // Función para validar si se puede hacer check-in (usa reglas centralizadas)
     const puedeHacerCheckIn = (event) => {
-        if (isAdminView) {
-            return event.estado === "Creada";
-        }
-
-        const ahora = new Date();
-        const horaInicio = new Date(event.hora_inicio);
-        const horaFin = new Date(event.hora_fin);
-        const tiempoAntesPermitido = 15 * 60 * 1000; // 15 minutos en ms
-        const horaCheckInPermitida = new Date(horaInicio.getTime() - tiempoAntesPermitido);
-
-        return event.estado === "Creada" && ahora >= horaCheckInPermitida && ahora <= horaFin;
+        return isAdminView ? canAdminCheckIn(event) : canUserCheckIn(event);
     };
 
     // Calcular eventos paginados
@@ -108,7 +98,7 @@ const ReservationList = ({ selectedDate, events, onCancelReservation, onCheckIn,
                                             />
                                             <CancelButton 
                                                 onClick={() => onCancelReservation(event.id)}
-                                                disabled={event.estado === "Cancelada"}
+                                                disabled={event.estado === RESERVATION_STATES.CANCELADA}
                                             />
                                         </div>
                                     </div>
