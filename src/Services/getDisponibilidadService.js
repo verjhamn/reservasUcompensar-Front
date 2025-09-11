@@ -1,10 +1,12 @@
 import { axiosInstance } from "./authService";
 import { format, addHours } from 'date-fns';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 // Para el modal de reservas (sin user_id)
 export const getDisponibilidad = async (espacio_id, fecha) => {
     try {
-        const response = await axiosInstance.post("/reservas/disponibilidad", {
+        const response = await axiosInstance.post(`${API_URL}/reservas/disponibilidad`, {
             espacio_id,
             fecha
         });
@@ -29,7 +31,7 @@ export const getDisponibilidadMes = async (espacio_id, mes, año) => {
         // Formatear la fecha como DD/MM/AAAA (usando el primer día del mes)
         const fecha = `01/${mes.toString().padStart(2, '0')}/${año}`;
         
-        const response = await axiosInstance.post("/reservas/disponibilidad", {
+        const response = await axiosInstance.post(`${API_URL}/reservas/disponibilidad`, {
             espacio_id,
             fecha,
             mes: true
@@ -52,7 +54,7 @@ export const getDisponibilidadMes = async (espacio_id, mes, año) => {
 // Para el check-in (con user_id)
 export const getDisponibilidadCheckIn = async (espacio_id, fecha, userId) => {
     try {
-        const response = await axiosInstance.post("/reservas/disponibilidad", {
+        const response = await axiosInstance.post(`${API_URL}/reservas/disponibilidad`, {
             user_id: userId,
             espacio_id: espacio_id,
             fecha: fecha
@@ -75,7 +77,7 @@ export const getDisponibilidadCheckIn = async (espacio_id, fecha, userId) => {
 // Para el check-out (con user_id)
 export const getDisponibilidadCheckOut = async (espacio_id, fecha, userId) => {
     try {
-        const response = await axiosInstance.post("/reservas/disponibilidad", {
+        const response = await axiosInstance.post(`${API_URL}/reservas/disponibilidad`, {
             user_id: userId,
             espacio_id: espacio_id,
             fecha: fecha
