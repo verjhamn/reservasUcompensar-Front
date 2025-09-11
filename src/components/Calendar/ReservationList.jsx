@@ -95,10 +95,20 @@ const ReservationList = ({ selectedDate, events, onCancelReservation, onCheckIn,
                                             <CheckInButton 
                                                 onClick={() => onCheckIn(event.id)}
                                                 disabled={!puedeHacerCheckIn(event)}
+                                                tooltip={!puedeHacerCheckIn(event) 
+                                                    ? (isAdminView 
+                                                        ? "La reserva debe estar en estado 'Creada' para hacer check-in" 
+                                                        : "Check-in solo disponible desde 15 minutos antes del inicio hasta el final de la reserva")
+                                                    : "Realizar check-in de la reserva"
+                                                }
                                             />
                                             <CancelButton 
                                                 onClick={() => onCancelReservation(event.id)}
                                                 disabled={event.estado === RESERVATION_STATES.CANCELADA}
+                                                tooltip={event.estado === RESERVATION_STATES.CANCELADA 
+                                                    ? "Esta reserva ya está cancelada" 
+                                                    : "Cancelar la reserva"
+                                                }
                                             />
                                         </div>
                                     </div>
