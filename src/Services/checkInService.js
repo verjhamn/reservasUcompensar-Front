@@ -4,14 +4,11 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 export const realizarCheckIn = async (reservaId) => {
   try {
-    console.log("[realizarCheckIn] Enviando solicitud de check-in...");
 
     const response = await axiosInstance.post(`${API_URL}/reservas/check-in`, {
       "reserva_id": reservaId,
       "check-in": true
     });
-
-    console.log("[realizarCheckIn] Respuesta del servidor:", response.data);
 
     if (response.data.success) {
       return response.data;
@@ -24,16 +21,30 @@ export const realizarCheckIn = async (reservaId) => {
   }
 };
 
+export const realizarCheckInAdmin = async (reservaId) => {
+  try {
+    const response = await axiosInstance.post(`${API_URL}/reservas/check-in-admin`, {
+      "reserva_id": reservaId,
+      "check-in": true
+    });
+
+    if (response.data.success) {
+      return response.data;
+    } else {
+      throw new Error(response.data.message || "Error al realizar el check-in");
+    }
+  } catch (error) {
+    console.error("[realizarCheckInAdmin] Error:", error);
+    throw error;
+  }
+};
+
 export const realizarCheckOut = async (reservaId) => {
   try {
-    console.log("[realizarCheckOut] Enviando solicitud de check-out...");
-
-    const response = await axiosInstance.post(`${API_URL}/reservas/check-out`, {
+    const response = await axiosInstance.post(`${API_URL}/reservas/checkout`, {
       "reserva_id": reservaId,
       "check-out": true
     });
-
-    console.log("[realizarCheckOut] Respuesta del servidor:", response.data);
 
     if (response.data.success) {
       return response.data;

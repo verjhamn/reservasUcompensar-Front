@@ -4,6 +4,7 @@ import AdminSearchFilters from '../AdminFilters/AdminSearchFilters';
 import ReservationCalendar from '../Calendar/ReservationCalendar';
 import { getAllReservations } from '../../Services/adminReservasService';
 import { deleteReserva } from '../../Services/deleteReservaService';
+import { realizarCheckInAdmin } from '../../Services/checkInService';
 import { showConfirmation, showSuccessToast, showErrorToast } from '../UtilComponents/Confirmation';
 import ReservationList from '../Calendar/ReservationList';
 import { format } from 'date-fns';
@@ -78,6 +79,24 @@ const AdminReservationsView = () => {
         }
     };
 
+    const handleCheckIn = async (reservationId) => {
+        try {
+            const confirmed = await showConfirmation(
+                () => { },
+                "¿Estás seguro de que deseas realizar el check-in de esta reserva?"
+            );
+
+            if (confirmed) {
+                await realizarCheckInAdmin(reservationId);
+                await fetchReservations();
+                showSuccessToast('Check-in realizado con éxito');
+            }
+        } catch (error) {
+            console.error('Error al realizar check-in:', error);
+            showErrorToast('Error al realizar el check-in');
+        }
+    };
+
     const filteredReservations = reservations.filter(event =>
         format(new Date(event.start), "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd")
     );
@@ -105,7 +124,9 @@ const AdminReservationsView = () => {
                             selectedDate={selectedDate}
                             events={filteredReservations}
                             onCancelReservation={handleCancelReservation}
+                            onCheckIn={handleCheckIn}
                             showStatus={true}
+                            isAdminView={true}
                         />
                     </div>
                 </div>

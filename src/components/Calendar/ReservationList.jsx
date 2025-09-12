@@ -3,6 +3,9 @@ import { format } from 'date-fns';
 import es from 'date-fns/locale/es';
 import Pagination from '../UtilComponents/Pagination';
 import CancelButton from '../UtilComponents/CancelButton';
+import CheckInButton from '../UtilComponents/CheckInButton';
+import { RESERVATION_STATES } from '../../utils/constants';
+import { canAdminCheckIn, canUserCheckIn } from '../../utils/checkinRules';
 
 const estadoStyles = {
     'Creada': 'bg-gray-300 text-gray-800',
@@ -11,10 +14,15 @@ const estadoStyles = {
     // Puedes agregar más estados aquí
 };
 
-const ReservationList = ({ selectedDate, events, onCancelReservation, showStatus = false }) => {
+const ReservationList = ({ selectedDate, events, onCancelReservation, onCheckIn, showStatus = false, isAdminView = false }) => {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 5;
     const isEmpty = (obj) => !obj || Object.keys(obj).length === 0;
+
+    // Función para validar si se puede hacer check-in (usa reglas centralizadas)
+    const puedeHacerCheckIn = (event) => {
+        return isAdminView ? canAdminCheckIn(event) : canUserCheckIn(event);
+    };
 
     // Calcular eventos paginados
     const indexOfLastEvent = currentPage * itemsPerPage;
@@ -82,13 +90,26 @@ const ReservationList = ({ selectedDate, events, onCancelReservation, showStatus
                                             )}
                                         </div>
 
-                                        {/* Sección de Botón - Derecha */}
-                                        <div className="flex items-center">
-                                            {event.estado !== "Cancelada" && (
-                                                <CancelButton 
-                                                    onClick={() => onCancelReservation(event.id)}
-                                                />
-                                            )}
+                                        {/* Sección de Botones - Derecha */}
+                                        <div className="flex items-center gap-2">
+                                            <CheckInButton 
+                                                onClick={() => onCheckIn(event.id)}
+                                                disabled={!puedeHacerCheckIn(event)}
+                                                tooltip={!puedeHacerCheckIn(event) 
+                                                    ? (isAdminView 
+                                                        ? "La reserva debe estar en estado 'Creada' para hacer check-in" 
+                                                        : "Check-in solo disponible desde 15 minutos antes del inicio hasta el final de la reserva")
+                                                    : "Realizar check-in de la reserva"
+                                                }
+                                            />
+                                            <CancelButton 
+                                                onClick={() => onCancelReservation(event.id)}
+                                                disabled={event.estado === RESERVATION_STATES.CANCELADA}
+                                                tooltip={event.estado === RESERVATION_STATES.CANCELADA 
+                                                    ? "Esta reserva ya está cancelada" 
+                                                    : "Cancelar la reserva"
+                                                }
+                                            />
                                         </div>
                                     </div>
                                 </li>

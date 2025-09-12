@@ -1,8 +1,10 @@
 import { axiosInstance } from "./authService";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 export const getAllReservations = async (filters = {}) => {
     try {
-        const response = await axiosInstance.post("/reservas/filtrar", {
+        const response = await axiosInstance.post(`${API_URL}/reservas/filtrar`, {
             palabra: filters.palabra || "",
             fecha: filters.fecha || "",
             horaInicio: filters.horaInicio || "",
