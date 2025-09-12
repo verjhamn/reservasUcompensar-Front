@@ -14,7 +14,18 @@ export const getMisReservas = async () => {
     // Verificar si la respuesta es exitosa
     if (response.data.success) {
       console.log("[getMisReservas] Reservas obtenidas:", response.data.data);
-      return response.data.data; // Retornar las reservas del usuario
+      
+      // Validar que los datos estén completos y filtrar reservas inválidas
+      const reservasValidas = response.data.data.filter(reserva => {
+        return reserva && 
+               reserva.id && 
+               reserva.hora_inicio && 
+               reserva.hora_fin && 
+               reserva.estado;
+      });
+      
+      console.log("[getMisReservas] Reservas válidas filtradas:", reservasValidas);
+      return reservasValidas;
     } else {
       console.error("[getMisReservas] Error en la respuesta:", response.data);
       throw new Error(response.data.message || "Error al obtener las reservas.");

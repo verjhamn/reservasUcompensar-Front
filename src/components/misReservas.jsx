@@ -19,10 +19,18 @@ const BigCalendarView = () => {
     const fetchReservations = async () => {
       try {
         const response = await getMisReservas();
+        
+        // Validar que response sea un array
+        if (!Array.isArray(response)) {
+          console.warn("[misReservas] La respuesta no es un array:", response);
+          setEvents([]);
+          return;
+        }
+        
         const formattedEvents = response.map(item => ({
           id: item.id,
-          type: item.espacio.key || 'Coworking',
-          idEspacio: item.espacio.codigo,
+          type: item.espacio?.key || 'Coworking',
+          idEspacio: item.espacio?.codigo || 'N/A',
           title: item.titulo,
           descripcion: item.descripcion,
           start: new Date(item.hora_inicio),
@@ -30,13 +38,14 @@ const BigCalendarView = () => {
           hora_inicio: item.hora_inicio,
           hora_fin: item.hora_fin,
           estado: item.estado,
-          espacio: item.espacio
+          espacio: item.espacio || {}
         }));
 
         setEvents(formattedEvents);
       } catch (error) {
         console.error("[misReservas] Error al cargar reservas:", error);
         showErrorToast('Error al cargar las reservas');
+        setEvents([]); // Establecer array vacío en caso de error
       }
     };
 

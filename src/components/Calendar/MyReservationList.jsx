@@ -42,10 +42,10 @@ const MyReservationList = ({ selectedDate, events, onCancelReservation, onCheckO
                             <div className="flex justify-between items-start">
                                 <div className="space-y-1 flex-1">
                                     <h4 className="text-base font-semibold text-gris-700">
-                                        Espacio: {event.idEspacio}
+                                        Espacio: {event.idEspacio || 'N/A'}
                                     </h4>
                                     <p className="text-sm text-gris-medio">ID Reserva: {event.id}</p>
-                                    <p className="text-sm text-gris-medio"> {event.type}</p>
+                                    <p className="text-sm text-gris-medio"> {event.type || 'Sin tipo'}</p>
                                     <p className="text-sm text-gris-medio">
                                         Horario: {format(new Date(event.start), "HH:mm")} - {format(new Date(event.end), "HH:mm")}
                                     </p>
