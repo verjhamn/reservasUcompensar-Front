@@ -41,7 +41,7 @@ export const realizarCheckInAdmin = async (reservaId) => {
 
 export const realizarCheckOut = async (reservaId) => {
   try {
-    const response = await axiosInstance.post(`${API_URL}/reservas/checkout`, {
+    const response = await axiosInstance.post(`${API_URL}/reservas/check-out`, {
       "reserva_id": reservaId,
       "check-out": true
     });

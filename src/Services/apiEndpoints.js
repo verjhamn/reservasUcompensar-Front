@@ -14,7 +14,7 @@ export const API_ENDPOINTS = {
   // Check-in/Check-out
   CHECK_IN: `${API_URL}/reservas/check-in`,
   CHECK_IN_ADMIN: `${API_URL}/reservas/check-in-admin`,
-  CHECK_OUT: `${API_URL}/reservas/checkout`, // Note: backend uses 'checkout' not 'check-out'
+  CHECK_OUT: `${API_URL}/reservas/check-out`, 
   
   // Reservation Management
   CREATE_RESERVATION: `${API_URL}/reservas/crear`,

@@ -254,7 +254,7 @@ export const ADMIN_ROLES = {
 - `/reservas/admin`: Gestión administrativa
 - `/reservas/reportes`: Generación de reportes
 - `/reservas/checkin`: Proceso de check-in
-- `/reservas/checkout`: Proceso de check-out
+- `/reservas/check-out`: Proceso de check-out
 
 ### 6.2 Manejo de Errores
 - Sistema centralizado de notificaciones con react-hot-toast

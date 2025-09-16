@@ -11,7 +11,7 @@
 #### Check-in/Check-out
 - **POST** `/reservas/check-in` - Check-in de usuario regular
 - **POST** `/reservas/check-in-admin` - Check-in de administrador
-- **POST** `/reservas/checkout` - Check-out (tanto usuario como admin)
+- **POST** `/reservas/check-out` - Check-out (tanto usuario como admin)
 
 #### Gestión de Reservas
 - **POST** `/reservas/crear` - Crear nueva reserva
@@ -44,7 +44,7 @@
 ### 📝 Notas de Implementación
 
 #### Naming de Endpoints
-- **Backend usa**: `/reservas/checkout` (no `/reservas/check-out`)
+- **Backend usa**: `/reservas/check-out` 
 - **Frontend respeta**: La convención del backend para mantener compatibilidad
 
 #### Configuración Centralizada

@@ -27,7 +27,7 @@ const CheckOutModal = ({ isOpen, onClose, reservaData }) => {
       <Toaster />
       <div className="bg-white rounded-lg p-8 max-w-md w-full">
         <div className="flex justify-between items-start mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">check-out de Reserva</h2>
+          <h2 className="text-2xl font-bold text-gray-800">Check-out de Reserva</h2>
           <button
             onClick={() => onClose(false)}
             className="text-gray-500 hover:text-gray-700 transition-colors"
@@ -90,7 +90,7 @@ const CheckOutModal = ({ isOpen, onClose, reservaData }) => {
               className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors disabled:opacity-50"
               disabled={loading}
             >
-              {loading ? 'Procesando...' : 'Confirmar Check-out'}
+              {loading ? 'Procesando...' : 'Confirmar check-out'}
             </button>
           </div>
         </div>
