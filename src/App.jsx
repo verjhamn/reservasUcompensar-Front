@@ -124,10 +124,10 @@ function App() {
 
     useEffect(() => {
         const checkUserPermissions = () => {
-            const userData = JSON.parse(localStorage.getItem("userData") || "{}");
             const isAdminUser = hasAdminAccess();
-            const canViewReportsUser = canAccessReports(userData?.mail);
+            const canViewReportsUser = canAccessReports();
             
+            console.log("[App] Verificando permisos - Admin:", isAdminUser, "Reports:", canViewReportsUser);
             setIsAdmin(isAdminUser);
             setCanViewReports(canViewReportsUser);
         };
@@ -139,6 +139,25 @@ function App() {
             setCanViewReports(false);
         }
     }, [isLoggedIn]);
+
+    // Escuchar cambios en los roles del usuario
+    useEffect(() => {
+        const handleRolesUpdate = () => {
+            console.log("[App] Roles actualizados, verificando permisos...");
+            const isAdminUser = hasAdminAccess();
+            const canViewReportsUser = canAccessReports();
+            
+            console.log("[App] Permisos actualizados - Admin:", isAdminUser, "Reports:", canViewReportsUser);
+            setIsAdmin(isAdminUser);
+            setCanViewReports(canViewReportsUser);
+        };
+
+        window.addEventListener('userRolesUpdated', handleRolesUpdate);
+        
+        return () => {
+            window.removeEventListener('userRolesUpdated', handleRolesUpdate);
+        };
+    }, []);
 
     const handleFilterChange = (newFilters) => {
         setFilters(newFilters);
