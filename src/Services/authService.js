@@ -1,15 +1,15 @@
 import axios from "axios";
+import { STORAGE_KEYS, EVENTS } from "../config/events";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 // Obtener y almacenar token e ID del usuario
-export const getAuthToken = () => localStorage.getItem("authToken");
-export const setAuthToken = (token) => localStorage.setItem("authToken", token);
-export const getUserId = () => localStorage.getItem("userId");
-export const setUserId = (userId) => localStorage.setItem("userId", userId);
+export const getAuthToken = () => localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+export const setAuthToken = (token) => localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
+export const getUserId = () => localStorage.getItem(STORAGE_KEYS.USER_ID);
+export const setUserId = (userId) => localStorage.setItem(STORAGE_KEYS.USER_ID, userId);
 export const getUserRoles = () => {
-    const roles = localStorage.getItem("userRoles");
-    console.log("[getUserRoles] Leyendo roles de localStorage:", roles);
+    const roles = localStorage.getItem(STORAGE_KEYS.USER_ROLES);
     
     if (!roles) return [];
     
@@ -18,35 +18,30 @@ export const getUserRoles = () => {
         
         // Si el resultado es un string, parsearlo de nuevo (doble serialización)
         if (typeof parsedRoles === 'string') {
-            console.log("[getUserRoles] Doble serialización detectada, parseando de nuevo...");
             parsedRoles = JSON.parse(parsedRoles);
         }
         
-        console.log("[getUserRoles] Roles parseados:", parsedRoles);
         return Array.isArray(parsedRoles) ? parsedRoles : [];
     } catch (error) {
-        console.error("[getUserRoles] Error parseando roles:", error);
+        console.error("Error parsing user roles:", error);
         return [];
     }
 };
 export const setUserRoles = (roles) => {
-    console.log("[setUserRoles] Guardando roles en localStorage:", roles);
-    localStorage.setItem("userRoles", JSON.stringify(roles));
-    console.log("[setUserRoles] Roles guardados, verificando...", JSON.parse(localStorage.getItem("userRoles")));
+    localStorage.setItem(STORAGE_KEYS.USER_ROLES, JSON.stringify(roles));
     
     // Disparar evento personalizado para notificar que los roles cambiaron
-    window.dispatchEvent(new CustomEvent('userRolesUpdated', { detail: roles }));
-    console.log("[setUserRoles] Evento 'userRolesUpdated' disparado");
+    window.dispatchEvent(new CustomEvent(EVENTS.USER_ROLES_UPDATED, { detail: roles }));
 };
 export const clearAuth = () => {
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("userId");
-    localStorage.removeItem("userRoles");
+    localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.USER_ID);
+    localStorage.removeItem(STORAGE_KEYS.USER_ROLES);
 };
 
 // Obtener usuario desde localStorage
 const getUserData = () => {
-    const userData = localStorage.getItem("userData");
+    const userData = localStorage.getItem(STORAGE_KEYS.USER_DATA);
     return userData ? JSON.parse(userData) : null;
 };
 
@@ -65,10 +60,7 @@ export const fetchAuthToken = async () => {
     };
 
     try {
-        console.log("[authService] Intentando autenticación en el backend...");
         const response = await axios.post(`${API_BASE_URL}/auth/login`, loginData);
-        console.log("[authService] Respuesta completa del backend:", response.data);
-        
         const { token, data, roles: roleNames } = response.data;
         const userId = data?.id;
         const userRoles = data?.roles;
@@ -77,14 +69,9 @@ export const fetchAuthToken = async () => {
             setAuthToken(token);
             setUserId(userId);
             
-            console.log("[authService] userId extraído:", userId);
-            console.log("[authService] userRoles extraídos:", userRoles);
-            console.log("[authService] roleNames extraídos:", roleNames);
-            
             // Guardar roles del backend - usar data.roles que contiene los objetos completos
             if (userRoles && Array.isArray(userRoles)) {
                 setUserRoles(userRoles);
-                console.log("[authService] Roles guardados en localStorage:", userRoles);
             } else {
                 // Si no hay roles en data.roles, verificar si hay roles en el nivel superior
                 if (roleNames && Array.isArray(roleNames)) {
@@ -107,15 +94,11 @@ export const fetchAuthToken = async () => {
                         return { id, name };
                     }).filter(role => role.id !== null);
                     
-                    console.log("[authService] Roles convertidos de nombres:", roleObjects);
-                    
                     if (roleObjects.length > 0) {
                         setUserRoles(roleObjects);
-                        console.log("[authService] Roles convertidos guardados:", roleObjects);
                     }
                 }
             }
-            console.log("[authService] Nuevo token generado y guardado:", token);
             return token;
         } else {
             throw new Error("No se recibió un token o ID de usuario válido.");

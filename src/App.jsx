@@ -13,6 +13,8 @@ import InfoModal from "./components/InfoModal";
 import CheckInModal from "./components/CheckInModal";
 import CheckOutModal from "./components/CheckOutModal";
 import { hasAdminAccess, canAccessReports } from './utils/userHelper';
+import { EVENTS } from './config/events';
+import roleSyncService from './Services/roleSyncService';
 import AdminReservationsView from './components/AdminReservations/AdminReservationsView';
 import { getDisponibilidad, verificarReservaUsuario, getDisponibilidadCheckIn, getDisponibilidadCheckOut, verificarReservaConCheckIn } from './Services/getDisponibilidadService';
 import { getUserId } from './Services/authService';
@@ -47,6 +49,20 @@ function App() {
         const storedUser = localStorage.getItem("userData");
         setIsLoggedIn(!!storedUser);
     }, []);
+
+    // Iniciar/detener sincronización de roles según el estado de login
+    useEffect(() => {
+        if (isLoggedIn) {
+            roleSyncService.startAutoSync();
+        } else {
+            roleSyncService.stopAutoSync();
+        }
+
+        // Cleanup al desmontar componente
+        return () => {
+            roleSyncService.stopAutoSync();
+        };
+    }, [isLoggedIn]);
 
     // Verificar si el modal ya se ha mostrado
     useEffect(() => {
@@ -127,7 +143,6 @@ function App() {
             const isAdminUser = hasAdminAccess();
             const canViewReportsUser = canAccessReports();
             
-            console.log("[App] Verificando permisos - Admin:", isAdminUser, "Reports:", canViewReportsUser);
             setIsAdmin(isAdminUser);
             setCanViewReports(canViewReportsUser);
         };
@@ -143,19 +158,17 @@ function App() {
     // Escuchar cambios en los roles del usuario
     useEffect(() => {
         const handleRolesUpdate = () => {
-            console.log("[App] Roles actualizados, verificando permisos...");
             const isAdminUser = hasAdminAccess();
             const canViewReportsUser = canAccessReports();
             
-            console.log("[App] Permisos actualizados - Admin:", isAdminUser, "Reports:", canViewReportsUser);
             setIsAdmin(isAdminUser);
             setCanViewReports(canViewReportsUser);
         };
 
-        window.addEventListener('userRolesUpdated', handleRolesUpdate);
+        window.addEventListener(EVENTS.USER_ROLES_UPDATED, handleRolesUpdate);
         
         return () => {
-            window.removeEventListener('userRolesUpdated', handleRolesUpdate);
+            window.removeEventListener(EVENTS.USER_ROLES_UPDATED, handleRolesUpdate);
         };
     }, []);
 
