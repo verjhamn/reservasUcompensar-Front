@@ -23,7 +23,7 @@ const StatCard = ({
     isSelected = false,
     isClickable = false
 }) => {
-    const baseClasses = `${bgColor} rounded-lg p-4 shadow-sm transition-all duration-200`;
+    const baseClasses = `${bgColor} rounded-lg p-2 md:p-4 shadow-sm transition-all duration-200`;
     const hoverClasses = isClickable ? 'hover:shadow-lg hover:scale-105 cursor-pointer' : 'hover:shadow-md';
     const selectedClasses = isSelected ? `ring-4 ring-offset-2 ${ringColor} shadow-lg scale-105` : '';
     
@@ -41,22 +41,24 @@ const StatCard = ({
             } : undefined}
         >
             <div className="flex items-center justify-between">
-                <div className="flex-1">
-                    <p className={`text-sm font-medium ${textColor} opacity-80`}>
+                <div className="flex-1 min-w-0">
+                    <p className={`text-xs md:text-sm font-medium ${textColor} opacity-80 truncate`}>
                         {title}
                     </p>
-                    <p className={`text-2xl font-bold ${textColor} mt-1`}>
+                    <p className={`text-lg md:text-2xl font-bold ${textColor} mt-1`}>
                         {value}
                     </p>
                 </div>
                 {icon && (
-                    <div className={`${textColor} opacity-60`}>
-                        {icon}
+                    <div className={`${textColor} opacity-60 flex-shrink-0 ml-2`}>
+                        <div className="w-5 h-5 md:w-8 md:h-8">
+                            {icon}
+                        </div>
                     </div>
                 )}
             </div>
             {isClickable && (
-                <p className="text-xs text-gray-500 mt-2 italic">
+                <p className="text-xs text-gray-500 mt-1 md:mt-2 italic hidden sm:block">
                     {isSelected ? '✓ Filtro activo' : 'Clic para filtrar'}
                 </p>
             )}

@@ -111,18 +111,18 @@ const ReservationStats = ({ allReservations, dayReservations, selectedDate, filt
     };
 
     return (
-        <div className="bg-white rounded-xl shadow-md p-6 mb-4">
-            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-                <h3 className="text-lg font-semibold text-turquesa flex items-center gap-2">
-                    <CalendarDaysIcon className="h-6 w-6" />
+        <div className="bg-white rounded-xl shadow-md p-3 md:p-6 mb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 md:mb-4 gap-3">
+                <h3 className="text-base md:text-lg font-semibold text-turquesa flex items-center gap-2">
+                    <CalendarDaysIcon className="h-5 w-5 md:h-6 md:w-6" />
                     Estadísticas de reservas
                 </h3>
                 
                 {/* Toggle entre tres modos de visualización */}
-                <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+                <div className="flex items-center gap-1 md:gap-2 bg-gray-100 rounded-lg p-1">
                     <button
                         onClick={() => handleViewModeChange('all')}
-                        className={`px-3 py-1.5 text-sm rounded-md transition-all whitespace-nowrap ${
+                        className={`px-2 md:px-3 py-1 md:py-1.5 text-xs md:text-sm rounded-md transition-all whitespace-nowrap ${
                             viewMode === 'all' 
                                 ? 'bg-turquesa text-white shadow-sm' 
                                 : 'text-gray-600 hover:text-gray-900'
@@ -133,7 +133,7 @@ const ReservationStats = ({ allReservations, dayReservations, selectedDate, filt
                     </button>
                     <button
                         onClick={() => handleViewModeChange('month')}
-                        className={`px-3 py-1.5 text-sm rounded-md transition-all whitespace-nowrap ${
+                        className={`px-2 md:px-3 py-1 md:py-1.5 text-xs md:text-sm rounded-md transition-all whitespace-nowrap ${
                             viewMode === 'month' 
                                 ? 'bg-turquesa text-white shadow-sm' 
                                 : 'text-gray-600 hover:text-gray-900'
@@ -144,7 +144,7 @@ const ReservationStats = ({ allReservations, dayReservations, selectedDate, filt
                     </button>
                     <button
                         onClick={() => handleViewModeChange('day')}
-                        className={`px-3 py-1.5 text-sm rounded-md transition-all whitespace-nowrap ${
+                        className={`px-2 md:px-3 py-1 md:py-1.5 text-xs md:text-sm rounded-md transition-all whitespace-nowrap ${
                             viewMode === 'day' 
                                 ? 'bg-turquesa text-white shadow-sm' 
                                 : 'text-gray-600 hover:text-gray-900'
@@ -163,7 +163,7 @@ const ReservationStats = ({ allReservations, dayReservations, selectedDate, filt
                 {viewMode === 'all' && '🗂️ Mostrando todas las reservas según filtros aplicados'}
             </p>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 md:gap-4">
                 {/* Total de reservas */}
                 <StatCard
                     title="Total de Reservas"
@@ -232,8 +232,8 @@ const ReservationStats = ({ allReservations, dayReservations, selectedDate, filt
 
             {/* Resumen textual */}
             {summaryStats.total > 0 && (
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                    <p className="text-sm text-gray-600 text-center">
+                <div className="mt-3 md:mt-4 pt-3 md:pt-4 border-t border-gray-200">
+                    <p className="text-xs md:text-sm text-gray-600 text-center">
                         Mostrando <span className="font-semibold text-gray-800">{summaryStats.total}</span> reservas
                         {summaryStats.confirmadas > 0 && (
                             <> · <span className="font-semibold text-green-700">{summaryStats.confirmadas}</span> confirmadas</>
@@ -253,7 +253,7 @@ const ReservationStats = ({ allReservations, dayReservations, selectedDate, filt
 
             {/* Ayuda sobre el filtrado */}
             {activeStatFilter && (
-                <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-2">
+                <div className="mt-2 md:mt-3 bg-blue-50 border border-blue-200 rounded-lg p-2">
                     <p className="text-xs text-blue-700 text-center">
                         💡 Filtrado por estado: <span className="font-semibold">{activeStatFilter}</span>
                         {' '}- Haz clic en la misma tarjeta o en "Total" para quitar el filtro

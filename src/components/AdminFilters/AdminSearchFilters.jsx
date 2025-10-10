@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSyncAlt } from "@fortawesome/free-solid-svg-icons";
+import { FunnelIcon, ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
 import FilterField from "./FilterField";
 
 const coworkingPeriods = [
@@ -20,11 +21,16 @@ const generateTimeOptions = (start, end) => {
 };
 
 const AdminSearchFilters = ({ filters, setFilters }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
   const staticOptions = {
     tipos: ["Coworking", "Espacio multipropósito", "Laboratorio", "Espacio de eventos", "Sala de clases"],
     estados: ["Creada", "Confirmada", "Completada", "Cancelada"],
     pisos: ["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]
   };
+
+  // Contar filtros activos
+  const activeFiltersCount = Object.values(filters).filter(value => value && value.trim() !== "").length;
 
   const startTimeOptions = generateTimeOptions(7, 21);
   
@@ -72,22 +78,92 @@ const AdminSearchFilters = ({ filters, setFilters }) => {
       horaInicio: "",
       horaFin: ""
     });
+    // Cerrar el panel en móvil después de limpiar
+    if (window.innerWidth < 768) {
+      setIsOpen(false);
+    }
   };
 
   return (
-    <div className="bg-white shadow-md p-4 md:p-6 rounded-xl">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold">Filtros de búsqueda</h3>
+    <div className="bg-white shadow-md rounded-xl overflow-hidden">
+      {/* Header del panel - siempre visible */}
+      <div className="p-3 md:p-6">
+        {/* Botón colapsable para móvil */}
         <button
-          onClick={handleClearFilters}
-          className="text-turquesa hover:text-fucsia"
-          title="Limpiar Filtros"
+          onClick={() => setIsOpen(!isOpen)}
+          className="w-full flex items-center justify-between mb-3 md:mb-4 lg:cursor-default"
         >
-          <FontAwesomeIcon icon={faSyncAlt} />
+          <div className="flex items-center gap-2">
+            <FunnelIcon className="h-5 w-5 text-turquesa" />
+            <h3 className="text-base md:text-lg font-semibold">Filtros de búsqueda</h3>
+            {activeFiltersCount > 0 && (
+              <span className="bg-turquesa text-white text-xs font-bold rounded-full px-2 py-0.5 min-w-[20px] text-center">
+                {activeFiltersCount}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {activeFiltersCount > 0 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleClearFilters();
+                }}
+                className="text-turquesa hover:text-fucsia text-sm p-1"
+                title="Limpiar Filtros"
+              >
+                <FontAwesomeIcon icon={faSyncAlt} className="w-4 h-4" />
+              </button>
+            )}
+            <div className="lg:hidden">
+              {isOpen ? (
+                <ChevronUpIcon className="h-5 w-5 text-gray-600" />
+              ) : (
+                <ChevronDownIcon className="h-5 w-5 text-gray-600" />
+              )}
+            </div>
+          </div>
         </button>
-      </div>
 
-      <form className="grid grid-cols-1 gap-4">
+        {/* Resumen de filtros activos (solo visible cuando está cerrado en móvil) */}
+        {!isOpen && activeFiltersCount > 0 && (
+          <div className="lg:hidden flex flex-wrap gap-2 mb-3">
+            {filters.palabra && (
+              <span className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded-full">
+                📝 {filters.palabra}
+              </span>
+            )}
+            {filters.email && (
+              <span className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded-full">
+                ✉️ {filters.email.substring(0, 15)}...
+              </span>
+            )}
+            {filters.tipo && (
+              <span className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded-full">
+                🏢 {filters.tipo}
+              </span>
+            )}
+            {filters.estado && (
+              <span className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded-full">
+                📊 {filters.estado}
+              </span>
+            )}
+            {filters.piso && (
+              <span className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded-full">
+                🏗️ Piso {filters.piso}
+              </span>
+            )}
+            {filters.horaInicio && (
+              <span className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded-full">
+                🕐 {filters.horaInicio}-{filters.horaFin}
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Formulario de filtros - colapsable en móvil, siempre visible en desktop */}
+        <div className={`${isOpen ? 'block' : 'hidden'} lg:block`}>
+          <form className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3 md:gap-4">
         <FilterField
           label="Palabra clave"
           name="palabra"
@@ -171,6 +247,8 @@ const AdminSearchFilters = ({ filters, setFilters }) => {
           </>
         )}
       </form>
+        </div>
+      </div>
     </div>
   );
 };
