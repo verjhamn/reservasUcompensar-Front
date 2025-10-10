@@ -237,14 +237,14 @@ function App() {
                                         onClick={() => setView("Calendario")}
                                         className={`py-2 px-4 rounded ${view === "Calendario" ? "bg-turquesa hover:bg-turquesa/90 text-white" : "bg-gray-300"}`}
                                     >
-                                        Mis Reservas
+                                        Mis reservas
                                     </button>
                                     {isAdmin && (
                                         <button
                                             onClick={() => setView("adminReservations")}
                                             className={`py-2 px-4 rounded ${view === "adminReservations" ? "bg-turquesa hover:bg-turquesa/90 text-white" : "bg-gray-300"}`}
                                         >
-                                            Administrar Reservas
+                                            Administrar reservas
                                         </button>
                                     )}
                                     {(isAdmin || canViewReports) && (

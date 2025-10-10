@@ -4,6 +4,7 @@ import es from 'date-fns/locale/es';
 import Pagination from '../UtilComponents/Pagination';
 import CancelButton from '../UtilComponents/CancelButton';
 import CheckInButton from '../UtilComponents/CheckInButton';
+import SimpleReservationCounter from '../Stats/SimpleReservationCounter';
 import { RESERVATION_STATES } from '../../utils/constants';
 import { canAdminCheckIn, canUserCheckIn } from '../../utils/checkinRules';
 
@@ -18,6 +19,7 @@ const ReservationList = ({ selectedDate, events, onCancelReservation, onCheckIn,
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 5;
     const isEmpty = (obj) => !obj || Object.keys(obj).length === 0;
+
 
     // Función para validar si se puede hacer check-in (usa reglas centralizadas)
     const puedeHacerCheckIn = (event) => {
@@ -35,6 +37,9 @@ const ReservationList = ({ selectedDate, events, onCancelReservation, onCheckIn,
             <h3 className="text-lg font-semibold text-turquesa mb-3 border-b">
                 Reservas del {format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: es })}
             </h3>
+
+            {/* Contador simple de reservas del día */}
+            {isAdminView && <SimpleReservationCounter reservations={events} selectedDate={selectedDate} />}
 
             {events.length > 0 ? (
                 <>
