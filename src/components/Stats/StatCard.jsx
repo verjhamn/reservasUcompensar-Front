@@ -25,7 +25,7 @@ const StatCard = ({
 }) => {
     const baseClasses = `${bgColor} rounded-lg p-2 md:p-4 shadow-sm transition-all duration-200`;
     const hoverClasses = isClickable ? 'hover:shadow-lg hover:scale-105 cursor-pointer' : 'hover:shadow-md';
-    const selectedClasses = isSelected ? `ring-4 ring-offset-2 ${ringColor} shadow-lg scale-105` : '';
+    const selectedClasses = isSelected ? `ring-2 ring-offset-1 ${ringColor} shadow-lg scale-105` : '';
     
     return (
         <div 

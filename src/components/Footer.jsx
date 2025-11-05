@@ -27,8 +27,6 @@ const Footer = () => {
           <p>Bogotá Sede Principal</p>
           <p>Avenida (Calle) 32 No. 17 - 30</p>
           <p className="mb-4">Teléfono: 338 06 66</p>
-          <p>Sede Nuevo Campus</p>
-          <p>Av Carrera 68 No. 68 B – 45</p>
         </div>
 
         <div className="flex flex-col items-center text-center md:items-start md:text-left">
