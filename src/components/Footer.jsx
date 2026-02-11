@@ -12,12 +12,10 @@ const Footer = () => {
             className="h-10 mb-4" 
           />
           <p className="text-center md:text-left mb-4">
-            Si deseas tener más información sobre los cursos, comunícate con nosotros.
+            Si deseas tener más información sobre las reservas, comunícate con nosotros.
           </p>
-          <p>Teléfono: (601) 3380666</p>
-          <p>WhatsApp: (+1) 3128831904</p>
-          <a href="mailto:cuposeducon@ucompensar.edu.co" className="text-orange-500 underline">
-            cuposeducon@ucompensar.edu.co
+          <a href="mailto:admon.campus@ucompensar.edu.co" className="text-orange-500 underline">
+          admon.campus@ucompensar.edu.co
           </a>
         </div>
 
