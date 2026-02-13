@@ -1,12 +1,12 @@
 import { ADMIN_ROLES } from '../config/adminRoles';
 import { BACKEND_ROLE_IDS } from '../config/backendRoles';
-import { getUserRoles } from '../Services/authService'; 
+import { getUserRoles } from '../Services/authService';
 
 export const getUserData = () => {
   try {
     const userDataString = localStorage.getItem("userData");
     if (!userDataString) return null;
-    
+
     return JSON.parse(userDataString);
   } catch (error) {
     console.error("Error parsing user data:", error);
@@ -18,22 +18,22 @@ export const getUserData = () => {
 export const getUserRoleFromBackend = () => {
   try {
     const roles = getUserRoles();
-    
+
     // Si no hay roles, es usuario estándar
     if (!roles || roles.length === 0) {
       return ADMIN_ROLES.USER;
     }
-    
+
     // Buscar el rol con mayor privilegio basado en role_id
     const superAdminRole = roles.find(role => role.id === BACKEND_ROLE_IDS.SUPER_ADMIN);
     if (superAdminRole) return ADMIN_ROLES.SUPER_ADMIN;
-    
+
     const adminRole = roles.find(role => role.id === BACKEND_ROLE_IDS.ADMIN);
     if (adminRole) return ADMIN_ROLES.ADMIN;
-    
+
     const reportsRole = roles.find(role => role.id === BACKEND_ROLE_IDS.REPORTS_VIEWER);
     if (reportsRole) return ADMIN_ROLES.REPORTS_VIEWER;
-    
+
     // Si hay roles pero no coinciden con los IDs esperados, considerar como usuario
     return ADMIN_ROLES.USER;
   } catch (error) {
@@ -58,12 +58,18 @@ export const getUserRole = (email) => {
   return getUserRoleFromBackend();
 };
 
-export const canAccessReports = (email) => {
+export const canAccessReports = () => {
   const role = getUserRoleFromBackend();
   return [ADMIN_ROLES.SUPER_ADMIN, ADMIN_ROLES.ADMIN, ADMIN_ROLES.REPORTS_VIEWER].includes(role);
 };
 
-export const canReserveAnySpace = (email) => {
+export const canReserveAnySpace = () => {
   const role = getUserRoleFromBackend();
   return [ADMIN_ROLES.SUPER_ADMIN, ADMIN_ROLES.ADMIN].includes(role);
+};
+
+// Verificar si el usuario es específicamente super admin
+export const isSuperAdmin = () => {
+  const role = getUserRoleFromBackend();
+  return role === ADMIN_ROLES.SUPER_ADMIN;
 };
