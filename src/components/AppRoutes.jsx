@@ -5,6 +5,7 @@ import MisReservasView from '../pages/MisReservasView';
 import AdminView from '../pages/AdminView';
 import ReportesView from '../pages/ReportesView';
 import EspacioQRView from '../pages/EspacioQRView';
+import ColorPaletteDemo from './ColorPaletteDemo';
 
 const AppRoutes = ({ isLoggedIn, isAdmin, canViewReports }) => {
     const navigate = useNavigate();
@@ -117,6 +118,8 @@ const AppRoutes = ({ isLoggedIn, isAdmin, canViewReports }) => {
                         )}
                     </>
                 )}
+                {/* Temporary: Color Palette Demo */}
+                <Route path="/colores" element={<ColorPaletteDemo />} />
                 {/* Redirect to catalog if trying to access protected routes without auth */}
                 <Route path="*" element={<Navigate to="/catalogo" replace />} />
             </Routes>
