@@ -35,7 +35,7 @@ const Header = ({ onLoginSuccess, onLogout }) => {
     const checkExistingUser = async () => {
       const storedUser = localStorage.getItem("userData");
       const storedRoles = localStorage.getItem("userRoles");
-      
+
       if (storedUser && !storedRoles) {
         try {
           await fetchAuthToken();
@@ -54,10 +54,10 @@ const Header = ({ onLoginSuccess, onLogout }) => {
       localStorage.setItem("userData", JSON.stringify(userData));
       setUser(userData);
       onLoginSuccess(userData);
-      
+
       // IMPORTANTE: Llamar a fetchAuthToken para obtener roles del backend
       await fetchAuthToken();
-      
+
     } catch (error) {
       console.error("Error al obtener datos del usuario:", error);
     }
@@ -65,7 +65,7 @@ const Header = ({ onLoginSuccess, onLogout }) => {
 
   const getUserRoleLabel = () => {
     const role = getUserRoleFromBackend();
-    switch(role) {
+    switch (role) {
       case ADMIN_ROLES.SUPER_ADMIN:
         return 'Super Admin';
       case ADMIN_ROLES.ADMIN:
@@ -82,15 +82,15 @@ const Header = ({ onLoginSuccess, onLogout }) => {
 
   const getRoleColor = () => {
     const role = getUserRoleFromBackend();
-    switch(role) {
+    switch (role) {
       case ADMIN_ROLES.SUPER_ADMIN:
-        return 'text-pink-600';
+        return 'text-purple-600 font-bold'; // Morado Institucional
       case ADMIN_ROLES.ADMIN:
-        return 'text-teal-600';
+        return 'text-primary-600 font-bold'; // Naranja Institucional
       case ADMIN_ROLES.REPORTS_VIEWER:
-        return 'text-purple-600';
+        return 'text-blue-dark-600 font-semibold';
       default:
-        return 'text-gray-600';
+        return 'text-neutral-500';
     }
   };
 
@@ -123,7 +123,7 @@ const Header = ({ onLoginSuccess, onLogout }) => {
                     </span>
                   </div>
                 </div>
-                <SignOutButton 
+                <SignOutButton
                   onLogout={() => {
                     localStorage.removeItem("userData");
                     setUser(null);
@@ -140,7 +140,7 @@ const Header = ({ onLoginSuccess, onLogout }) => {
           <div className="md:hidden flex items-center">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+              className="inline-flex items-center justify-center p-2 rounded-md text-neutral-400 hover:text-neutral-500 hover:bg-neutral-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500"
             >
               {isMenuOpen ? (
                 <X className="block h-6 w-6" />
@@ -170,9 +170,9 @@ const Header = ({ onLoginSuccess, onLogout }) => {
                     </span>
                   </div>
                 </div>
-                
+
                 <div onClick={() => setIsMenuOpen(false)}>
-                  <SignOutButton 
+                  <SignOutButton
                     onLogout={() => {
                       localStorage.removeItem("userData");
                       setUser(null);

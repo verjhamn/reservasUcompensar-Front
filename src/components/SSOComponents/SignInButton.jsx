@@ -8,7 +8,7 @@ const SignInButton = ({ onLoginSuccess }) => {
     const { instance } = useMsal();
 
     const handleLogin = async () => {
-        
+
         try {
             const response = await instance.loginPopup(loginRequest).catch(e => {
                 console.log(e);
@@ -22,7 +22,7 @@ const SignInButton = ({ onLoginSuccess }) => {
     };
 
     return (
-        <button onClick={handleLogin} className="bg-turquesa text-xs md:text-md text-white p-2 md:px-4 md:py-2 rounded flex items-center space-x-1 md:space-x-3">
+        <button onClick={handleLogin} className="bg-primary-600 hover:bg-primary-700 transition-colors text-xs md:text-md text-white p-2 md:px-4 md:py-2 rounded-lg shadow-sm flex items-center space-x-1 md:space-x-3 font-medium">
             <FontAwesomeIcon icon={faSignInAlt} />
             <span>Iniciar sesión</span>
         </button>

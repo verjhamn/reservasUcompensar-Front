@@ -17,7 +17,7 @@ const SignOutButton = ({ onLogout }) => {
     };
 
     return (
-        <button onClick={handleLogout} className="bg-fucsia text-xs md:text-md text-white p-2 md:px-4 md:py-2 rounded flex items-center space-x-2">
+        <button onClick={handleLogout} className="text-neutral-500 hover:text-red-600 hover:bg-red-50 transition-all text-xs md:text-md p-2 md:px-4 md:py-2 rounded-lg flex items-center space-x-2 font-medium">
             <FontAwesomeIcon icon={faSignOutAlt} />
             <span>Cerrar sesión</span>
         </button>

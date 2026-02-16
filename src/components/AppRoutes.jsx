@@ -39,40 +39,29 @@ const AppRoutes = ({ isLoggedIn, isAdmin, canViewReports }) => {
     return (
         <>
             {/* Navigation Tabs */}
-            <div className="flex justify-center space-x-4 mb-6">
-                <Link
-                    to="/catalogo"
-                    className={`py-2 px-4 rounded ${isActive('/catalogo') ? "bg-turquesa hover:bg-turquesa/90 text-white" : "bg-gray-300"}`}
-                >
-                    Catálogo
-                </Link>
-
-                {isLoggedIn && (
-                    <>
-                        <Link
-                            to="/mis-reservas"
-                            className={`py-2 px-4 rounded ${isActive('/mis-reservas') ? "bg-turquesa hover:bg-turquesa/90 text-white" : "bg-gray-300"}`}
-                        >
-                            Mis reservas
-                        </Link>
-                        {isAdmin && (
-                            <Link
-                                to="/admin-reservas"
-                                className={`py-2 px-4 rounded ${isActive('/admin-reservas') ? "bg-turquesa hover:bg-turquesa/90 text-white" : "bg-gray-300"}`}
-                            >
-                                Administrar reservas
-                            </Link>
-                        )}
-                        {(isAdmin || canViewReports) && (
-                            <Link
-                                to="/reportes"
-                                className={`py-2 px-4 rounded ${isActive('/reportes') ? "bg-turquesa hover:bg-turquesa/90 text-white" : "bg-gray-300"}`}
-                            >
-                                Reportes
-                            </Link>
-                        )}
-                    </>
-                )}
+            <div className="flex justify-center items-center space-x-2 mb-8 bg-neutral-100 p-1.5 rounded-xl w-fit mx-auto shadow-inner">
+                {[
+                    { path: '/catalogo', label: 'Catálogo' },
+                    ...(isLoggedIn ? [
+                        { path: '/mis-reservas', label: 'Mis reservas' },
+                        ...(isAdmin ? [{ path: '/admin-reservas', label: 'Administrar reservas' }] : []),
+                        ...((isAdmin || canViewReports) ? [{ path: '/reportes', label: 'Reportes' }] : [])
+                    ] : [])
+                ].map((tab) => (
+                    <Link
+                        key={tab.path}
+                        to={tab.path}
+                        className={`
+                            relative px-6 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ease-out
+                            ${isActive(tab.path)
+                                ? "bg-purple-600 text-white shadow-md transform scale-[1.02]"
+                                : "text-neutral-500 hover:text-purple-700 hover:bg-white/60"
+                            }
+                        `}
+                    >
+                        {tab.label}
+                    </Link>
+                ))}
             </div>
 
             {/* Routes */}
