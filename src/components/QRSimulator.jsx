@@ -5,16 +5,14 @@ import { QrCode } from 'lucide-react';
 const QRSimulator = () => {
     const navigate = useNavigate();
     const [qrCode, setQrCode] = useState('');
+    const [isVisible, setIsVisible] = useState(false);
 
     const testQRCodes = [
         {
             nombre: 'Ejemplo UUID',
-            codigo: '27184818-d9c7-11ef-a876-0050568fe02c'
+            // ... (resto de códigos)
         },
-        {
-            nombre: 'Espacio de prueba',
-            codigo: 'P3C01L'
-        },
+        // ...
     ];
 
     const handleSimulate = () => {
@@ -27,41 +25,65 @@ const QRSimulator = () => {
         navigate(`/espacio/${codigo}`);
     };
 
+    if (!isVisible) {
+        return (
+            <button
+                onClick={() => setIsVisible(true)}
+                className="fixed bottom-4 right-4 z-50 bg-neutral-800 text-white p-3 rounded-full shadow-lg hover:bg-neutral-700 transition-colors flex items-center gap-2 opacity-50 hover:opacity-100"
+                title="Abrir Simulador QR"
+            >
+                <QrCode className="w-5 h-5" />
+            </button>
+        );
+    }
+
     return (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-            <div className="flex items-center gap-2 mb-3">
-                <QrCode className="w-5 h-5 text-yellow-700" />
-                <h3 className="font-semibold text-yellow-900">Simulador de QR (Testing)</h3>
+        <div className="fixed bottom-4 right-4 z-50 bg-white border border-neutral-200 rounded-xl p-4 shadow-2xl w-80 animate-fade-in-up">
+            <div className="flex items-center justify-between mb-3 border-b border-neutral-100 pb-2">
+                <div className="flex items-center gap-2">
+                    <QrCode className="w-5 h-5 text-purple-600" />
+                    <h3 className="font-semibold text-neutral-800">Simulador QR</h3>
+                </div>
+                <button
+                    onClick={() => setIsVisible(false)}
+                    className="text-neutral-400 hover:text-neutral-600 text-sm font-medium"
+                >
+                    Ocultar
+                </button>
             </div>
 
             <div className="space-y-3">
-                <div className="flex gap-2">
-                    <input
-                        type="text"
-                        value={qrCode}
-                        onChange={(e) => setQrCode(e.target.value)}
-                        placeholder="Ingresa código del espacio (ej: 27184818-d9c7-11ef...)"
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
-                    />
-                    <button
-                        onClick={handleSimulate}
-                        className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-md text-sm"
-                    >
-                        Simular
-                    </button>
-                </div>
+                <input
+                    type="text"
+                    value={qrCode}
+                    onChange={(e) => setQrCode(e.target.value)}
+                    placeholder="Código UUID del espacio..."
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-200 focus:border-purple-500 outline-none"
+                />
 
-                <div className="flex gap-2 flex-wrap">
-                    <span className="text-xs text-gray-600">Pruebas rápidas:</span>
-                    {testQRCodes.map((qr) => (
+                <button
+                    onClick={handleSimulate}
+                    className="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors"
+                >
+                    Simular Escaneo
+                </button>
+
+                <div className="mt-2 text-xs text-neutral-500">
+                    <p className="mb-1 font-medium">Pruebas rápidas:</p>
+                    <div className="flex flex-wrap gap-2">
                         <button
-                            key={qr.codigo}
-                            onClick={() => handleQuickTest(qr.codigo)}
-                            className="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded text-xs"
+                            onClick={() => handleQuickTest('27184818-d9c7-11ef-a876-0050568fe02c')}
+                            className="bg-neutral-100 hover:bg-neutral-200 px-2 py-1 rounded text-neutral-700 transition-colors"
                         >
-                            {qr.nombre}
+                            Ejemplo UUID
                         </button>
-                    ))}
+                        <button
+                            onClick={() => handleQuickTest('P3C01L')}
+                            className="bg-neutral-100 hover:bg-neutral-200 px-2 py-1 rounded text-neutral-700 transition-colors"
+                        >
+                            Espacio Prueba
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
