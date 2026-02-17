@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from "react";
 import ReactPaginate from "react-paginate";
 import ReservationModal from "./ReservationModal";
+import QuoteRequestModal from "./QuoteRequestModal";
 import { fetchFilteredReservations } from "../Services/reservasService";
 import { useMsal } from "@azure/msal-react";
 import { loginRequest } from "../Services/SSOServices/authConfig";
 import { fetchAuthToken } from "../Services/authService";
 
-const ResultsTable = ({ filters = {}, goToMyReservations }) => {
+const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode }) => {
   const { instance } = useMsal();
   const [page, setPage] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
   const [selectedSpace, setSelectedSpace] = useState(null);
+  const [quoteData, setQuoteData] = useState(null);
   const [itemsPerPage, setItemsPerPage] = useState(9);
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -33,7 +36,7 @@ const ResultsTable = ({ filters = {}, goToMyReservations }) => {
       setError(null);
       try {
         const response = await fetchFilteredReservations(filters);
-        
+
         const processedSpaces = response.flatMap(item => {
           if (item.coworking_contenedor === "NO") {
             return [{
@@ -61,9 +64,10 @@ const ResultsTable = ({ filters = {}, goToMyReservations }) => {
         console.log('Espacios procesados:', processedSpaces); // Para debug
         setData(processedSpaces);
 
-        if (processedSpaces.length === 1) {
-          handleReserveClick(processedSpaces[0]);
-        }
+        // Pre-select if only one result? Maybe remove this auto-select to avoid confusion
+        // if (processedSpaces.length === 1) {
+        //   handleReserveClick(processedSpaces[0]);
+        // }
       } catch (err) {
         console.error("Error al obtener datos en ResultsTable:", err);
         setError(err.message || "Error al cargar los datos.");
@@ -76,48 +80,53 @@ const ResultsTable = ({ filters = {}, goToMyReservations }) => {
 
 
   const handleReserveClick = async (item) => {
-    let userData = localStorage.getItem("userData");
+    // For both guests and logged in users, we show ReservationModal first to check availability
+    setSelectedSpace(item);
+    setIsModalOpen(true);
 
-    if (!userData) {
-      try {
-        const response = await instance.loginPopup(loginRequest);
-        const accessToken = response.accessToken;
+    if (!isGuestMode) {
+      let userData = localStorage.getItem("userData");
+      if (!userData) {
+        try {
+          const response = await instance.loginPopup(loginRequest);
+          const accessToken = response.accessToken;
 
-        // Obtener datos del usuario desde Microsoft Graph
-        const graphResponse = await fetch("https://graph.microsoft.com/v1.0/me", {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
-        const user = await graphResponse.json();
+          // Obtener datos del usuario desde Microsoft Graph
+          const graphResponse = await fetch("https://graph.microsoft.com/v1.0/me", {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
+          const user = await graphResponse.json();
 
-        if (user) {
-          console.log("Usuario autenticado con SSO:", user);
+          if (user) {
+            localStorage.setItem("userData", JSON.stringify(user));
+            window.dispatchEvent(new Event("storage"));
+            await fetchAuthToken();
+          }
 
-          // Guardamos correctamente el usuario en localStorage
-          localStorage.setItem("userData", JSON.stringify(user));
-          window.dispatchEvent(new Event("storage")); // Actualiza el Header automáticamente
-
-          // Llamamos a fetchAuthToken para registrar al usuario en el backend si no existe
-          console.log("[ResultsTable] Registrando usuario en el backend si es necesario...");
-          await fetchAuthToken();
+          setIsLoggedIn(true);
+        } catch (error) {
+          console.error("Error en el inicio de sesión con Microsoft:", error);
+          // If login fails, we might close modal or let them try again inside modal if we moved logic there.
+          // But since we are here, we keep modal open if they just closed popup? 
+          // Actually if login fails, they shouldn't proceed.
+          // For now, assume success or they stay on page.
+          return;
         }
-
-        setIsLoggedIn(true);
-        // Remover el getRandomImage y pasar el item directamente
-        setSelectedSpace(item);
-        setIsModalOpen(true);
-      } catch (error) {
-        console.error("Error en el inicio de sesión con Microsoft:", error);
-        return;
+      } else {
+        await fetchAuthToken();
       }
-    } else {
-      //Si ya hay datos en localStorage, verificamos la autenticación en el backend
-      console.log("[ResultsTable] Verificando autenticación en backend...");
-      await fetchAuthToken();
-
-      // Remover el getRandomImage y pasar el item directamente
-      setSelectedSpace(item);
-      setIsModalOpen(true);
     }
+    // Guest mode just opens modal (already set above)
+  };
+
+  const handleQuoteRequestFromModal = (data) => {
+    setIsModalOpen(false);
+    setQuoteData({
+      space: selectedSpace,
+      ...data
+    });
+    // Small delay for smooth transition
+    setTimeout(() => setIsQuoteModalOpen(true), 150);
   };
 
   const renderInfoMessage = () => {
@@ -152,9 +161,9 @@ const ResultsTable = ({ filters = {}, goToMyReservations }) => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {data.slice(page * itemsPerPage, (page + 1) * itemsPerPage).map((item, index) => (
           <div key={`${item.id}-${index}`} className="border rounded-lg overflow-hidden shadow hover:shadow-lg transition duration-300 flex flex-col">
-            <img 
-              src={item.imagenes[0]?.img_path} 
-              alt={item.codigo} 
+            <img
+              src={item.imagenes[0]?.img_path}
+              alt={item.codigo}
               className="h-48 w-full object-cover"
             />
             <div className="p-4 flex flex-col flex-grow">
@@ -162,13 +171,15 @@ const ResultsTable = ({ filters = {}, goToMyReservations }) => {
                 <h3 className="text-lg font-bold text-gray-800">{item.Titulo} {item.codigo || "Código no disponible"}</h3>
                 <p className="text-gray-600 text-sm">Tipo: {item.tipo || "Tipo no disponible"}</p>
                 <p className="text-gray-600 text-sm">Piso: {item.piso || "No disponible"}</p>
-               {/*  <p className="text-gray-600 text-sm">Descripción: {item.descripcion || "Descripción no disponible"}</p> */}
               </div>
               <button
                 onClick={() => handleReserveClick(item)}
-                className="mt-4 w-full bg-turquesa text-white py-2 px-4 rounded hover:bg-turquesa/90 transition duration-300"
+                className={`mt-4 w-full py-2 px-4 rounded transition duration-300 font-medium shadow-sm ${isGuestMode
+                  ? "bg-purple-600 hover:bg-purple-700 text-white"
+                  : "bg-primary-600 hover:bg-primary-700 text-white"
+                  }`}
               >
-                Reservar
+                {isGuestMode ? "Solicitar Cotización" : "Reservar"}
               </button>
             </div>
           </div>
@@ -198,6 +209,15 @@ const ResultsTable = ({ filters = {}, goToMyReservations }) => {
         onClose={() => setIsModalOpen(false)}
         spaceData={selectedSpace}
         goToMyReservations={goToMyReservations}
+        isGuestMode={isGuestMode}
+        onQuoteRequest={handleQuoteRequestFromModal}
+      />
+
+      <QuoteRequestModal
+        isOpen={isQuoteModalOpen}
+        onClose={() => setIsQuoteModalOpen(false)}
+        spaceData={selectedSpace}
+        quoteData={quoteData}
       />
     </div>
   );

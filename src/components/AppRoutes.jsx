@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation, Link } from 'react-router-dom';
+import LandingView from '../pages/LandingView';
 import CatalogoView from '../pages/CatalogoView';
 import MisReservasView from '../pages/MisReservasView';
 import AdminView from '../pages/AdminView';
@@ -36,37 +37,47 @@ const AppRoutes = ({ isLoggedIn, isAdmin, canViewReports }) => {
     // Helper to check if a route is active
     const isActive = (path) => location.pathname === path;
 
+    // Check if we are on landing page
+    const isLanding = location.pathname === '/';
+
+    // Strict Landing Redirect: If on /catalogo, not logged in, and not guest mode -> Redirect to Landing
+    if (location.pathname === '/catalogo' && !isLoggedIn && !location.state?.guestMode) {
+        return <Navigate to="/" replace />;
+    }
+
     return (
         <>
-            {/* Navigation Tabs */}
-            <div className="flex justify-center items-center space-x-2 mb-8 bg-neutral-100 p-1.5 rounded-xl w-fit mx-auto shadow-inner">
-                {[
-                    { path: '/catalogo', label: 'Catálogo' },
-                    ...(isLoggedIn ? [
-                        { path: '/mis-reservas', label: 'Mis reservas' },
-                        ...(isAdmin ? [{ path: '/admin-reservas', label: 'Administrar reservas' }] : []),
-                        ...((isAdmin || canViewReports) ? [{ path: '/reportes', label: 'Reportes' }] : [])
-                    ] : [])
-                ].map((tab) => (
-                    <Link
-                        key={tab.path}
-                        to={tab.path}
-                        className={`
-                            relative px-6 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ease-out
-                            ${isActive(tab.path)
-                                ? "bg-purple-600 text-white shadow-md transform scale-[1.02]"
-                                : "text-neutral-500 hover:text-purple-700 hover:bg-white/60"
-                            }
-                        `}
-                    >
-                        {tab.label}
-                    </Link>
-                ))}
-            </div>
+            {/* Navigation Tabs (Hidden on Landing) */}
+            {!isLanding && (
+                <div className="flex justify-center items-center space-x-2 mb-8 bg-neutral-100 p-1.5 rounded-xl w-fit mx-auto shadow-inner animate-fade-in">
+                    {[
+                        { path: '/catalogo', label: 'Catálogo' },
+                        ...(isLoggedIn ? [
+                            { path: '/mis-reservas', label: 'Mis reservas' },
+                            ...(isAdmin ? [{ path: '/admin-reservas', label: 'Administrar reservas' }] : []),
+                            ...((isAdmin || canViewReports) ? [{ path: '/reportes', label: 'Reportes' }] : [])
+                        ] : [])
+                    ].map((tab) => (
+                        <Link
+                            key={tab.path}
+                            to={tab.path}
+                            className={`
+                                relative px-6 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ease-out
+                                ${isActive(tab.path)
+                                    ? "bg-purple-600 text-white shadow-md transform scale-[1.02]"
+                                    : "text-neutral-500 hover:text-purple-700 hover:bg-white/60"
+                                }
+                            `}
+                        >
+                            {tab.label}
+                        </Link>
+                    ))}
+                </div>
+            )}
 
             {/* Routes */}
             <Routes>
-                <Route path="/" element={<Navigate to="/catalogo" replace />} />
+                <Route path="/" element={<LandingView isLoggedIn={isLoggedIn} />} />
                 <Route
                     path="/catalogo"
                     element={
@@ -109,8 +120,8 @@ const AppRoutes = ({ isLoggedIn, isAdmin, canViewReports }) => {
                 )}
                 {/* Temporary: Color Palette Demo */}
                 <Route path="/colores" element={<ColorPaletteDemo />} />
-                {/* Redirect to catalog if trying to access protected routes without auth */}
-                <Route path="*" element={<Navigate to="/catalogo" replace />} />
+                {/* Redirect to landing if trying to access protected routes without auth */}
+                <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
         </>
     );

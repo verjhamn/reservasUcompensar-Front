@@ -12,7 +12,7 @@ import CalendarLegend from "./components/CalendarLegend";
 import TimeSlotSelector from "./components/TimeSlotSelector";
 import ReservationForm from "./components/ReservationForm";
 
-const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) => {
+const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGuestMode, onQuoteRequest }) => {
     const [activeTab, setActiveTab] = useState("info");
     const [selectedHours, setSelectedHours] = useState([]);
 
@@ -210,6 +210,29 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
 
     if (!isOpen || !spaceData) return null;
 
+    const handleGuestSubmit = () => {
+        if (!selectedDate) {
+            toast.error('Por favor seleccione una fecha', { duration: 3000 });
+            return;
+        }
+        if (selectedHours.length === 0) {
+            toast.error('Por favor seleccione al menos una hora', { duration: 3000 });
+            return;
+        }
+
+        // Pass validation, proceed to Quote Request
+        if (onQuoteRequest) {
+            // Sort hours just in case
+            const sortedHours = [...selectedHours].sort();
+            onQuoteRequest({
+                date: selectedDate,
+                startTime: sortedHours[0],
+                endTime: sortedHours[sortedHours.length - 1], // Simplified logic, assumes contiguous
+                hours: sortedHours
+            });
+        }
+    };
+
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <Toaster />
@@ -286,7 +309,8 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations }) =>
                             setTitle={setReservationTitle}
                             description={reservationDescription}
                             setDescription={setReservationDescription}
-                            onSubmit={handleConfirmReservation}
+                            onSubmit={isGuestMode ? handleGuestSubmit : handleConfirmReservation}
+                            isGuestMode={isGuestMode}
                         />
                     </div>
                 )}

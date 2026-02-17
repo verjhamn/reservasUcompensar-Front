@@ -100,11 +100,13 @@ const Header = ({ onLoginSuccess, onLogout }) => {
         <div className="flex justify-between h-16">
           {/* Logo section */}
           <div className="flex-shrink-0 flex items-center">
-            <img
-              className="h-8 w-auto"
-              src="https://ucompensar.edu.co/wp-content/uploads/2021/04/main-logo.svg"
-              alt="Compensar Logo"
-            />
+            <a href="/" className="cursor-pointer">
+              <img
+                className="h-8 w-auto"
+                src="https://ucompensar.edu.co/wp-content/uploads/2021/04/main-logo.svg"
+                alt="Compensar Logo"
+              />
+            </a>
           </div>
 
           {/* Desktop menu */}

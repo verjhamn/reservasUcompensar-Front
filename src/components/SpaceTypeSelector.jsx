@@ -1,151 +1,123 @@
-import React from 'react';
-import { BookOpen, Users, Dumbbell, FlaskConical, Laptop, Building2 } from 'lucide-react';
+import React, { useState } from 'react';
+// Version Force Update: 1.0.1
+import { BookOpen, Users, FlaskConical, Laptop, Building2, ArrowLeft, ChevronDown, Check } from 'lucide-react';
 
 const spaceTypes = [
-    {
-        id: 'study',
-        name: 'Sala de Estudio',
-        description: 'Espacios tranquilos para estudio individual o grupal',
-        icon: BookOpen,
-        color: 'purple',
-        value: 'Sala de estudio',
-    },
-    {
-        id: 'meeting',
-        name: 'Sala de Reuniones',
-        description: 'Espacios para reuniones y trabajo colaborativo',
-        icon: Users,
-        color: 'blue-light',
-        value: 'Sala de reuniones',
-    },
-    {
-        id: 'auditorium',
-        name: 'Auditorio',
-        description: 'Espacios para conferencias y eventos',
-        icon: Building2,
-        color: 'primary',
-        value: 'Auditorio',
-    },
-    {
-        id: 'sports',
-        name: 'Instalación Deportiva',
-        description: 'Canchas y espacios deportivos',
-        icon: Dumbbell,
-        color: 'turquoise',
-        value: 'Cancha',
-    },
-    {
-        id: 'lab',
-        name: 'Laboratorio',
-        description: 'Laboratorios de ciencias y tecnología',
-        icon: FlaskConical,
-        color: 'magenta',
-        value: 'Laboratorio',
-    },
-    {
-        id: 'computer',
-        name: 'Sala de Cómputo',
-        description: 'Equipos de cómputo disponibles',
-        icon: Laptop,
-        color: 'blue-dark',
-        value: 'Sala de computo',
-    },
+    { id: 'events', name: 'Espacio de eventos', icon: Building2, color: 'primary', value: 'Espacio de eventos' },
+    { id: 'coworking', name: 'Coworking', icon: Laptop, color: 'blue-light', value: 'Coworking' },
+    { id: 'multipurpose', name: 'Espacio multipropósito', icon: Users, color: 'purple', value: 'Espacio multipropósito' },
+    { id: 'lab', name: 'Laboratorio', icon: FlaskConical, color: 'magenta', value: 'Laboratorio' },
+    { id: 'classroom', name: 'Sala de clases', icon: BookOpen, color: 'turquoise', value: 'Sala de clases' },
 ];
 
-const SpaceTypeSelector = ({ selectedType, onSelectType }) => {
-    const getColorClasses = (color) => {
+const SpaceTypeSelector = ({ selectedType, onSelectType, onBack }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    // Inicializar con el tipo seleccionado si existe
+    const [selected, setSelected] = useState(() => {
+        return spaceTypes.find(t => t.value === selectedType) || null;
+    });
+
+    const handleSelect = (type) => {
+        setSelected(type);
+        setIsOpen(false);
+        // Pequeño delay para que el usuario vea la selección antes de navegar
+        setTimeout(() => {
+            onSelectType(type.value);
+        }, 300);
+    };
+
+    const getIconColor = (color) => {
         const colorMap = {
-            purple: {
-                gradient: 'from-purple-500 to-purple-700',
-                ring: 'ring-purple-500',
-                hover: 'hover:ring-purple-300',
-                icon: 'text-purple-500',
-                badge: 'text-purple-700',
-            },
-            'blue-light': {
-                gradient: 'from-blue-light-500 to-blue-light-700',
-                ring: 'ring-blue-light-500',
-                hover: 'hover:ring-blue-light-300',
-                icon: 'text-blue-light-500',
-                badge: 'text-blue-light-700',
-            },
-            primary: {
-                gradient: 'from-primary-500 to-primary-700',
-                ring: 'ring-primary-500',
-                hover: 'hover:ring-primary-300',
-                icon: 'text-primary-500',
-                badge: 'text-primary-700',
-            },
-            turquoise: {
-                gradient: 'from-turquoise-500 to-turquoise-700',
-                ring: 'ring-turquoise-500',
-                hover: 'hover:ring-turquoise-300',
-                icon: 'text-turquoise-500',
-                badge: 'text-turquoise-700',
-            },
-            magenta: {
-                gradient: 'from-magenta-500 to-magenta-700',
-                ring: 'ring-magenta-500',
-                hover: 'hover:ring-magenta-300',
-                icon: 'text-magenta-500',
-                badge: 'text-magenta-700',
-            },
-            'blue-dark': {
-                gradient: 'from-blue-dark-500 to-blue-dark-700',
-                ring: 'ring-blue-dark-500',
-                hover: 'hover:ring-blue-dark-300',
-                icon: 'text-blue-dark-500',
-                badge: 'text-blue-dark-700',
-            },
+            purple: 'text-purple-600',
+            'blue-light': 'text-blue-light-600',
+            primary: 'text-primary-600',
+            turquoise: 'text-turquoise-600',
+            magenta: 'text-magenta-600',
+            'blue-dark': 'text-blue-dark-600',
         };
-        return colorMap[color] || colorMap.purple;
+        return colorMap[color] || 'text-neutral-600';
     };
 
     return (
-        <div className="mb-8">
-            <h2 className="text-2xl font-bold text-purple-700 mb-4">Selecciona el Tipo de Espacio</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {spaceTypes.map((type) => {
-                    const Icon = type.icon;
-                    const colors = getColorClasses(type.color);
-                    const isSelected = selectedType === type.value;
+        <div className="animate-fade-in flex flex-col items-center justify-center min-h-[50vh]">
 
-                    return (
-                        <button
-                            key={type.id}
-                            onClick={() => onSelectType(type.value)}
-                            className={`relative overflow-hidden rounded-xl shadow-lg transition-all duration-300 hover:shadow-2xl hover:scale-105 group ${isSelected
-                                    ? `ring-4 ${colors.ring} ring-offset-2`
-                                    : `hover:ring-2 ${colors.hover}`
-                                }`}
-                        >
-                            {/* Gradient Header */}
-                            <div className={`h-32 bg-gradient-to-br ${colors.gradient} relative`}>
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                    <div className="bg-white/20 backdrop-blur-sm rounded-full p-4 group-hover:scale-110 transition-transform">
-                                        <Icon className="w-12 h-12 text-white" />
+            <div className="w-full max-w-lg">
+                <button
+                    onClick={onBack}
+                    className="mb-6 flex items-center text-neutral-500 hover:text-primary-600 transition-colors group"
+                >
+                    <ArrowLeft className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
+                    <span className="font-medium">Volver a selección de sede</span>
+                </button>
+
+                <div className="bg-white rounded-3xl shadow-xl border border-neutral-100 relative">
+                    {/* Header Decorativo */}
+                    <div className="h-32 bg-gradient-to-r from-purple-600 to-primary-600 relative flex items-center justify-center rounded-t-3xl overflow-hidden">
+                        <div className="absolute inset-0 bg-white/10 pattern-grid-lg opacity-20" />
+                        <div className="text-center text-white z-10">
+                            <h2 className="text-2xl font-bold mb-1">Tipo de espacio</h2>
+                            <p className="text-white/80 text-sm">Selecciona el tipo de espacio que necesitas</p>
+                        </div>
+                    </div>
+
+                    {/* Dropdown Container */}
+                    <div className="p-8">
+                        <div className="relative">
+                            <button
+                                onClick={() => setIsOpen(!isOpen)}
+                                className={`w-full bg-neutral-50 border-2 border-neutral-200 rounded-xl p-4 flex items-center justify-between hover:border-primary-300 hover:bg-white transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-primary-100 ${isOpen ? 'border-primary-500 bg-white ring-4 ring-primary-100' : ''}`}
+                            >
+                                <div className="flex items-center">
+                                    {selected && (
+                                        <div className={`mr-3 ${getIconColor(selected.color)}`}>
+                                            {React.createElement(selected.icon, { className: "w-5 h-5" })}
+                                        </div>
+                                    )}
+                                    <span className={`text-lg ${selected ? 'text-neutral-800 font-semibold' : 'text-neutral-400'}`}>
+                                        {selected ? selected.name : 'Elige el tipo de espacio...'}
+                                    </span>
+                                </div>
+                                <ChevronDown className={`w-6 h-6 text-neutral-400 transition-transform duration-300 ${isOpen ? 'rotate-180 text-primary-500' : ''}`} />
+                            </button>
+
+                            {/* Dropdown Menu */}
+                            {isOpen && (
+                                <div className="absolute top-full left-0 right-0 mt-3 bg-white rounded-xl shadow-2xl border border-neutral-100 overflow-hidden z-20 origin-top max-h-80 overflow-y-auto">
+                                    <div className="py-2">
+                                        {spaceTypes.map((type) => {
+                                            const Icon = type.icon;
+                                            const iconColor = getIconColor(type.color);
+
+                                            return (
+                                                <button
+                                                    key={type.id}
+                                                    onClick={() => handleSelect(type)}
+                                                    className="w-full px-6 py-4 flex items-center hover:bg-neutral-50 transition-colors group border-b border-neutral-50 last:border-0"
+                                                >
+                                                    <div className={`p-2 rounded-lg bg-neutral-100 mr-4 group-hover:bg-white group-hover:shadow-sm transition-all ${iconColor}`}>
+                                                        <Icon className="w-6 h-6" />
+                                                    </div>
+                                                    <span className="text-neutral-700 font-medium text-lg group-hover:text-primary-700 transition-colors">
+                                                        {type.name}
+                                                    </span>
+                                                    {selected?.id === type.id && (
+                                                        <Check className="w-5 h-5 text-success ml-auto" />
+                                                    )}
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                 </div>
+                            )}
+                        </div>
 
-                                {isSelected && (
-                                    <div className={`absolute top-3 right-3 bg-white ${colors.badge} text-xs font-bold px-2 py-1 rounded-full shadow-md`}>
-                                        ✓
-                                    </div>
-                                )}
+                        {selected && !isOpen && (
+                            <div className="mt-6 text-center animate-fade-in text-neutral-500 text-sm">
+                                Redirigiendo a los resultados...
                             </div>
-
-                            {/* Card Content */}
-                            <div className="bg-white p-4 text-left">
-                                <h3 className="text-lg font-bold text-neutral-800 mb-1">
-                                    {type.name}
-                                </h3>
-                                <p className="text-sm text-neutral-500">
-                                    {type.description}
-                                </p>
-                            </div>
-                        </button>
-                    );
-                })}
+                        )}
+                    </div>
+                </div>
             </div>
         </div>
     );

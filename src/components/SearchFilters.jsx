@@ -18,18 +18,18 @@ const generateTimeOptions = (start, end) => {
   return times;
 };
 
-const SearchFilters = ({ filters, setFilters, onFilterChange }) => {
+const SearchFilters = ({ filters, setFilters, onFilterChange, isGuestMode }) => {
   const [showMoreFilters, setShowMoreFilters] = useState(false);
 
   const staticOptions = {
     sedes: ["Campus Av. 68"],
-    espaciosFisicos: ["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13","14", "15"],
-    tipo: ["Coworking", "Espacio multipropósito","Laboratorio", "Espacio de eventos" , "Sala de clases"],
+    espaciosFisicos: ["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"],
+    tipo: ["Coworking", "Espacio multipropósito", "Laboratorio", "Espacio de eventos", "Sala de clases"],
     tiposRecurso: ["Personal", "Puesto en L"],
   };
 
   const startTimeOptions = generateTimeOptions(7, 21);
-  
+
   // Generar opciones de hora fin basadas en la hora de inicio seleccionada
   const getEndTimeOptions = (startTime) => {
     if (!startTime) return generateTimeOptions(8, 22);
@@ -61,7 +61,7 @@ const SearchFilters = ({ filters, setFilters, onFilterChange }) => {
         tiporecurso: "",
       };
       setFilters(updatedFilters);
-    } 
+    }
     // Reset hora fin when hora inicio changes
     else if (name === "horaInicio") {
       const updatedFilters = {
@@ -90,22 +90,43 @@ const SearchFilters = ({ filters, setFilters, onFilterChange }) => {
   };
 
   const handleClearFilters = () => {
-    const defaultFilters = {
-      capacidad: "",
-      espacio: "",
-      ubicacion: "",
-      fecha: "",
-      horaInicio: "",
-      horaFinal: "",
-      palabra: "",
-      id: "",
-      sede: "",
-      tipo: "",
-      tiporecurso: "",
-      piso: "",
-    };
-    setFilters(defaultFilters);
-    onFilterChange(defaultFilters);
+    if (isGuestMode) {
+      // En modo invitado, reseteamos pero manteniendo las restricciones
+      const guestDefaults = {
+        capacidad: "",
+        espacio: "",
+        ubicacion: "",
+        fecha: "",
+        horaInicio: "",
+        horaFinal: "",
+        palabra: "",
+        id: "",
+        sede: "1",
+        tipo: "Espacio de eventos",
+        tiporecurso: "",
+        piso: "",
+      };
+      setFilters(guestDefaults);
+      onFilterChange(guestDefaults);
+    } else {
+      // Modo normal: reseteo total
+      const defaultFilters = {
+        capacidad: "",
+        espacio: "",
+        ubicacion: "",
+        fecha: "",
+        horaInicio: "",
+        horaFinal: "",
+        palabra: "",
+        id: "",
+        sede: "",
+        tipo: "",
+        tiporecurso: "",
+        piso: "",
+      };
+      setFilters(defaultFilters);
+      onFilterChange(defaultFilters);
+    }
   };
 
   return (
@@ -121,34 +142,38 @@ const SearchFilters = ({ filters, setFilters, onFilterChange }) => {
         </button>
       </div>
       <form className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
-        {/* Sede - Always visible */}
-        <div>
-          <label className="block text-gray-700 mb-1">Sede</label>
-          <select
-            name="sede"
-            value={filters.sede || ""}
-            onChange={handleChange}
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
-          >
-            <option value="Campus Av. 68">Campus Av. 68</option>
-          </select>
-        </div>
+        {/* Sede - Visible only if NOT guest mode */}
+        {!isGuestMode && (
+          <div>
+            <label className="block text-gray-700 mb-1">Sede</label>
+            <select
+              name="sede"
+              value={filters.sede || ""}
+              onChange={handleChange}
+              className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
+            >
+              <option value="1">Campus Av. 68</option>
+            </select>
+          </div>
+        )}
 
-        {/* Tipo de espacio - Always visible */}
-        <div>
-          <label className="block text-gray-700 mb-1">Tipo de espacio</label>
-          <select
-            name="tipo"
-            value={filters.tipo || ""}
-            onChange={handleChange}
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
-          >
-            <option value="">Seleccionar</option>
-            {staticOptions.tipo.map((tipo, index) => (
-              <option key={index} value={tipo}>{tipo}</option>
-            ))}
-          </select>
-        </div>
+        {/* Tipo de espacio - Visible only if NOT guest mode */}
+        {!isGuestMode && (
+          <div>
+            <label className="block text-gray-700 mb-1">Tipo de espacio</label>
+            <select
+              name="tipo"
+              value={filters.tipo || ""}
+              onChange={handleChange}
+              className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
+            >
+              <option value="">Seleccionar</option>
+              {staticOptions.tipo.map((tipo, index) => (
+                <option key={index} value={tipo}>{tipo}</option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* Botón para mostrar más filtros */}
         <div className="col-span-1 sm:col-span-2 lg:col-span-1">

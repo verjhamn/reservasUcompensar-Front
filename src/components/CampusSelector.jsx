@@ -7,14 +7,14 @@ const campuses = [
         name: 'Campus Av. 68',
         address: 'Av. 68 No. 49A-47',
         description: 'Campus principal con instalaciones completas',
-        value: 'Campus A',
+        value: '1',
     },
     {
         id: 'teusaquillo',
         name: 'Campus Teusaquillo',
         address: 'Cra. 24 No. 39A-17',
         description: 'Sede administrativa y académica',
-        value: 'Campus C',
+        value: '2',
     },
 ];
 
@@ -28,14 +28,14 @@ const CampusSelector = ({ selectedCampus, onSelectCampus }) => {
                         key={campus.id}
                         onClick={() => onSelectCampus(campus.value)}
                         className={`relative overflow-hidden rounded-2xl shadow-lg transition-all duration-300 hover:shadow-2xl hover:scale-105 group ${selectedCampus === campus.value
-                                ? 'ring-4 ring-purple-500 ring-offset-2'
-                                : 'hover:ring-2 hover:ring-purple-300'
+                            ? 'ring-4 ring-purple-500 ring-offset-2'
+                            : 'hover:ring-2 hover:ring-purple-300'
                             }`}
                     >
                         {/* Gradient Background */}
                         <div className={`h-48 bg-gradient-to-br ${campus.id === 'av68'
-                                ? 'from-purple-500 to-purple-700'
-                                : 'from-primary-500 to-primary-700'
+                            ? 'from-purple-500 to-purple-700'
+                            : 'from-primary-500 to-primary-700'
                             } relative`}>
                             {/* Icon */}
                             <div className="absolute inset-0 flex items-center justify-center">
