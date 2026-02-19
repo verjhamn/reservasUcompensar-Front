@@ -155,8 +155,17 @@ const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode }) => {
   if (error) return <p>{error}</p>;
   if (data.length === 0) return <p>No se encontraron resultados para los filtros seleccionados.</p>;
 
+  const handleBackFromQuote = () => {
+    setIsQuoteModalOpen(false);
+    // Reopen reservation modal with same selected space
+    // We might need to ensure ReservationModal state is preserved or re-initialized if needed
+    // But since selectedSpace is in state, it should be fine.
+    setTimeout(() => setIsModalOpen(true), 150);
+  };
+
   return (
     <div className="bg-white shadow-md p-4 md:p-6 rounded-xl">
+      {/* ... (rest of render) ... */}
       {renderInfoMessage()}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {data.slice(page * itemsPerPage, (page + 1) * itemsPerPage).map((item, index) => (
@@ -218,6 +227,7 @@ const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode }) => {
         onClose={() => setIsQuoteModalOpen(false)}
         spaceData={selectedSpace}
         quoteData={quoteData}
+        onBack={handleBackFromQuote}
       />
     </div>
   );

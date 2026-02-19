@@ -3,7 +3,7 @@ import { X, CheckCircle, Store, User, Mail, Phone, Calendar } from 'lucide-react
 
 import { sendQuoteRequest } from '../services/quoteService';
 
-const QuoteRequestModal = ({ isOpen, onClose, spaceData, quoteData }) => {
+const QuoteRequestModal = ({ isOpen, onClose, spaceData, quoteData, onBack }) => {
     const [formData, setFormData] = useState({
         nombre: '',
         tipoDocumento: '',
@@ -61,6 +61,10 @@ const QuoteRequestModal = ({ isOpen, onClose, spaceData, quoteData }) => {
     const handleBack = () => {
         if (currentStep > 1) {
             setCurrentStep(prev => prev - 1);
+        } else if (onBack) {
+            onBack();
+        } else {
+            onClose();
         }
     };
 
@@ -418,17 +422,13 @@ const QuoteRequestModal = ({ isOpen, onClose, spaceData, quoteData }) => {
 
                         {/* Footer Buttons */}
                         <div className="pt-6 flex justify-between gap-4 mt-auto border-t border-gray-100">
-                            {currentStep > 1 ? (
-                                <button
-                                    type="button"
-                                    onClick={handleBack}
-                                    className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
-                                >
-                                    Atrás
-                                </button>
-                            ) : (
-                                <div></div> // Espaciador
-                            )}
+                            <button
+                                type="button"
+                                onClick={handleBack}
+                                className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                            >
+                                {currentStep === 1 ? 'Volver' : 'Atrás'}
+                            </button>
 
                             {currentStep < totalSteps ? (
                                 <button
