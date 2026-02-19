@@ -11,10 +11,13 @@ import AvailabilityCalendar from "./components/AvailabilityCalendar";
 import CalendarLegend from "./components/CalendarLegend";
 import TimeSlotSelector from "./components/TimeSlotSelector";
 import ReservationForm from "./components/ReservationForm";
+import QuoteRequestModal from "../QuoteRequestModal";
 
 const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGuestMode, onQuoteRequest }) => {
     const [activeTab, setActiveTab] = useState("info");
     const [selectedHours, setSelectedHours] = useState([]);
+    const [viewMode, setViewMode] = useState('reservation'); // 'reservation' or 'quote'
+    const [quoteData, setQuoteData] = useState(null);
 
     const isCoworking = spaceData?.coworking_contenedor === "SI";
 
@@ -221,102 +224,118 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
         }
 
         // Pass validation, proceed to Quote Request
-        if (onQuoteRequest) {
-            // Sort hours just in case
-            const sortedHours = [...selectedHours].sort();
-            onQuoteRequest({
-                date: selectedDate,
-                startTime: sortedHours[0],
-                endTime: sortedHours[sortedHours.length - 1], // Simplified logic, assumes contiguous
-                hours: sortedHours
-            });
-        }
+        // Sort hours just in case
+        const sortedHours = [...selectedHours].sort();
+        const data = {
+            date: selectedDate,
+            startTime: sortedHours[0],
+            endTime: sortedHours[sortedHours.length - 1],
+            hours: sortedHours
+        };
+        setQuoteData(data);
+        setViewMode('quote');
     };
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <Toaster />
-            <div className="bg-white rounded-lg p-8 max-w-6xl w-full max-h-[95vh] overflow-auto">
-                <div className="flex justify-between items-start mb-6">
-                    <h2 className="text-2xl font-bold text-gray-800">{spaceData.tipo}: {spaceData.codigo}</h2>
-                    <button
-                        onClick={onClose}
-                        className="text-gray-500 hover:text-gray-700 transition-colors"
-                    >
-                        <svg
-                            className="w-6 h-6"
-                            fill="none"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
+            {viewMode === 'reservation' && (
+                <div className="bg-white rounded-lg p-8 max-w-6xl w-full max-h-[95vh] overflow-auto">
+                    <div className="flex justify-between items-start mb-6">
+                        <h2 className="text-2xl font-bold text-gray-800">{spaceData.tipo}: {spaceData.codigo}</h2>
+                        <button
+                            onClick={onClose}
+                            className="text-gray-500 hover:text-gray-700 transition-colors"
                         >
-                            <path d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </button>
-                </div>
-
-                <div className="border-b mb-6">
-                    <button
-                        onClick={() => setActiveTab("info")}
-                        className={`py-2 px-4 ${activeTab === "info"
-                            ? "border-b-2 border-turquesa font-bold text-turquesa"
-                            : "text-gray-600 hover:text-gray-800"
-                            }`}
-                    >
-                        Información
-                    </button>
-                    <button
-                        onClick={() => setActiveTab("availability")}
-                        className={`py-2 px-4 ${activeTab === "availability"
-                            ? "border-b-2 border-turquesa font-bold text-turquesa"
-                            : "text-gray-600 hover:text-gray-800"
-                            }`}
-                    >
-                        Disponibilidad
-                    </button>
-                </div>
-
-                {activeTab === "info" && (
-                    <SpaceInformation spaceData={spaceData} onNext={() => setActiveTab("availability")} />
-                )}
-
-                {activeTab === "availability" && (
-                    <div>
-                        <CalendarLegend />
-
-                        <AvailabilityCalendar
-                            events={filteredEvents}
-                            date={selectedDate}
-                            onNavigate={handleNavigate}
-                            onSelectSlot={handleSlotSelect}
-                            dayPropGetter={dayPropGetter}
-                            slotPropGetter={slotPropGetter}
-                        />
-
-                        <TimeSlotSelector
-                            timeSlots={generateTimeSlots()}
-                            selectedHours={selectedHours}
-                            onTimeSelect={handleTimeSelect}
-                            isAvailable={isTimeSlotAvailable}
-                            isCoworking={isCoworking}
-                        />
-
-                        <ReservationForm
-                            isCoworking={isCoworking}
-                            title={reservationTitle}
-                            setTitle={setReservationTitle}
-                            description={reservationDescription}
-                            setDescription={setReservationDescription}
-                            onSubmit={isGuestMode ? handleGuestSubmit : handleConfirmReservation}
-                            isGuestMode={isGuestMode}
-                        />
+                            <svg
+                                className="w-6 h-6"
+                                fill="none"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
                     </div>
-                )}
-            </div>
+
+                    <div className="border-b mb-6">
+                        <button
+                            onClick={() => setActiveTab("info")}
+                            className={`py-2 px-4 ${activeTab === "info"
+                                ? "border-b-2 border-turquesa font-bold text-turquesa"
+                                : "text-gray-600 hover:text-gray-800"
+                                }`}
+                        >
+                            Información
+                        </button>
+                        <button
+                            onClick={() => setActiveTab("availability")}
+                            className={`py-2 px-4 ${activeTab === "availability"
+                                ? "border-b-2 border-turquesa font-bold text-turquesa"
+                                : "text-gray-600 hover:text-gray-800"
+                                }`}
+                        >
+                            Disponibilidad
+                        </button>
+                    </div>
+
+                    {activeTab === "info" && (
+                        <SpaceInformation spaceData={spaceData} onNext={() => setActiveTab("availability")} />
+                    )}
+
+                    {activeTab === "availability" && (
+                        <div>
+                            <CalendarLegend />
+
+                            <AvailabilityCalendar
+                                events={filteredEvents}
+                                date={selectedDate}
+                                onNavigate={handleNavigate}
+                                onSelectSlot={handleSlotSelect}
+                                dayPropGetter={dayPropGetter}
+                                slotPropGetter={slotPropGetter}
+                            />
+
+                            <TimeSlotSelector
+                                timeSlots={generateTimeSlots()}
+                                selectedHours={selectedHours}
+                                onTimeSelect={handleTimeSelect}
+                                isAvailable={isTimeSlotAvailable}
+                                isCoworking={isCoworking}
+                            />
+
+                            <ReservationForm
+                                isCoworking={isCoworking}
+                                title={reservationTitle}
+                                setTitle={setReservationTitle}
+                                description={reservationDescription}
+                                setDescription={setReservationDescription}
+                                onSubmit={isGuestMode ? handleGuestSubmit : handleConfirmReservation}
+                                isGuestMode={isGuestMode}
+                            />
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {viewMode === 'quote' && (
+                <div className="bg-white rounded-lg max-w-6xl w-full h-[95vh] overflow-hidden flex flex-col">
+                    <QuoteRequestModal
+                        isOpen={true}
+                        isEmbedded={true}
+                        spaceData={spaceData}
+                        quoteData={quoteData}
+                        onClose={onClose}
+                        onBack={() => setViewMode('reservation')}
+                    />
+                </div>
+            )}
+
             <LoadingSpinner loading={loadingAvailability || reservationLoading} />
-        </div>
+        </div >
     );
 };
 

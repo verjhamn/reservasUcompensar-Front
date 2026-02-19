@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import ReactPaginate from "react-paginate";
 import ReservationModal from "./ReservationModal";
-import QuoteRequestModal from "./QuoteRequestModal";
+
 import { fetchFilteredReservations } from "../Services/reservasService";
 import { useMsal } from "@azure/msal-react";
 import { loginRequest } from "../Services/SSOServices/authConfig";
@@ -11,9 +11,7 @@ const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode }) => {
   const { instance } = useMsal();
   const [page, setPage] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
   const [selectedSpace, setSelectedSpace] = useState(null);
-  const [quoteData, setQuoteData] = useState(null);
   const [itemsPerPage, setItemsPerPage] = useState(9);
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -119,15 +117,7 @@ const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode }) => {
     // Guest mode just opens modal (already set above)
   };
 
-  const handleQuoteRequestFromModal = (data) => {
-    setIsModalOpen(false);
-    setQuoteData({
-      space: selectedSpace,
-      ...data
-    });
-    // Small delay for smooth transition
-    setTimeout(() => setIsQuoteModalOpen(true), 150);
-  };
+
 
   const renderInfoMessage = () => {
     if (filters.tipo && filters.tipo !== "Coworking") {
@@ -219,15 +209,6 @@ const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode }) => {
         spaceData={selectedSpace}
         goToMyReservations={goToMyReservations}
         isGuestMode={isGuestMode}
-        onQuoteRequest={handleQuoteRequestFromModal}
-      />
-
-      <QuoteRequestModal
-        isOpen={isQuoteModalOpen}
-        onClose={() => setIsQuoteModalOpen(false)}
-        spaceData={selectedSpace}
-        quoteData={quoteData}
-        onBack={handleBackFromQuote}
       />
     </div>
   );

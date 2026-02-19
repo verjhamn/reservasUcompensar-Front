@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { X, CheckCircle, Store, User, Mail, Phone, Calendar } from 'lucide-react';
 
 import { sendQuoteRequest } from '../services/quoteService';
+import { toast, Toaster } from 'react-hot-toast';
 
-const QuoteRequestModal = ({ isOpen, onClose, spaceData, quoteData, onBack }) => {
+const QuoteRequestModal = ({ isOpen, onClose, spaceData, quoteData, onBack, isEmbedded = false }) => {
     const [formData, setFormData] = useState({
         nombre: '',
         tipoDocumento: '',
@@ -54,7 +55,21 @@ const QuoteRequestModal = ({ isOpen, onClose, spaceData, quoteData, onBack }) =>
     const handleNext = () => {
         if (currentStep < totalSteps) {
             if (validateStep(currentStep)) setCurrentStep(prev => prev + 1);
-            else alert("Por favor completa todos los campos requeridos para continuar.");
+            else toast.error("Por favor completa todos los campos requeridos para continuar.", {
+                duration: 4000,
+                position: 'top-center',
+                style: {
+                    background: '#FEE2E2',
+                    color: '#B91C1C',
+                    border: '1px solid #FCA5A5',
+                    padding: '16px',
+                    fontWeight: '500',
+                },
+                iconTheme: {
+                    primary: '#B91C1C',
+                    secondary: '#FFFAFA',
+                },
+            });
         }
     };
 
@@ -164,300 +179,311 @@ const QuoteRequestModal = ({ isOpen, onClose, spaceData, quoteData, onBack }) =>
 
     const formattedDate = quoteData?.date ? new Date(quoteData.date).toLocaleDateString() : '';
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
-                {/* Header */}
-                <div className="bg-primary-600 px-6 py-4 flex items-center justify-between">
-                    <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                        <Store className="h-5 w-5" />
-                        Solicitar Cotización de Evento
-                    </h2>
+    const content = (
+        <div className={`bg-white rounded-2xl ${!isEmbedded ? 'shadow-2xl w-full max-w-2xl' : 'w-full'} overflow-hidden flex flex-col ${!isEmbedded ? 'max-h-[90vh]' : 'h-full'}`}>
+            {!isEmbedded && <Toaster />}
+            {/* Header */}
+            <div className="bg-primary-600 px-6 py-4 flex items-center justify-between">
+                <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                    <Store className="h-5 w-5" />
+                    Solicitar Cotización de Evento
+                </h2>
+                {!isEmbedded && (
                     <button
                         onClick={onClose}
                         className="text-white/80 hover:text-white transition-colors p-1 rounded-full hover:bg-white/10"
                     >
                         <X className="h-6 w-6" />
                     </button>
+                )}
+            </div>
+
+            {/* Progress Bar */}
+            <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-semibold text-primary-700 uppercase tracking-wider">
+                        Paso {currentStep} de {totalSteps}
+                    </span>
+                    <span className="text-xs font-medium text-gray-500">
+                        {currentStep === 1 && "Datos Personales"}
+                        {currentStep === 2 && "Datos de Empresa"}
+                        {currentStep === 3 && "Detalles del Evento"}
+                    </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                        className="bg-primary-600 h-2 rounded-full transition-all duration-300 ease-in-out"
+                        style={{ width: `${(currentStep / totalSteps) * 100}%` }}
+                    ></div>
+                </div>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 overflow-y-auto flex-1">
+                {/* Espacio seleccionado info - Always visible */}
+                <div className="mb-6 bg-purple-50 p-4 rounded-lg flex items-start gap-3 border border-purple-100">
+                    <Calendar className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                        <h4 className="font-semibold text-purple-900">Espacio Seleccionado</h4>
+                        <p className="text-sm text-purple-700">
+                            {safeRender(spaceData?.Titulo)} - {safeRender(spaceData?.codigo)} <br />
+                            <span className="opacity-75">{safeRender(spaceData?.tipo)} en sede {safeRender(spaceData?.sede)}</span>
+                        </p>
+                        {quoteData && (
+                            <div className="mt-2 pt-2 border-t border-purple-200">
+                                <p className="text-sm font-medium text-purple-800">Fecha y Hora Preferida:</p>
+                                <p className="text-sm text-purple-700">
+                                    {formattedDate} <br />
+                                    {quoteData.startTime} - {quoteData.endTime}
+                                </p>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
-                {/* Progress Bar */}
-                <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-semibold text-primary-700 uppercase tracking-wider">
-                            Paso {currentStep} de {totalSteps}
-                        </span>
-                        <span className="text-xs font-medium text-gray-500">
-                            {currentStep === 1 && "Datos Personales"}
-                            {currentStep === 2 && "Datos de Empresa"}
-                            {currentStep === 3 && "Detalles del Evento"}
-                        </span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                            className="bg-primary-600 h-2 rounded-full transition-all duration-300 ease-in-out"
-                            style={{ width: `${(currentStep / totalSteps) * 100}%` }}
-                        ></div>
-                    </div>
-                </div>
-
-                {/* Body */}
-                <div className="p-6 overflow-y-auto flex-1">
-                    {/* Espacio seleccionado info - Always visible */}
-                    <div className="mb-6 bg-purple-50 p-4 rounded-lg flex items-start gap-3 border border-purple-100">
-                        <Calendar className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
-                        <div>
-                            <h4 className="font-semibold text-purple-900">Espacio Seleccionado</h4>
-                            <p className="text-sm text-purple-700">
-                                {safeRender(spaceData?.Titulo)} - {safeRender(spaceData?.codigo)} <br />
-                                <span className="opacity-75">{safeRender(spaceData?.tipo)} en sede {safeRender(spaceData?.sede)}</span>
-                            </p>
-                            {quoteData && (
-                                <div className="mt-2 pt-2 border-t border-purple-200">
-                                    <p className="text-sm font-medium text-purple-800">Fecha y Hora Preferida:</p>
-                                    <p className="text-sm text-purple-700">
-                                        {formattedDate} <br />
-                                        {quoteData.startTime} - {quoteData.endTime}
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    <form onSubmit={handleSubmit} className="h-full flex flex-col">
-                        <div className="flex-1">
-                            {/* Seccion 1: Datos Personales */}
-                            {currentStep === 1 && (
-                                <div className="animate-fade-in space-y-4">
-                                    <h3 className="text-lg font-bold text-gray-800 mb-4 pb-2 border-b">Datos Personales</h3>
-                                    <div className="grid md:grid-cols-2 gap-4">
-                                        <div className="space-y-2 md:col-span-2">
-                                            <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                                                Nombre(s) y apellido(s) <span className="text-red-500">*</span>
-                                            </label>
-                                            <input
-                                                type="text"
-                                                name="nombre"
-                                                required
-                                                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
-                                                value={formData.nombre}
-                                                onChange={handleChange}
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                                                Tipo de documento <span className="text-red-500">*</span>
-                                            </label>
-                                            <select
-                                                name="tipoDocumento"
-                                                required
-                                                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
-                                                value={formData.tipoDocumento}
-                                                onChange={handleChange}
-                                            >
-                                                <option value="">Seleccionar</option>
-                                                <option value="CC">Cédula de Ciudadanía</option>
-                                                <option value="CE">Cédula de Extranjería</option>
-                                                <option value="TI">Tarjeta de Identidad</option>
-                                                <option value="PA">Pasaporte</option>
-                                            </select>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                                                Número de documento <span className="text-red-500">*</span>
-                                            </label>
-                                            <input
-                                                type="text"
-                                                name="numeroDocumento"
-                                                required
-                                                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
-                                                value={formData.numeroDocumento}
-                                                onChange={handleChange}
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                                                Correo electrónico <span className="text-red-500">*</span>
-                                            </label>
-                                            <input
-                                                type="email"
-                                                name="correo"
-                                                required
-                                                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
-                                                value={formData.correo}
-                                                onChange={handleChange}
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                                                Teléfono / celular <span className="text-red-500">*</span>
-                                            </label>
-                                            <input
-                                                type="tel"
-                                                name="telefono"
-                                                required
-                                                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
-                                                value={formData.telefono}
-                                                onChange={handleChange}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Seccion 2: Datos de la empresa */}
-                            {currentStep === 2 && (
-                                <div className="animate-fade-in space-y-4">
-                                    <h3 className="text-lg font-bold text-gray-800 mb-4 pb-2 border-b">Datos de la Empresa</h3>
-                                    <div className="grid md:grid-cols-2 gap-4">
-                                        <div className="space-y-2 md:col-span-2">
-                                            <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                                                Nombre empresa <span className="text-red-500">*</span>
-                                            </label>
-                                            <input
-                                                type="text"
-                                                name="empresa"
-                                                required
-                                                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
-                                                value={formData.empresa}
-                                                onChange={handleChange}
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                                                Tipo de documento empresa <span className="text-red-500">*</span>
-                                            </label>
-                                            <select
-                                                name="tipoDocumentoEmpresa"
-                                                required
-                                                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
-                                                value={formData.tipoDocumentoEmpresa}
-                                                onChange={handleChange}
-                                            >
-                                                <option value="">Seleccionar</option>
-                                                <option value="NIT">NIT</option>
-                                                <option value="RUT">RUT</option>
-                                                <option value="Otro">Otro</option>
-                                            </select>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                                                Número de documento empresa <span className="text-red-500">*</span>
-                                            </label>
-                                            <input
-                                                type="text"
-                                                name="numeroDocumentoEmpresa"
-                                                required
-                                                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
-                                                value={formData.numeroDocumentoEmpresa}
-                                                onChange={handleChange}
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                                                Teléfono / celular corporativo <span className="text-red-500">*</span>
-                                            </label>
-                                            <input
-                                                type="tel"
-                                                name="telefonoEmpresa"
-                                                required
-                                                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
-                                                value={formData.telefonoEmpresa}
-                                                onChange={handleChange}
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                                                Dirección empresa <span className="text-red-500">*</span>
-                                            </label>
-                                            <input
-                                                type="text"
-                                                name="direccionEmpresa"
-                                                required
-                                                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
-                                                value={formData.direccionEmpresa}
-                                                onChange={handleChange}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Seccion 3: Detalles del evento */}
-                            {currentStep === 3 && (
-                                <div className="animate-fade-in space-y-4">
-                                    <h3 className="text-lg font-bold text-gray-800 mb-4 pb-2 border-b">Detalles del Evento</h3>
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium text-gray-700">Tipo de evento / Propósito <span className="text-red-500">*</span></label>
+                <form onSubmit={handleSubmit} className="h-full flex flex-col">
+                    <div className="flex-1">
+                        {/* Seccion 1: Datos Personales */}
+                        {currentStep === 1 && (
+                            <div className="animate-fade-in space-y-4">
+                                <h3 className="text-lg font-bold text-gray-800 mb-4 pb-2 border-b">Datos Personales</h3>
+                                <div className="grid md:grid-cols-2 gap-4">
+                                    <div className="space-y-2 md:col-span-2">
+                                        <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                                            Nombre(s) y apellido(s) <span className="text-red-500">*</span>
+                                        </label>
                                         <input
                                             type="text"
-                                            name="tipoEvento"
+                                            name="nombre"
                                             required
                                             className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
-                                            placeholder="Ej: Capacitación, Seminario, Lanzamiento..."
-                                            value={formData.tipoEvento}
+                                            value={formData.nombre}
                                             onChange={handleChange}
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium text-gray-700">Observaciones adicionales</label>
-                                        <textarea
-                                            name="detalles"
-                                            rows="4"
-                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all resize-none"
-                                            placeholder="Número de asistentes estimado, requerimientos especiales, etc."
-                                            value={formData.detalles}
+                                        <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                                            Tipo de documento <span className="text-red-500">*</span>
+                                        </label>
+                                        <select
+                                            name="tipoDocumento"
+                                            required
+                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
+                                            value={formData.tipoDocumento}
                                             onChange={handleChange}
-                                        ></textarea>
+                                        >
+                                            <option value="">Seleccionar</option>
+                                            <option value="CC">Cédula de Ciudadanía</option>
+                                            <option value="CE">Cédula de Extranjería</option>
+                                            <option value="TI">Tarjeta de Identidad</option>
+                                            <option value="PA">Pasaporte</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                                            Número de documento <span className="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            name="numeroDocumento"
+                                            required
+                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
+                                            value={formData.numeroDocumento}
+                                            onChange={handleChange}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                                            Correo electrónico <span className="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            type="email"
+                                            name="correo"
+                                            required
+                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
+                                            value={formData.correo}
+                                            onChange={handleChange}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                                            Teléfono / celular <span className="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            type="tel"
+                                            name="telefono"
+                                            required
+                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
+                                            value={formData.telefono}
+                                            onChange={handleChange}
+                                        />
                                     </div>
                                 </div>
-                            )}
-                        </div>
-
-                        {error && (
-                            <div className="p-3 mt-4 bg-red-50 text-red-700 rounded-lg text-sm border border-red-200">
-                                {error}
                             </div>
                         )}
 
-                        {/* Footer Buttons */}
-                        <div className="pt-6 flex justify-between gap-4 mt-auto border-t border-gray-100">
+                        {/* Seccion 2: Datos de la empresa */}
+                        {currentStep === 2 && (
+                            <div className="animate-fade-in space-y-4">
+                                <h3 className="text-lg font-bold text-gray-800 mb-4 pb-2 border-b">Datos de la Empresa</h3>
+                                <div className="grid md:grid-cols-2 gap-4">
+                                    <div className="space-y-2 md:col-span-2">
+                                        <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                                            Nombre empresa <span className="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            name="empresa"
+                                            required
+                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
+                                            value={formData.empresa}
+                                            onChange={handleChange}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                                            Tipo de documento empresa <span className="text-red-500">*</span>
+                                        </label>
+                                        <select
+                                            name="tipoDocumentoEmpresa"
+                                            required
+                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
+                                            value={formData.tipoDocumentoEmpresa}
+                                            onChange={handleChange}
+                                        >
+                                            <option value="">Seleccionar</option>
+                                            <option value="NIT">NIT</option>
+                                            <option value="RUT">RUT</option>
+                                            <option value="Otro">Otro</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                                            Número de documento empresa <span className="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            name="numeroDocumentoEmpresa"
+                                            required
+                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
+                                            value={formData.numeroDocumentoEmpresa}
+                                            onChange={handleChange}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                                            Teléfono / celular corporativo <span className="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            type="tel"
+                                            name="telefonoEmpresa"
+                                            required
+                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
+                                            value={formData.telefonoEmpresa}
+                                            onChange={handleChange}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                                            Dirección empresa <span className="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            name="direccionEmpresa"
+                                            required
+                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
+                                            value={formData.direccionEmpresa}
+                                            onChange={handleChange}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Seccion 3: Detalles del evento */}
+                        {currentStep === 3 && (
+                            <div className="animate-fade-in space-y-4">
+                                <h3 className="text-lg font-bold text-gray-800 mb-4 pb-2 border-b">Detalles del Evento</h3>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-gray-700">Tipo de evento / Propósito <span className="text-red-500">*</span></label>
+                                    <input
+                                        type="text"
+                                        name="tipoEvento"
+                                        required
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
+                                        placeholder="Ej: Capacitación, Seminario, Lanzamiento..."
+                                        value={formData.tipoEvento}
+                                        onChange={handleChange}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-gray-700">Observaciones adicionales</label>
+                                    <textarea
+                                        name="detalles"
+                                        rows="4"
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all resize-none"
+                                        placeholder="Número de asistentes estimado, requerimientos especiales, etc."
+                                        value={formData.detalles}
+                                        onChange={handleChange}
+                                    ></textarea>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {error && (
+                        <div className="p-3 mt-4 bg-red-50 text-red-700 rounded-lg text-sm border border-red-200">
+                            {error}
+                        </div>
+                    )}
+
+                    {/* Footer Buttons */}
+                    <div className="pt-6 flex justify-between gap-4 mt-auto border-t border-gray-100">
+                        <button
+                            type="button"
+                            onClick={handleBack}
+                            className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                        >
+                            {currentStep === 1 ? 'Volver' : 'Atrás'}
+                        </button>
+
+                        {currentStep < totalSteps ? (
                             <button
                                 type="button"
-                                onClick={handleBack}
-                                className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                                onClick={handleNext}
+                                className="px-8 py-2 bg-primary-600 text-white rounded-lg font-bold hover:bg-primary-700 shadow-md transition-all"
                             >
-                                {currentStep === 1 ? 'Volver' : 'Atrás'}
+                                Siguiente
                             </button>
-
-                            {currentStep < totalSteps ? (
-                                <button
-                                    type="button"
-                                    onClick={handleNext}
-                                    className="px-8 py-2 bg-primary-600 text-white rounded-lg font-bold hover:bg-primary-700 shadow-md transition-all"
-                                >
-                                    Siguiente
-                                </button>
-                            ) : (
-                                <button
-                                    type="submit"
-                                    disabled={isLoading}
-                                    className={`px-8 py-2 bg-primary-600 text-white rounded-lg font-bold hover:bg-primary-700 shadow-md transition-all flex items-center gap-2 ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
-                                >
-                                    {isLoading ? (
-                                        <>
-                                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                                            Enviando...
-                                        </>
-                                    ) : (
-                                        'Solicitar Cotización'
-                                    )}
-                                </button>
-                            )}
-                        </div>
-                    </form>
-                </div>
+                        ) : (
+                            <button
+                                type="submit"
+                                disabled={isLoading}
+                                className={`px-8 py-2 bg-primary-600 text-white rounded-lg font-bold hover:bg-primary-700 shadow-md transition-all flex items-center gap-2 ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                            >
+                                {isLoading ? (
+                                    <>
+                                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                                        Enviando...
+                                    </>
+                                ) : (
+                                    'Solicitar Cotización'
+                                )}
+                            </button>
+                        )}
+                    </div>
+                </form>
             </div>
+        </div>
+    );
+
+    if (isEmbedded) {
+        return content;
+    }
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+            {content}
         </div>
     );
 };
