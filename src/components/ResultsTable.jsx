@@ -162,28 +162,52 @@ const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode }) => {
         {data.slice(page * itemsPerPage, (page + 1) * itemsPerPage).map((item, index) => (
           <div
             key={`${item.id}-${index}`}
-            className="relative rounded-lg overflow-hidden shadow-lg transition-all duration-300 flex flex-col animate-fade-in-up group hover:ring-2 hover:ring-purple-300 hover:shadow-2xl hover:scale-105"
+            onClick={() => handleReserveClick(item)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleReserveClick(item);
+              }
+            }}
+            role="button"
+            tabIndex={0}
+            className="relative rounded-2xl overflow-hidden shadow-lg transition-all duration-300 flex flex-col animate-fade-in-up group hover:shadow-2xl hover:-translate-y-1 cursor-pointer bg-white border border-transparent hover:border-purple-200 outline-none focus:ring-4 focus:ring-purple-200"
           >
-            <img
-              src={item.imagenes[0]?.img_path}
-              alt={item.codigo}
-              className="h-48 w-full object-cover transition-transform duration-700 group-hover:scale-110"
-            />
-            <div className="p-4 flex flex-col flex-grow">
-              <div className="flex-grow">
-                <h3 className="text-lg font-bold text-gray-800">{item.Titulo} {item.codigo || "Código no disponible"}</h3>
-                <p className="text-gray-600 text-sm">Tipo: {item.tipo || "Tipo no disponible"}</p>
-                <p className="text-gray-600 text-sm">Piso: {item.piso || "No disponible"}</p>
+            <div className="relative overflow-hidden h-48">
+              <img
+                src={item.imagenes[0]?.img_path}
+                alt={item.codigo}
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">
+                <span className="text-white font-medium px-4 py-1 bg-white/20 backdrop-blur-sm rounded-full border border-white/30 text-sm">
+                  {isGuestMode ? "Solicitar Cotización" : "Reservar Ahora"}
+                </span>
               </div>
-              <button
-                onClick={() => handleReserveClick(item)}
-                className={`mt-4 w-full py-2 px-4 rounded transition duration-300 font-medium shadow-sm ${isGuestMode
-                  ? "bg-purple-600 hover:bg-purple-700 text-white"
-                  : "bg-primary-600 hover:bg-primary-700 text-white"
-                  }`}
-              >
-                {isGuestMode ? "Solicitar Cotización" : "Reservar"}
-              </button>
+            </div>
+
+            <div className="p-5 flex flex-col flex-grow">
+              <div className="flex-grow space-y-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="text-lg font-bold text-gray-800 leading-tight group-hover:text-purple-700 transition-colors">
+                    {item.Titulo}
+                  </h3>
+                  <span className="text-purple-600 text-sm font-bold bg-purple-50 px-2 py-0.5 rounded-md">
+                    {item.codigo || "N/A"}
+                  </span>
+                </div>
+
+                <div className="flex flex-col gap-0.5 text-sm text-neutral-500">
+                  <p>
+                    <span className="font-medium text-neutral-400 mr-1">Tipo:</span>
+                    {item.tipo || "No disponible"}
+                  </p>
+                  <p>
+                    <span className="font-medium text-neutral-400 mr-1">Piso:</span>
+                    {item.piso || "No disponible"}
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         ))}
