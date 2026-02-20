@@ -33,7 +33,7 @@ const AdminSearchFilters = ({ filters, setFilters }) => {
   const activeFiltersCount = Object.values(filters).filter(value => value && value.trim() !== "").length;
 
   const startTimeOptions = generateTimeOptions(7, 21);
-  
+
   const getEndTimeOptions = (startTime) => {
     if (!startTime) return generateTimeOptions(8, 22);
     const startHour = parseInt(startTime.split(':')[0]);
@@ -85,19 +85,21 @@ const AdminSearchFilters = ({ filters, setFilters }) => {
   };
 
   return (
-    <div className="bg-white shadow-md rounded-xl overflow-hidden">
+    <div className="bg-white shadow-xl rounded-2xl overflow-hidden border border-neutral-100 transition-all hover:shadow-2xl">
       {/* Header del panel - siempre visible */}
-      <div className="p-3 md:p-6">
+      <div className="p-4 md:p-6">
         {/* Botón colapsable para móvil */}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="w-full flex items-center justify-between mb-3 md:mb-4 lg:cursor-default"
+          className="w-full flex items-center justify-between mb-4 md:mb-6 lg:cursor-default group"
         >
-          <div className="flex items-center gap-2">
-            <FunnelIcon className="h-5 w-5 text-turquesa" />
-            <h3 className="text-base md:text-lg font-semibold">Filtros de búsqueda</h3>
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-purple-50 rounded-lg group-hover:bg-purple-100 transition-colors">
+              <FunnelIcon className="h-5 w-5 text-purple-600" />
+            </div>
+            <h3 className="text-base md:text-lg font-bold text-gray-800">Filtros de búsqueda</h3>
             {activeFiltersCount > 0 && (
-              <span className="bg-turquesa text-white text-xs font-bold rounded-full px-2 py-0.5 min-w-[20px] text-center">
+              <span className="bg-purple-600 text-white text-xs font-bold rounded-full px-2 py-0.5 min-w-[20px] text-center shadow-sm">
                 {activeFiltersCount}
               </span>
             )}
@@ -109,7 +111,7 @@ const AdminSearchFilters = ({ filters, setFilters }) => {
                   e.stopPropagation();
                   handleClearFilters();
                 }}
-                className="text-turquesa hover:text-fucsia text-sm p-1"
+                className="text-neutral-400 hover:text-purple-600 text-sm p-1.5 rounded-full hover:bg-purple-50 transition-all"
                 title="Limpiar Filtros"
               >
                 <FontAwesomeIcon icon={faSyncAlt} className="w-4 h-4" />
@@ -164,89 +166,89 @@ const AdminSearchFilters = ({ filters, setFilters }) => {
         {/* Formulario de filtros - colapsable en móvil, siempre visible en desktop */}
         <div className={`${isOpen ? 'block' : 'hidden'} lg:block`}>
           <form className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3 md:gap-4">
-        <FilterField
-          label="Palabra clave"
-          name="palabra"
-          value={filters.palabra || ""}
-          onChange={handleChange}
-          type="text"
-          placeholder="Buscar por código o palabra clave..."
-        />
-
-        <FilterField
-          label="Correo electrónico"
-          name="email"
-          value={filters.email || ""}
-          onChange={handleChange}
-          type="email"
-          placeholder="Buscar por correo del usuario..."
-        />
-
-        <FilterField
-          label="Tipo de espacio"
-          name="tipo"
-          value={filters.tipo || ""}
-          onChange={handleChange}
-          type="select"
-          placeholder="Seleccionar tipo de espacio..."
-          options={staticOptions.tipos}
-        />
-
-        <FilterField
-          label="Estado"
-          name="estado"
-          value={filters.estado || ""}
-          onChange={handleChange}
-          type="select"
-          placeholder="Seleccionar estado..."
-          options={staticOptions.estados}
-        />
-
-        <FilterField
-          label="Piso"
-          name="piso"
-          value={filters.piso || ""}
-          onChange={handleChange}
-          type="select"
-          placeholder="Seleccionar piso..."
-          options={staticOptions.pisos}
-        />
-
-        {filters.tipo === "Coworking" ? (
-          <FilterField
-            label="Franja horaria"
-            name="periodo"
-            value={filters.horaInicio ? 
-              coworkingPeriods.find(p => p.start === filters.horaInicio)?.name + ` (${filters.horaInicio} - ${filters.horaFin})` : ""
-            }
-            onChange={handleChange}
-            type="select"
-            placeholder="Seleccionar franja horaria..."
-            options={coworkingPeriods.map(period => `${period.name} (${period.start} - ${period.end})`)}
-          />
-        ) : (
-          <>
             <FilterField
-              label="Hora inicio"
-              name="horaInicio"
-              value={filters.horaInicio || ""}
+              label="Palabra clave"
+              name="palabra"
+              value={filters.palabra || ""}
+              onChange={handleChange}
+              type="text"
+              placeholder="Buscar por código o palabra clave..."
+            />
+
+            <FilterField
+              label="Correo electrónico"
+              name="email"
+              value={filters.email || ""}
+              onChange={handleChange}
+              type="email"
+              placeholder="Buscar por correo del usuario..."
+            />
+
+            <FilterField
+              label="Tipo de espacio"
+              name="tipo"
+              value={filters.tipo || ""}
               onChange={handleChange}
               type="select"
-              placeholder="Seleccionar hora de inicio..."
-              options={startTimeOptions}
+              placeholder="Seleccionar tipo de espacio..."
+              options={staticOptions.tipos}
             />
+
             <FilterField
-              label="Hora fin"
-              name="horaFin"
-              value={filters.horaFin || ""}
+              label="Estado"
+              name="estado"
+              value={filters.estado || ""}
               onChange={handleChange}
               type="select"
-              placeholder="Seleccionar hora de fin..."
-              options={getEndTimeOptions(filters.horaInicio)}
+              placeholder="Seleccionar estado..."
+              options={staticOptions.estados}
             />
-          </>
-        )}
-      </form>
+
+            <FilterField
+              label="Piso"
+              name="piso"
+              value={filters.piso || ""}
+              onChange={handleChange}
+              type="select"
+              placeholder="Seleccionar piso..."
+              options={staticOptions.pisos}
+            />
+
+            {filters.tipo === "Coworking" ? (
+              <FilterField
+                label="Franja horaria"
+                name="periodo"
+                value={filters.horaInicio ?
+                  coworkingPeriods.find(p => p.start === filters.horaInicio)?.name + ` (${filters.horaInicio} - ${filters.horaFin})` : ""
+                }
+                onChange={handleChange}
+                type="select"
+                placeholder="Seleccionar franja horaria..."
+                options={coworkingPeriods.map(period => `${period.name} (${period.start} - ${period.end})`)}
+              />
+            ) : (
+              <>
+                <FilterField
+                  label="Hora inicio"
+                  name="horaInicio"
+                  value={filters.horaInicio || ""}
+                  onChange={handleChange}
+                  type="select"
+                  placeholder="Seleccionar hora de inicio..."
+                  options={startTimeOptions}
+                />
+                <FilterField
+                  label="Hora fin"
+                  name="horaFin"
+                  value={filters.horaFin || ""}
+                  onChange={handleChange}
+                  type="select"
+                  placeholder="Seleccionar hora de fin..."
+                  options={getEndTimeOptions(filters.horaInicio)}
+                />
+              </>
+            )}
+          </form>
         </div>
       </div>
     </div>

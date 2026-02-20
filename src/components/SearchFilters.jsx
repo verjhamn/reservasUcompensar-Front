@@ -131,48 +131,58 @@ const SearchFilters = ({ filters, setFilters, onFilterChange, isGuestMode }) => 
   };
 
   return (
-    <div className="bg-white shadow-md p-4 md:p-6 rounded-xl">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold">Filtros de búsqueda</h3>
+    <div className="bg-white shadow-xl p-6 md:p-8 rounded-2xl border border-neutral-100 transition-all hover:shadow-2xl">
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-xl font-bold text-gray-800 tracking-tight">Filtros de búsqueda</h3>
         <button
           onClick={handleClearFilters}
-          className="text-turquesa hover:text-fucsia"
+          className="text-neutral-400 hover:text-purple-600 transition-colors p-2 rounded-full hover:bg-purple-50"
           title="Limpiar Filtros"
         >
-          <FontAwesomeIcon icon={faSyncAlt} />
+          <FontAwesomeIcon icon={faSyncAlt} className="text-lg" />
         </button>
       </div>
       <form className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
         {/* Sede - Visible only if NOT guest mode */}
         {!isGuestMode && (
           <div>
-            <label className="block text-gray-700 mb-1">Sede</label>
-            <select
-              name="sede"
-              value={filters.sede || ""}
-              onChange={handleChange}
-              className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
-            >
-              <option value="1">Campus Av. 68</option>
-            </select>
+            <label className="block text-sm font-medium text-neutral-600 mb-1.5 ml-1">Sede</label>
+            <div className="relative">
+              <select
+                name="sede"
+                value={filters.sede || ""}
+                onChange={handleChange}
+                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all duration-200 appearance-none text-gray-700 font-medium cursor-pointer hover:border-purple-300"
+              >
+                <option value="1">Campus Av. 68</option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
+                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+              </div>
+            </div>
           </div>
         )}
 
         {/* Tipo de espacio - Visible only if NOT guest mode */}
         {!isGuestMode && (
           <div>
-            <label className="block text-gray-700 mb-1">Tipo de espacio</label>
-            <select
-              name="tipo"
-              value={filters.tipo || ""}
-              onChange={handleChange}
-              className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
-            >
-              <option value="">Seleccionar</option>
-              {staticOptions.tipo.map((tipo, index) => (
-                <option key={index} value={tipo}>{tipo}</option>
-              ))}
-            </select>
+            <label className="block text-sm font-medium text-neutral-600 mb-1.5 ml-1">Tipo de espacio</label>
+            <div className="relative">
+              <select
+                name="tipo"
+                value={filters.tipo || ""}
+                onChange={handleChange}
+                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all duration-200 appearance-none text-gray-700 font-medium cursor-pointer hover:border-purple-300"
+              >
+                <option value="">Seleccionar tipo...</option>
+                {staticOptions.tipo.map((tipo, index) => (
+                  <option key={index} value={tipo}>{tipo}</option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
+                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+              </div>
+            </div>
           </div>
         )}
 
@@ -182,9 +192,17 @@ const SearchFilters = ({ filters, setFilters, onFilterChange, isGuestMode }) => 
             <button
               type="button"
               onClick={() => setShowMoreFilters(!showMoreFilters)}
-              className="text-turquesa underline"
+              className="text-purple-600 font-semibold hover:text-purple-800 transition-colors flex items-center gap-2 group py-2"
             >
-              {showMoreFilters ? "Menos filtros" : "Más filtros"}
+              <span>{showMoreFilters ? "Menos filtros" : "Más filtros"}</span>
+              <svg
+                className={`w-4 h-4 transition-transform duration-300 ${showMoreFilters ? 'rotate-180' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
             </button>
           </div>
         )}
@@ -197,34 +215,44 @@ const SearchFilters = ({ filters, setFilters, onFilterChange, isGuestMode }) => 
               <>
                 {/* Tipo de Coworking */}
                 <div>
-                  <label className="block text-gray-700 mb-1">Tipo de Coworking</label>
-                  <select
-                    name="tiporecurso"
-                    value={filters.tiporecurso || ""}
-                    onChange={handleChange}
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
-                  >
-                    <option value="">Seleccionar</option>
-                    {staticOptions.tiposRecurso.map((tipo, index) => (
-                      <option key={index} value={tipo}>{tipo}</option>
-                    ))}
-                  </select>
+                  <label className="block text-sm font-medium text-neutral-600 mb-1.5 ml-1">Tipo de Coworking</label>
+                  <div className="relative">
+                    <select
+                      name="tiporecurso"
+                      value={filters.tiporecurso || ""}
+                      onChange={handleChange}
+                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all duration-200 appearance-none text-gray-700 font-medium cursor-pointer hover:border-purple-300"
+                    >
+                      <option value="">Seleccionar</option>
+                      {staticOptions.tiposRecurso.map((tipo, index) => (
+                        <option key={index} value={tipo}>{tipo}</option>
+                      ))}
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
+                      <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Piso */}
                 <div>
-                  <label className="block text-gray-700 mb-1">Piso</label>
-                  <select
-                    name="piso"
-                    value={filters.piso || ""}
-                    onChange={handleChange}
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
-                  >
-                    <option value="">Seleccionar</option>
-                    {staticOptions.espaciosFisicos.map((espacio, index) => (
-                      <option key={index} value={espacio}>{espacio}</option>
-                    ))}
-                  </select>
+                  <label className="block text-sm font-medium text-neutral-600 mb-1.5 ml-1">Piso</label>
+                  <div className="relative">
+                    <select
+                      name="piso"
+                      value={filters.piso || ""}
+                      onChange={handleChange}
+                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all duration-200 appearance-none text-gray-700 font-medium cursor-pointer hover:border-purple-300"
+                    >
+                      <option value="">Seleccionar</option>
+                      {staticOptions.espaciosFisicos.map((espacio, index) => (
+                        <option key={index} value={espacio}>{espacio}</option>
+                      ))}
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
+                      <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Fecha */}
@@ -242,31 +270,36 @@ const SearchFilters = ({ filters, setFilters, onFilterChange, isGuestMode }) => 
 
                 {/* Franja horaria for Coworking */}
                 <div>
-                  <label className="block text-gray-700 mb-1">Franja horaria</label>
-                  <select
-                    name="periodo"
-                    value={filters.horaInicio ? coworkingPeriods.find(p => p.start === filters.horaInicio)?.id : ""}
-                    onChange={handlePeriodSelect}
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
-                  >
-                    <option value="">Seleccionar</option>
-                    {coworkingPeriods.map((period) => (
-                      <option key={period.id} value={period.id}>
-                        {period.name} ({period.start} - {period.end})
-                      </option>
-                    ))}
-                  </select>
+                  <label className="block text-sm font-medium text-neutral-600 mb-1.5 ml-1">Franja horaria</label>
+                  <div className="relative">
+                    <select
+                      name="periodo"
+                      value={filters.horaInicio ? coworkingPeriods.find(p => p.start === filters.horaInicio)?.id : ""}
+                      onChange={handlePeriodSelect}
+                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all duration-200 appearance-none text-gray-700 font-medium cursor-pointer hover:border-purple-300"
+                    >
+                      <option value="">Seleccionar</option>
+                      {coworkingPeriods.map((period) => (
+                        <option key={period.id} value={period.id}>
+                          {period.name} ({period.start} - {period.end})
+                        </option>
+                      ))}
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
+                      <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Código */}
                 <div>
-                  <label className="block text-gray-700 mb-1">Código</label>
+                  <label className="block text-sm font-medium text-neutral-600 mb-1.5 ml-1">Código</label>
                   <input
                     type="search"
                     name="palabra"
                     value={filters.palabra || ""}
                     onChange={handleChange}
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
+                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all duration-200 text-gray-700 font-medium placeholder-gray-400 focus:placeholder-gray-300 hover:border-purple-300"
                     placeholder="Ej: P3C01L"
                   />
                 </div>
@@ -278,18 +311,23 @@ const SearchFilters = ({ filters, setFilters, onFilterChange, isGuestMode }) => 
               <>
                 {/* Piso */}
                 <div>
-                  <label className="block text-gray-700 mb-1">Piso</label>
-                  <select
-                    name="piso"
-                    value={filters.piso || ""}
-                    onChange={handleChange}
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
-                  >
-                    <option value="">Seleccionar</option>
-                    {staticOptions.espaciosFisicos.map((espacio, index) => (
-                      <option key={index} value={espacio}>{espacio}</option>
-                    ))}
-                  </select>
+                  <label className="block text-sm font-medium text-neutral-600 mb-1.5 ml-1">Piso</label>
+                  <div className="relative">
+                    <select
+                      name="piso"
+                      value={filters.piso || ""}
+                      onChange={handleChange}
+                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all duration-200 appearance-none text-gray-700 font-medium cursor-pointer hover:border-purple-300"
+                    >
+                      <option value="">Seleccionar</option>
+                      {staticOptions.espaciosFisicos.map((espacio, index) => (
+                        <option key={index} value={espacio}>{espacio}</option>
+                      ))}
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
+                      <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Fecha */}
@@ -300,41 +338,51 @@ const SearchFilters = ({ filters, setFilters, onFilterChange, isGuestMode }) => 
                     name="fecha"
                     value={filters.fecha ? filters.fecha.split("/").reverse().join("-") : ""}
                     onChange={handleChange}
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
+                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all duration-200 text-gray-700 font-medium hover:border-purple-300"
                     min={new Date().toISOString().split("T")[0]}
                   />
                 </div>
 
                 {/* Hora inicio */}
                 <div>
-                  <label className="block text-gray-700 mb-1">Hora inicio</label>
-                  <select
-                    name="horaInicio"
-                    value={filters.horaInicio || ""}
-                    onChange={handleChange}
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
-                  >
-                    <option value="">Seleccionar</option>
-                    {startTimeOptions.map((time) => (
-                      <option key={time} value={time}>{time}</option>
-                    ))}
-                  </select>
+                  <label className="block text-sm font-medium text-neutral-600 mb-1.5 ml-1">Hora inicio</label>
+                  <div className="relative">
+                    <select
+                      name="horaInicio"
+                      value={filters.horaInicio || ""}
+                      onChange={handleChange}
+                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all duration-200 appearance-none text-gray-700 font-medium cursor-pointer hover:border-purple-300"
+                    >
+                      <option value="">Seleccionar</option>
+                      {startTimeOptions.map((time) => (
+                        <option key={time} value={time}>{time}</option>
+                      ))}
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
+                      <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Hora fin */}
                 <div>
-                  <label className="block text-gray-700 mb-1">Hora fin</label>
-                  <select
-                    name="horaFin"
-                    value={filters.horaFin || ""}
-                    onChange={handleChange}
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
-                  >
-                    <option value="">Seleccionar</option>
-                    {getEndTimeOptions(filters.horaInicio).map((time) => (
-                      <option key={time} value={time}>{time}</option>
-                    ))}
-                  </select>
+                  <label className="block text-sm font-medium text-neutral-600 mb-1.5 ml-1">Hora fin</label>
+                  <div className="relative">
+                    <select
+                      name="horaFin"
+                      value={filters.horaFin || ""}
+                      onChange={handleChange}
+                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all duration-200 appearance-none text-gray-700 font-medium cursor-pointer hover:border-purple-300"
+                    >
+                      <option value="">Seleccionar</option>
+                      {getEndTimeOptions(filters.horaInicio).map((time) => (
+                        <option key={time} value={time}>{time}</option>
+                      ))}
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
+                      <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+                    </div>
+                  </div>
                 </div>
               </>
             )}
