@@ -59,9 +59,9 @@ const LandingView = ({ isLoggedIn }) => {
                     {/* Opción A: Comunidad UCompensar */}
                     <div
                         onClick={handleLogin}
-                        className="group relative bg-white rounded-2xl p-8 cursor-pointer shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-transparent hover:border-primary-100"
+                        className="group relative bg-white rounded-2xl p-8 cursor-pointer shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden ring-1 ring-transparent hover:ring-primary-100"
                     >
-                        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary-500 to-purple-600 rounded-t-2xl opacity-80 group-hover:opacity-100 transition-opacity" />
+                        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary-500 to-purple-600 opacity-80 group-hover:opacity-100 transition-opacity" />
 
                         <div className="h-20 w-20 bg-primary-50 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
                             <GraduationCap className="h-10 w-10 text-primary-600" />
@@ -83,9 +83,9 @@ const LandingView = ({ isLoggedIn }) => {
                     {/* Opción B: Externos / Eventos */}
                     <div
                         onClick={handleGuestAccess}
-                        className="group relative bg-white rounded-2xl p-8 cursor-pointer shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-transparent hover:border-purple-100"
+                        className="group relative bg-white rounded-2xl p-8 cursor-pointer shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden ring-1 ring-transparent hover:ring-purple-100"
                     >
-                        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-purple-500 to-blue-500 rounded-t-2xl opacity-80 group-hover:opacity-100 transition-opacity" />
+                        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-purple-500 to-blue-500 opacity-80 group-hover:opacity-100 transition-opacity" />
 
                         <div className="h-20 w-20 bg-purple-50 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
                             <CalendarDays className="h-10 w-10 text-purple-600" />

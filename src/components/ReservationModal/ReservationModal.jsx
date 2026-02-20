@@ -187,7 +187,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
         if (format(date, "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd")) {
             return {
                 style: {
-                    backgroundColor: "#00aab7",
+                    backgroundColor: "#722070",
                     color: "#fff",
                 },
             };
@@ -265,7 +265,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
                         <button
                             onClick={() => setActiveTab("info")}
                             className={`py-2 px-4 ${activeTab === "info"
-                                ? "border-b-2 border-turquesa font-bold text-turquesa"
+                                ? "border-b-2 border-purple-600 font-bold text-purple-600"
                                 : "text-gray-600 hover:text-gray-800"
                                 }`}
                         >
@@ -274,7 +274,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
                         <button
                             onClick={() => setActiveTab("availability")}
                             className={`py-2 px-4 ${activeTab === "availability"
-                                ? "border-b-2 border-turquesa font-bold text-turquesa"
+                                ? "border-b-2 border-purple-600 font-bold text-purple-600"
                                 : "text-gray-600 hover:text-gray-800"
                                 }`}
                         >

@@ -6,7 +6,7 @@ const CalendarLegend = () => {
             <h4 className="text-sm font-semibold text-gray-700 mb-2">Leyenda del calendario:</h4>
             <div className="flex flex-wrap gap-4 text-xs">
                 <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-[#00aab7] rounded"></div>
+                    <div className="w-4 h-4 bg-[#722070] rounded"></div>
                     <span>Día seleccionado</span>
                 </div>
                 <div className="flex items-center gap-2">

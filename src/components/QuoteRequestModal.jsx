@@ -59,15 +59,15 @@ const QuoteRequestModal = ({ isOpen, onClose, spaceData, quoteData, onBack, isEm
                 duration: 4000,
                 position: 'top-center',
                 style: {
-                    background: '#FEE2E2',
-                    color: '#B91C1C',
-                    border: '1px solid #FCA5A5',
+                    background: '#F3E8FF', // purple-50
+                    color: '#7E22CE', // purple-700
+                    border: '1px solid #D8B4FE', // purple-300
                     padding: '16px',
                     fontWeight: '500',
                 },
                 iconTheme: {
-                    primary: '#B91C1C',
-                    secondary: '#FFFAFA',
+                    primary: '#7E22CE', // purple-700
+                    secondary: '#FAF5FF', // purple-50
                 },
             });
         }
@@ -159,8 +159,8 @@ const QuoteRequestModal = ({ isOpen, onClose, spaceData, quoteData, onBack, isEm
         return (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
                 <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
-                    <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-6">
-                        <CheckCircle className="h-8 w-8 text-green-600" />
+                    <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-purple-100 mb-6">
+                        <CheckCircle className="h-8 w-8 text-purple-600" />
                     </div>
                     <h3 className="text-2xl font-bold text-gray-900 mb-2">¡Solicitud Recibida!</h3>
                     <p className="text-gray-500 mb-8">
@@ -168,7 +168,7 @@ const QuoteRequestModal = ({ isOpen, onClose, spaceData, quoteData, onBack, isEm
                     </p>
                     <button
                         onClick={handleClose}
-                        className="w-full bg-primary-600 text-white rounded-lg py-3 px-4 font-semibold hover:bg-primary-700 transition duration-200"
+                        className="w-full bg-purple-600 text-white rounded-lg py-3 px-4 font-semibold hover:bg-purple-700 transition duration-200"
                     >
                         Entendido
                     </button>
@@ -183,7 +183,7 @@ const QuoteRequestModal = ({ isOpen, onClose, spaceData, quoteData, onBack, isEm
         <div className={`bg-white rounded-2xl ${!isEmbedded ? 'shadow-2xl w-full max-w-2xl' : 'w-full'} overflow-hidden flex flex-col ${!isEmbedded ? 'max-h-[90vh]' : 'h-full'}`}>
             {!isEmbedded && <Toaster />}
             {/* Header */}
-            <div className="bg-primary-600 px-6 py-4 flex items-center justify-between">
+            <div className="bg-purple-600 px-6 py-4 flex items-center justify-between">
                 <h2 className="text-xl font-bold text-white flex items-center gap-2">
                     <Store className="h-5 w-5" />
                     Solicitar Cotización de Evento
@@ -201,7 +201,7 @@ const QuoteRequestModal = ({ isOpen, onClose, spaceData, quoteData, onBack, isEm
             {/* Progress Bar */}
             <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
                 <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-semibold text-primary-700 uppercase tracking-wider">
+                    <span className="text-xs font-semibold text-purple-700 uppercase tracking-wider">
                         Paso {currentStep} de {totalSteps}
                     </span>
                     <span className="text-xs font-medium text-gray-500">
@@ -212,7 +212,7 @@ const QuoteRequestModal = ({ isOpen, onClose, spaceData, quoteData, onBack, isEm
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
-                        className="bg-primary-600 h-2 rounded-full transition-all duration-300 ease-in-out"
+                        className="bg-purple-600 h-2 rounded-full transition-all duration-300 ease-in-out"
                         style={{ width: `${(currentStep / totalSteps) * 100}%` }}
                     ></div>
                 </div>
@@ -256,7 +256,7 @@ const QuoteRequestModal = ({ isOpen, onClose, spaceData, quoteData, onBack, isEm
                                             type="text"
                                             name="nombre"
                                             required
-                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
+                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all"
                                             value={formData.nombre}
                                             onChange={handleChange}
                                         />
@@ -451,7 +451,7 @@ const QuoteRequestModal = ({ isOpen, onClose, spaceData, quoteData, onBack, isEm
                             <button
                                 type="button"
                                 onClick={handleNext}
-                                className="px-8 py-2 bg-primary-600 text-white rounded-lg font-bold hover:bg-primary-700 shadow-md transition-all"
+                                className="px-8 py-2 bg-purple-600 text-white rounded-lg font-bold hover:bg-purple-700 shadow-md transition-all"
                             >
                                 Siguiente
                             </button>
@@ -459,7 +459,7 @@ const QuoteRequestModal = ({ isOpen, onClose, spaceData, quoteData, onBack, isEm
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className={`px-8 py-2 bg-primary-600 text-white rounded-lg font-bold hover:bg-primary-700 shadow-md transition-all flex items-center gap-2 ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                className={`px-8 py-2 bg-purple-600 text-white rounded-lg font-bold hover:bg-purple-700 shadow-md transition-all flex items-center gap-2 ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
                             >
                                 {isLoading ? (
                                     <>

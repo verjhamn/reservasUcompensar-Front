@@ -30,7 +30,7 @@ const CampusSelector = ({ selectedCampus, onSelectCampus }) => {
                         key={campus.id}
                         onClick={() => !campus.disabled && onSelectCampus(campus.value)}
                         disabled={campus.disabled}
-                        className={`relative overflow-hidden rounded-2xl shadow-lg transition-all duration-300 text-left group
+                        className={`relative overflow-hidden rounded-2xl shadow-lg transition-all duration-300 text-left group animate-fade-in-up
                             ${campus.disabled
                                 ? 'cursor-not-allowed opacity-80 grayscale'
                                 : selectedCampus === campus.value
@@ -53,8 +53,8 @@ const CampusSelector = ({ selectedCampus, onSelectCampus }) => {
                                 </>
                             ) : (
                                 <div className={`w-full h-full bg-gradient-to-br ${campus.id === 'teusaquillo'
-                                        ? 'from-neutral-400 to-neutral-600'
-                                        : 'from-primary-500 to-primary-700'
+                                    ? 'from-neutral-400 to-neutral-600'
+                                    : 'from-primary-500 to-primary-700'
                                     }`} />
                             )}
 

@@ -48,7 +48,7 @@ const SpaceInformation = ({ spaceData, onNext }) => {
             <div className="flex justify-end mt-4">
                 <button
                     onClick={onNext}
-                    className="px-6 py-3 bg-turquesa text-white rounded-lg hover:bg-turquesa/90 transition flex items-center gap-2"
+                    className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition flex items-center gap-2"
                 >
                     Siguiente
                     <svg

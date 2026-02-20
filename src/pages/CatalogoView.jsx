@@ -11,16 +11,16 @@ const CatalogoView = ({ filters, setFilters, handleFilterChange, goToMyReservati
     const location = useLocation();
     const isGuestMode = location.state?.guestMode;
 
-    // Efecto para aplicar modo invitado (Solo Eventos) y Sede por defecto
+    // Efecto para aplicar modo invitado (Solo Eventos)
     useEffect(() => {
         if (isGuestMode) {
-            const guestFilters = {
-                ...filters,
-                sede: '1', // Pre-seleccionar sede por ID (1 = Campus Av. 68)
-                tipo: 'Espacio de eventos'
-            };
-            // Solo actualizamos si no está ya configurado para evitar loops
-            if (filters.tipo !== 'Espacio de eventos' || filters.sede !== '1') {
+            // Solo pre-seleccionamos el TIPO, la SEDE la debe elegir el usuario
+            if (filters.tipo !== 'Espacio de eventos') {
+                const guestFilters = {
+                    ...filters,
+                    tipo: 'Espacio de eventos'
+                    // NO pre-seleccionamos sede aquí
+                };
                 setFilters(guestFilters);
                 handleFilterChange(guestFilters);
             }
@@ -47,14 +47,13 @@ const CatalogoView = ({ filters, setFilters, handleFilterChange, goToMyReservati
 
     // handleBackToCampus resets everything
     const handleBackToCampus = () => {
-        const newFilters = { ...filters, sede: '', tipo: '' };
+        const newFilters = { ...filters, sede: '', tipo: isGuestMode ? 'Espacio de eventos' : '' };
         setFilters(newFilters);
         handleFilterChange(newFilters);
     };
 
-    // Si estamos en modo invitado pero los filtros aún no están configurados, no renderizar nada (o un loader)
-    // Esto evita que se muestre el selector de campus o resultados incorrectos momentáneamente
-    if (isGuestMode && (filters.sede !== '1' || filters.tipo !== 'Espacio de eventos')) {
+    // Si estamos en modo invitado pero el tipo aún no está configurado, mostrar loader
+    if (isGuestMode && filters.tipo !== 'Espacio de eventos') {
         return <div className="min-h-screen flex items-center justify-center bg-gray-50/50"><p>Configurando perfil de invitado...</p></div>;
     }
 
@@ -64,7 +63,7 @@ const CatalogoView = ({ filters, setFilters, handleFilterChange, goToMyReservati
             {isSuperAdmin() && <QRSimulator />}
 
             {/* Paso 1: Selector de Campus */}
-            {showCampusSelector && !isGuestMode && (
+            {showCampusSelector && (
                 <CampusSelector onSelectCampus={handleCampusSelect} />
             )}
 
@@ -73,15 +72,13 @@ const CatalogoView = ({ filters, setFilters, handleFilterChange, goToMyReservati
                 <div className="animate-fade-in">
                     <div className="flex items-center mb-2">
                         <div>
-                            {!isGuestMode && ( // Ocultar botón volver para invitados si ya están predefinidos
-                                <button
-                                    onClick={handleBackToCampus}
-                                    className="mb-6 p-2 rounded-full hover:bg-neutral-100 transition-colors text-neutral-600 flex items-center gap-2"
-                                >
-                                    <ArrowLeft className="w-5 h-5" />
-                                    <span className="text-sm font-medium">Volver a selección de sede</span>
-                                </button>
-                            )}
+                            <button
+                                onClick={handleBackToCampus}
+                                className="mb-6 p-2 rounded-full hover:bg-neutral-100 transition-colors text-neutral-600 flex items-center gap-2"
+                            >
+                                <ArrowLeft className="w-5 h-5" />
+                                <span className="text-sm font-medium">Volver a selección de sede</span>
+                            </button>
                         </div>
                     </div>
 
