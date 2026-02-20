@@ -240,8 +240,8 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <Toaster />
             {viewMode === 'reservation' && (
-                <div className="bg-white rounded-lg p-8 max-w-6xl w-full max-h-[95vh] overflow-auto">
-                    <div className="flex justify-between items-start mb-6">
+                <div className="bg-white rounded-2xl p-6 lg:p-8 max-w-7xl w-full max-h-[95vh] flex flex-col shadow-2xl overflow-hidden">
+                    <div className="flex justify-between items-start mb-4 shrink-0">
                         <h2 className="text-2xl font-bold text-gray-800">{spaceData.tipo}: {spaceData.codigo}</h2>
                         <button
                             onClick={onClose}
@@ -264,7 +264,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
                     <div className="border-b mb-6">
                         <button
                             onClick={() => setActiveTab("info")}
-                            className={`py-2 px-4 ${activeTab === "info"
+                            className={`py-2 px-4 transition-colors ${activeTab === "info"
                                 ? "border-b-2 border-purple-600 font-bold text-purple-600"
                                 : "text-gray-600 hover:text-gray-800"
                                 }`}
@@ -273,7 +273,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
                         </button>
                         <button
                             onClick={() => setActiveTab("availability")}
-                            className={`py-2 px-4 ${activeTab === "availability"
+                            className={`py-2 px-4 transition-colors ${activeTab === "availability"
                                 ? "border-b-2 border-purple-600 font-bold text-purple-600"
                                 : "text-gray-600 hover:text-gray-800"
                                 }`}
@@ -282,42 +282,51 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
                         </button>
                     </div>
 
-                    {activeTab === "info" && (
-                        <SpaceInformation spaceData={spaceData} onNext={() => setActiveTab("availability")} />
-                    )}
+                    <div className="flex-1 overflow-y-auto no-scrollbar pb-4 pr-2">
+                        {activeTab === "info" && (
+                            <SpaceInformation spaceData={spaceData} onNext={() => setActiveTab("availability")} />
+                        )}
 
-                    {activeTab === "availability" && (
-                        <div>
-                            <CalendarLegend />
+                        {activeTab === "availability" && (
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 h-full">
+                                {/* Columna Izquierda: Calendario */}
+                                <div className="flex flex-col h-full">
+                                    <CalendarLegend />
+                                    <div className="flex-1 min-h-[350px]">
+                                        <AvailabilityCalendar
+                                            events={filteredEvents}
+                                            date={selectedDate}
+                                            onNavigate={handleNavigate}
+                                            onSelectSlot={handleSlotSelect}
+                                            dayPropGetter={dayPropGetter}
+                                            slotPropGetter={slotPropGetter}
+                                        />
+                                    </div>
+                                </div>
 
-                            <AvailabilityCalendar
-                                events={filteredEvents}
-                                date={selectedDate}
-                                onNavigate={handleNavigate}
-                                onSelectSlot={handleSlotSelect}
-                                dayPropGetter={dayPropGetter}
-                                slotPropGetter={slotPropGetter}
-                            />
+                                {/* Columna Derecha: Horas y Formulario */}
+                                <div className="flex flex-col h-full bg-gray-50/50 rounded-2xl p-4 md:p-6 border border-gray-100">
+                                    <TimeSlotSelector
+                                        timeSlots={generateTimeSlots()}
+                                        selectedHours={selectedHours}
+                                        onTimeSelect={handleTimeSelect}
+                                        isAvailable={isTimeSlotAvailable}
+                                        isCoworking={isCoworking}
+                                    />
 
-                            <TimeSlotSelector
-                                timeSlots={generateTimeSlots()}
-                                selectedHours={selectedHours}
-                                onTimeSelect={handleTimeSelect}
-                                isAvailable={isTimeSlotAvailable}
-                                isCoworking={isCoworking}
-                            />
-
-                            <ReservationForm
-                                isCoworking={isCoworking}
-                                title={reservationTitle}
-                                setTitle={setReservationTitle}
-                                description={reservationDescription}
-                                setDescription={setReservationDescription}
-                                onSubmit={isGuestMode ? handleGuestSubmit : handleConfirmReservation}
-                                isGuestMode={isGuestMode}
-                            />
-                        </div>
-                    )}
+                                    <ReservationForm
+                                        isCoworking={isCoworking}
+                                        title={reservationTitle}
+                                        setTitle={setReservationTitle}
+                                        description={reservationDescription}
+                                        setDescription={setReservationDescription}
+                                        onSubmit={isGuestMode ? handleGuestSubmit : handleConfirmReservation}
+                                        isGuestMode={isGuestMode}
+                                    />
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
 

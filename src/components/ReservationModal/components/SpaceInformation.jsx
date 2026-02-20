@@ -10,45 +10,45 @@ const SpaceInformation = ({ spaceData, onNext }) => {
     return (
         <div className="space-y-6">
             <div className="flex flex-col gap-6 md:flex-row">
-                <div className="w-full md:w-2/3 h-64 md:h-80">
+                <div className="w-full md:w-2/3 h-56 md:h-64">
                     <Carousel images={getImagePaths()} />
                 </div>
-                <div className="w-full max-h-80 md:w-1/3 grid grid-cols-2 md:grid-cols-1 gap-4 overflow-y-auto">
-                    <div className="min-w-0">
-                        <h3 className="font-semibold text-gray-700 text-lg truncate">Código</h3>
-                        <p className="text-gray-600 text-base truncate">{spaceData.codigo}</p>
+                <div className="w-full md:w-1/3 grid grid-cols-2 md:grid-cols-1 gap-2 md:gap-3">
+                    <div className="min-w-0 bg-gray-50/50 p-3 rounded-xl border border-gray-100">
+                        <h3 className="font-bold text-gray-800 text-sm mb-1 truncate">Código</h3>
+                        <p className="text-gray-600 text-sm truncate">{spaceData.codigo}</p>
                     </div>
-                    <div className="min-w-0">
-                        <h3 className="font-semibold text-gray-700 text-lg truncate">Tipo</h3>
-                        <p className="text-gray-600 text-base truncate">
+                    <div className="min-w-0 bg-gray-50/50 p-3 rounded-xl border border-gray-100">
+                        <h3 className="font-bold text-gray-800 text-sm mb-1 truncate">Tipo</h3>
+                        <p className="text-gray-600 text-sm truncate">
                             {spaceData.tipo}
                             {spaceData.tipoEspecifico && spaceData.tipoEspecifico !== spaceData.tipo && (
                                 <span className="text-gray-500"> - {spaceData.tipoEspecifico}</span>
                             )}
                         </p>
                     </div>
-                    <div className="min-w-0">
-                        <h3 className="font-semibold text-gray-700 text-lg truncate">Piso</h3>
-                        <p className="text-gray-600 text-base truncate">{spaceData.piso}</p>
+                    <div className="min-w-0 bg-gray-50/50 p-3 rounded-xl border border-gray-100">
+                        <h3 className="font-bold text-gray-800 text-sm mb-1 truncate">Piso</h3>
+                        <p className="text-gray-600 text-sm truncate">{spaceData.piso}</p>
                     </div>
-                    <div className="min-w-0">
-                        <h3 className="font-semibold text-gray-700 text-lg truncate">Equipos</h3>
-                        <p className="text-gray-600 text-base truncate">{spaceData.cantidad_equipos}</p>
+                    <div className="min-w-0 bg-gray-50/50 p-3 rounded-xl border border-gray-100">
+                        <h3 className="font-bold text-gray-800 text-sm mb-1 truncate">Equipos</h3>
+                        <p className="text-gray-600 text-sm truncate">{spaceData.cantidad_equipos}</p>
                     </div>
                 </div>
             </div>
 
-            <div className="bg-gris-sutil p-4 md:p-6 rounded-lg">
-                <h3 className="font-semibold text-gray-700 text-lg mb-3">Información Adicional</h3>
-                <p className="text-gray-600 text-base">
+            <div className="bg-purple-50/50 border border-purple-100 p-4 rounded-2xl">
+                <h3 className="font-bold text-purple-800 text-sm mb-2">Información Adicional</h3>
+                <p className="text-gray-700 text-sm leading-relaxed">
                     {spaceData.descripcion || "Sin observaciones adicionales."}
                 </p>
             </div>
 
-            <div className="flex justify-end mt-4">
+            <div className="flex justify-end mt-2">
                 <button
                     onClick={onNext}
-                    className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition flex items-center gap-2"
+                    className="px-6 py-3 bg-purple-600 font-medium text-white rounded-xl shadow-sm hover:shadow-md hover:bg-purple-700 transition-all flex items-center gap-2"
                 >
                     Siguiente
                     <svg
