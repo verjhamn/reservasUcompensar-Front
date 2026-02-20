@@ -1,5 +1,6 @@
 import React from 'react';
 import { MapPin } from 'lucide-react';
+import campusBg from '../assets/campus_av68.webp';
 
 const campuses = [
     {
@@ -38,14 +39,27 @@ const CampusSelector = ({ selectedCampus, onSelectCampus }) => {
                             }
                         `}
                     >
-                        {/* Gradient Background */}
-                        <div className={`h-48 bg-gradient-to-br ${campus.id === 'av68'
-                            ? 'from-purple-500 to-purple-700'
-                            : 'from-primary-500 to-primary-700'
-                            } relative`}>
+                        {/* Background Image / Gradient */}
+                        <div className={`h-48 relative overflow-hidden group-hover:scale-105 transition-transform duration-700`}>
+                            {campus.id === 'av68' ? (
+                                <>
+                                    <img
+                                        src={campusBg}
+                                        alt={campus.name}
+                                        className="w-full h-full object-cover"
+                                    />
+                                    <div className="absolute inset-0 bg-purple-900/40 mix-blend-multiply" />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-purple-900/80 to-transparent" />
+                                </>
+                            ) : (
+                                <div className={`w-full h-full bg-gradient-to-br ${campus.id === 'teusaquillo'
+                                        ? 'from-neutral-400 to-neutral-600'
+                                        : 'from-primary-500 to-primary-700'
+                                    }`} />
+                            )}
 
                             {/* Icon */}
-                            <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="absolute inset-0 flex items-center justify-center z-10">
                                 <div className={`bg-white/20 backdrop-blur-sm rounded-full p-6 transition-transform ${!campus.disabled && 'group-hover:scale-110'}`}>
                                     <MapPin className="w-16 h-16 text-white" />
                                 </div>

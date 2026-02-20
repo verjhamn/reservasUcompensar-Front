@@ -97,7 +97,7 @@ const EspacioQRView = ({ isLoggedIn, goToMyReservations }) => {
     };
 
     return (
-        <div>
+        <div className="container mx-auto py-6">
             {/* Mostrar el espacio específico con filtro por ID */}
             <ResultsTable filters={filters} goToMyReservations={goToMyReservations} />
 

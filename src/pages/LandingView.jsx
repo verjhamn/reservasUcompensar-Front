@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useMsal } from "@azure/msal-react";
 import { GraduationCap, CalendarDays, ArrowRight } from 'lucide-react';
 import { loginRequest } from "../Services/SSOServices/authConfig";
+import campusBg from '../assets/campus_av68.webp';
 
 const LandingView = ({ isLoggedIn }) => {
     const navigate = useNavigate();
@@ -29,14 +30,27 @@ const LandingView = ({ isLoggedIn }) => {
     };
 
     return (
-        <div className="min-h-[calc(100vh-200px)] flex flex-col justify-center items-center p-6 bg-gray-50/50">
-            <div className="max-w-4xl w-full text-center space-y-12 animate-fade-in-up">
+        <div className="relative min-h-[calc(100vh-200px)] flex flex-col justify-center items-center p-6 bg-gray-900 overflow-hidden mb-8">
+            {/* Background Image with Improved Overlay */}
+            <div className="absolute inset-0 z-0">
+                <img
+                    src={campusBg}
+                    alt="Campus Background"
+                    className="w-full h-full object-cover opacity-20"
+                />
+                {/* Gradient Overlay - Adjusted for better visibility of building */}
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-900/85 via-purple-900/80 to-primary-900/85 mix-blend-multiply" />
+                {/* Decorative Pattern Overlay (Optional, for texture) */}
+                <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
+            </div>
+
+            <div className="relative z-10 max-w-4xl w-full text-center space-y-12 animate-fade-in-up">
 
                 <div className="space-y-4">
-                    <h1 className="text-4xl md:text-5xl font-bold text-neutral-900 tracking-tight">
+                    <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight drop-shadow-lg">
                         Bienvenido a la gestión y reserva de espacios
                     </h1>
-                    <p className="text-xl text-neutral-500 max-w-2xl mx-auto">
+                    <p className="text-xl text-purple-100 max-w-2xl mx-auto font-medium drop-shadow-md">
                         Selecciona tu perfil para continuar y encontrar el espacio perfecto.
                     </p>
                 </div>

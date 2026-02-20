@@ -108,13 +108,11 @@ function App() {
                         useRouter={true}
                     />
                     <main className="flex-grow bg-gray-100">
-                        <div className="container mx-auto py-6">
-                            <AppRoutes
-                                isLoggedIn={isLoggedIn}
-                                isAdmin={isAdmin}
-                                canViewReports={canViewReports}
-                            />
-                        </div>
+                        <AppRoutes
+                            isLoggedIn={isLoggedIn}
+                            isAdmin={isAdmin}
+                            canViewReports={canViewReports}
+                        />
                     </main>
                     <Footer />
                 </div>

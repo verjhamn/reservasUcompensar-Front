@@ -59,7 +59,7 @@ const CatalogoView = ({ filters, setFilters, handleFilterChange, goToMyReservati
     }
 
     return (
-        <div className="bg-gray-50/50 rounded-xl p-4">
+        <div className="container mx-auto py-6 bg-gray-50/50 rounded-xl p-4">
             {/* QR Simulator solo para Super Admin */}
             {isSuperAdmin() && <QRSimulator />}
 

@@ -120,7 +120,8 @@ const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode }) => {
 
 
   const renderInfoMessage = () => {
-    if (filters.tipo && filters.tipo !== "Coworking") {
+    // En modo invitado no mostramos la alerta de correo porque usan el formulario de cotización
+    if (filters.tipo && filters.tipo !== "Coworking" && !isGuestMode) {
       return (
         <div className="bg-amber-50 border-l-4 border-amber-400 p-4 mb-4 rounded">
           <div className="flex">
