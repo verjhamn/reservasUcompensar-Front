@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import campusBg from '../assets/campus_av68.webp';
 
 const InfoModal = ({ onClose }) => {
   useEffect(() => {
@@ -15,7 +16,7 @@ const InfoModal = ({ onClose }) => {
       <div className="bg-white rounded-lg p-8 md:p-12 max-w-2xl lg:max-w-5xl w-full max-h-[95vh] overflow-auto shadow-lg">
         {/* Header del Modal */}
         <div className="flex justify-between items-center mb-6 relative">
-          <h2 className="text-3xl font-bold text-turquesa text-center w-full">¡Aviso Importante!</h2>
+          <h2 className="text-3xl font-bold text-purple-600 text-center w-full">¡Aviso Importante!</h2>
           <button
             onClick={onClose}
             className="absolute top-0 right-0 text-gray-500 hover:text-gray-700 transition-colors"
@@ -37,9 +38,9 @@ const InfoModal = ({ onClose }) => {
         {/* Imagen del Modal */}
         <div className="mb-6">
           <img
-            src="https://reservas.ucompensar.edu.co/img/imgModal.webp"
-            alt="Imagen Informativa"
-            className="w-full h-40 object-cover rounded-lg shadow-md"
+            src={campusBg}
+            alt="Imagen Informativa - Campus Av 68"
+            className="w-full h-48 object-cover rounded-lg shadow-md"
           />
         </div>
 
@@ -49,7 +50,7 @@ const InfoModal = ({ onClose }) => {
             Esta aplicación permite reservar exclusivamente espacios de coworking en la sede Campus Av. 68.
           </p>
           <p className="text-gray-600 text-base md:text-xl leading-relaxed">
-            Para reservar espacios en la sede Teusaquillo, por favor realiza la solicitud a través de la MIS haciendo clic <a href="https://mis.ucompensar.edu.co" target="_blank" className="text-turquesa underline">aquí</a>.
+            Para reservar espacios en la sede Teusaquillo, por favor realiza la solicitud a través de la MIS haciendo clic <a href="https://mis.ucompensar.edu.co" target="_blank" className="text-purple-600 underline font-medium">aquí</a>.
           </p>
           <p className="text-gray-600 text-base md:text-2xl leading-relaxed">
             ¡Gracias por tu comprensión!

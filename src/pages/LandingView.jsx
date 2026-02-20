@@ -36,10 +36,10 @@ const LandingView = ({ isLoggedIn }) => {
                 <img
                     src={campusBg}
                     alt="Campus Background"
-                    className="w-full h-full object-cover opacity-20"
+                    className="w-full h-full object-cover opacity-50"
                 />
                 {/* Gradient Overlay - Adjusted for better visibility of building */}
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-900/85 via-purple-900/80 to-primary-900/85 mix-blend-multiply" />
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-900/80 via-purple-900/75 to-primary-900/80 mix-blend-multiply" />
                 {/* Decorative Pattern Overlay (Optional, for texture) */}
                 <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
             </div>
