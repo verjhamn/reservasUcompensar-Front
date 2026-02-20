@@ -49,7 +49,7 @@ const AppRoutes = ({ isLoggedIn, isAdmin, canViewReports }) => {
         <>
             {/* Navigation Tabs (Hidden on Landing) */}
             {!isLanding && (
-                <div className="flex justify-center items-center space-x-2 mb-4 bg-neutral-100 p-1.5 rounded-xl w-fit mx-auto shadow-inner animate-fade-in">
+                <div className="flex justify-center items-center space-x-2 mt-8 mb-2 bg-neutral-100 p-1.5 rounded-xl w-fit mx-auto shadow-inner animate-fade-in">
                     {[
                         { path: '/catalogo', label: 'Catálogo' },
                         ...(isLoggedIn ? [

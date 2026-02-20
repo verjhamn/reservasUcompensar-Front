@@ -58,7 +58,7 @@ const CatalogoView = ({ filters, setFilters, handleFilterChange, goToMyReservati
     }
 
     return (
-        <div className="container mx-auto py-6 bg-gray-50/50 rounded-xl p-4">
+        <div className="container mx-auto pb-6 pt-2 bg-gray-50/50 rounded-xl px-4">
             {/* QR Simulator solo para Super Admin */}
             {isSuperAdmin() && <QRSimulator />}
 
@@ -74,7 +74,7 @@ const CatalogoView = ({ filters, setFilters, handleFilterChange, goToMyReservati
                         <div>
                             <button
                                 onClick={handleBackToCampus}
-                                className="mb-6 p-2 rounded-full hover:bg-neutral-100 transition-colors text-neutral-600 flex items-center gap-2"
+                                className="mb-2 p-2 rounded-full hover:bg-neutral-100 transition-colors text-neutral-600 flex items-center gap-2"
                             >
                                 <ArrowLeft className="w-5 h-5" />
                                 <span className="text-sm font-medium">Volver a selección de sede</span>
