@@ -19,7 +19,8 @@ const generateTimeOptions = (start, end) => {
 };
 
 const SearchFilters = ({ filters, setFilters, onFilterChange, isGuestMode }) => {
-  const [showMoreFilters, setShowMoreFilters] = useState(false);
+  // En modo invitado, mostrar filtros expandidos por defecto
+  const [showMoreFilters, setShowMoreFilters] = useState(isGuestMode);
 
   const staticOptions = {
     sedes: ["Campus Av. 68"],
@@ -175,16 +176,18 @@ const SearchFilters = ({ filters, setFilters, onFilterChange, isGuestMode }) => 
           </div>
         )}
 
-        {/* Botón para mostrar más filtros */}
-        <div className="col-span-1 sm:col-span-2 lg:col-span-1">
-          <button
-            type="button"
-            onClick={() => setShowMoreFilters(!showMoreFilters)}
-            className="text-turquesa underline"
-          >
-            {showMoreFilters ? "Menos filtros" : "Más filtros"}
-          </button>
-        </div>
+        {/* Botón para mostrar más filtros - Solo visible en modo normal */}
+        {!isGuestMode && (
+          <div className="col-span-1 sm:col-span-2 lg:col-span-1">
+            <button
+              type="button"
+              onClick={() => setShowMoreFilters(!showMoreFilters)}
+              className="text-turquesa underline"
+            >
+              {showMoreFilters ? "Menos filtros" : "Más filtros"}
+            </button>
+          </div>
+        )}
 
         {/* Filtros adicionales */}
         {showMoreFilters && (

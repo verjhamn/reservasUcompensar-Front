@@ -206,7 +206,7 @@ export const AUTHORIZED_EMAILS = {
     super_admin: ['tecnologia@ucompensar.edu.co'],
     admin: [
         'ndmartinezo@ucompensar.edu.co',
-        'admon.campus@ucompensar.edu.co',
+        'reservas.campus@ucompensar.edu.co',
         // ... más emails
     ],
     reports_viewer: [

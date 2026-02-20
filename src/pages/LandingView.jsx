@@ -34,7 +34,7 @@ const LandingView = ({ isLoggedIn }) => {
 
                 <div className="space-y-4">
                     <h1 className="text-4xl md:text-5xl font-bold text-neutral-900 tracking-tight">
-                        Bienvenido al Portal de Reservas
+                        Bienvenido a la gestión y reserva de espacios
                     </h1>
                     <p className="text-xl text-neutral-500 max-w-2xl mx-auto">
                         Selecciona tu perfil para continuar y encontrar el espacio perfecto.

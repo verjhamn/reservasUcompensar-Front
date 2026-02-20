@@ -59,57 +59,51 @@ const CatalogoView = ({ filters, setFilters, handleFilterChange, goToMyReservati
     }
 
     return (
-        <div className="min-h-screen bg-gray-50/50">
+        <div className="bg-gray-50/50 rounded-xl p-4">
             {/* QR Simulator solo para Super Admin */}
             {isSuperAdmin() && <QRSimulator />}
 
-            <div className="container mx-auto py-6">
-                {/* Paso 1: Selector de Campus */}
-                {showCampusSelector && !isGuestMode && (
-                    <CampusSelector onSelectCampus={handleCampusSelect} />
-                )}
+            {/* Paso 1: Selector de Campus */}
+            {showCampusSelector && !isGuestMode && (
+                <CampusSelector onSelectCampus={handleCampusSelect} />
+            )}
 
-                {/* Paso 2: Resultados (Inmediatamente tras seleccionar sede) */}
-                {showResults && (
-                    <div className="animate-fade-in">
-                        <div className="flex items-center mb-6">
+            {/* Paso 2: Resultados (Inmediatamente tras seleccionar sede) */}
+            {showResults && (
+                <div className="animate-fade-in">
+                    <div className="flex items-center mb-2">
+                        <div>
                             {!isGuestMode && ( // Ocultar botón volver para invitados si ya están predefinidos
                                 <button
                                     onClick={handleBackToCampus}
-                                    className="mr-4 p-2 rounded-full hover:bg-neutral-100 transition-colors text-neutral-600 flex items-center gap-2"
+                                    className="mb-6 p-2 rounded-full hover:bg-neutral-100 transition-colors text-neutral-600 flex items-center gap-2"
                                 >
                                     <ArrowLeft className="w-5 h-5" />
                                     <span className="text-sm font-medium">Volver a selección de sede</span>
                                 </button>
                             )}
-                            <div>
-                                <h2 className="text-2xl font-bold text-neutral-800">Espacios Disponibles</h2>
-                                <p className="text-sm text-neutral-500">
-                                    {filters.sede} {filters.tipo ? `• ${filters.tipo}` : ''}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="flex flex-col lg:flex-row gap-6">
-                            <div className="w-full lg:w-1/4">
-                                <SearchFilters
-                                    filters={filters}
-                                    setFilters={setFilters}
-                                    onFilterChange={handleFilterChange}
-                                    isGuestMode={isGuestMode}
-                                />
-                            </div>
-                            <div className="w-full lg:flex-1">
-                                <ResultsTable
-                                    filters={filters}
-                                    goToMyReservations={goToMyReservations}
-                                    isGuestMode={isGuestMode}
-                                />
-                            </div>
                         </div>
                     </div>
-                )}
-            </div>
+
+                    <div className="flex flex-col lg:flex-row gap-6">
+                        <div className="w-full lg:w-1/4">
+                            <SearchFilters
+                                filters={filters}
+                                setFilters={setFilters}
+                                onFilterChange={handleFilterChange}
+                                isGuestMode={isGuestMode}
+                            />
+                        </div>
+                        <div className="w-full lg:flex-1">
+                            <ResultsTable
+                                filters={filters}
+                                goToMyReservations={goToMyReservations}
+                                isGuestMode={isGuestMode}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
