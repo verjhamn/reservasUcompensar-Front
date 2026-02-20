@@ -7,7 +7,7 @@ import { useMsal } from "@azure/msal-react";
 import { loginRequest } from "../Services/SSOServices/authConfig";
 import { fetchAuthToken } from "../Services/authService";
 
-const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode }) => {
+const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode, onSpaceLoaded }) => {
   const { instance } = useMsal();
   const [page, setPage] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -62,10 +62,10 @@ const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode }) => {
         console.log('Espacios procesados:', processedSpaces); // Para debug
         setData(processedSpaces);
 
-        // Pre-select if only one result? Maybe remove this auto-select to avoid confusion
-        // if (processedSpaces.length === 1) {
-        //   handleReserveClick(processedSpaces[0]);
-        // }
+        // Notificar al padre cuando los datos están listos (usado por EspacioQRView para apertura automática)
+        if (typeof onSpaceLoaded === 'function') {
+          onSpaceLoaded(processedSpaces);
+        }
       } catch (err) {
         console.error("Error al obtener datos en ResultsTable:", err);
         setError(err.message || "Error al cargar los datos.");
@@ -104,11 +104,9 @@ const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode }) => {
           setIsLoggedIn(true);
         } catch (error) {
           console.error("Error en el inicio de sesión con Microsoft:", error);
-          // If login fails, we might close modal or let them try again inside modal if we moved logic there.
-          // But since we are here, we keep modal open if they just closed popup? 
-          // Actually if login fails, they shouldn't proceed.
-          // For now, assume success or they stay on page.
-          return;
+          // Si el usuario cierra el popup sin iniciar sesión, continuar
+          // el flujo sin autenticación (el modal ya está abierto)
+          // No hacer return para no bloquear el uso de la app
         }
       } else {
         await fetchAuthToken();
