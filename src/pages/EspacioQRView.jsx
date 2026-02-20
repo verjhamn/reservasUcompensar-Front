@@ -83,7 +83,10 @@ const EspacioQRView = ({ isLoggedIn, goToMyReservations }) => {
             flujoIniciadoRef.current = true;
             const espacioCargado = espacios[0];
 
-            if (isLoggedIn) {
+            // Revisar si existe sesión en la app, O cuentas cacheadas en MSAL
+            const currentAccounts = instance.getAllAccounts();
+
+            if (isLoggedIn || currentAccounts.length > 0) {
                 // Ya está logueado, flujo interno directo
                 await verificarFlujoInterno(espacioCargado);
             } else {
