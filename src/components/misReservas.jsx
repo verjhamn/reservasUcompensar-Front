@@ -19,14 +19,14 @@ const BigCalendarView = () => {
     const fetchReservations = async () => {
       try {
         const response = await getMisReservas();
-        
+
         // Validar que response sea un array
         if (!Array.isArray(response)) {
           console.warn("[misReservas] La respuesta no es un array:", response);
           setEvents([]);
           return;
         }
-        
+
         const formattedEvents = response.map(item => ({
           id: item.id,
           type: item.espacio?.key || 'Coworking',
@@ -74,11 +74,11 @@ const BigCalendarView = () => {
     const ahora = new Date();
     const inicioReserva = new Date(reserva.hora_inicio);
     const finReserva = new Date(reserva.hora_fin);
-    
+
     // Verificar que la reserva esté en el horario actual y tenga estado "Confirmada"
-    if (reserva.estado === "Confirmada" && 
-        inicioReserva <= ahora && 
-        finReserva >= ahora) {
+    if (reserva.estado === "Confirmada" &&
+      inicioReserva <= ahora &&
+      finReserva >= ahora) {
       setReservaCheckOut(reserva);
       setShowCheckOutModal(true);
     } else {
@@ -90,9 +90,9 @@ const BigCalendarView = () => {
     setShowCheckOutModal(false);
     if (checkOutSuccess) {
       // Actualizar la lista de eventos después del check-out exitoso
-      setEvents(prevEvents => 
-        prevEvents.map(event => 
-          event.id === reservaCheckOut.id 
+      setEvents(prevEvents =>
+        prevEvents.map(event =>
+          event.id === reservaCheckOut.id
             ? { ...event, estado: "Completada" }
             : event
         )
@@ -106,7 +106,7 @@ const BigCalendarView = () => {
   );
 
   return (
-    <div className="p-4 bg-gris-sutil rounded-lg shadow-lg">
+    <div className="bg-gray-50 p-4 md:p-6 rounded-2xl shadow-xl border border-neutral-100">
       <Toaster />
       <div className="flex flex-col lg:flex-row gap-4">
 

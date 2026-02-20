@@ -27,24 +27,24 @@ const ReservationCalendar = ({
         if (isSelected && hasEvents) {
             return {
                 style: {
-                    backgroundColor: "#00aab7",
+                    backgroundColor: "#9333ea",
                     color: "#fff",
                     position: "relative",
-                    border: "2px solid #008a94"
+                    border: "2px solid #7e22ce"
                 }
             };
         } else if (isSelected) {
             return {
                 style: {
-                    backgroundColor: "#00aab7",
+                    backgroundColor: "#9333ea",
                     color: "#fff"
                 }
             };
         } else if (hasEvents) {
             return {
                 style: {
-                    backgroundColor: "#a8e3ea",
-                    color: "#00aab7",
+                    backgroundColor: "#f3e8ff",
+                    color: "#9333ea",
                     fontWeight: "bold"
                 }
             };
@@ -53,7 +53,7 @@ const ReservationCalendar = ({
     };
 
     return (
-        <div className="p-2 bg-white rounded-lg shadow-md">
+        <div className="p-4 bg-white rounded-2xl shadow-xl border border-neutral-100">
             <Calendar
                 localizer={localizer}
                 events={[]}
