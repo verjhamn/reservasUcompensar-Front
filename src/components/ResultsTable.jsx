@@ -160,11 +160,14 @@ const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode }) => {
       {renderInfoMessage()}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {data.slice(page * itemsPerPage, (page + 1) * itemsPerPage).map((item, index) => (
-          <div key={`${item.id}-${index}`} className="border rounded-lg overflow-hidden shadow hover:shadow-lg transition duration-300 flex flex-col">
+          <div
+            key={`${item.id}-${index}`}
+            className="relative rounded-lg overflow-hidden shadow-lg transition-all duration-300 flex flex-col animate-fade-in-up group hover:ring-2 hover:ring-purple-300 hover:shadow-2xl hover:scale-105"
+          >
             <img
               src={item.imagenes[0]?.img_path}
               alt={item.codigo}
-              className="h-48 w-full object-cover"
+              className="h-48 w-full object-cover transition-transform duration-700 group-hover:scale-110"
             />
             <div className="p-4 flex flex-col flex-grow">
               <div className="flex-grow">
