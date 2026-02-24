@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, CheckCircle, Store, User, Mail, Phone, Calendar } from 'lucide-react';
 
-import { sendQuoteRequest } from '../services/quoteService';
+import { crearReservaExterna } from '../Services/externalReservationService';
 import { toast, Toaster } from 'react-hot-toast';
 
 const QuoteRequestModal = ({ isOpen, onClose, spaceData, quoteData, onBack, isEmbedded = false }) => {
@@ -88,34 +88,36 @@ const QuoteRequestModal = ({ isOpen, onClose, spaceData, quoteData, onBack, isEm
         setIsLoading(true);
         setError(null);
 
-        // Construir JSON de solicitud extendido
+        // Formatear fecha a DD/MM/YYYY
+        const d = quoteData?.date ? new Date(quoteData.date) : new Date();
+        const dia = String(d.getDate()).padStart(2, '0');
+        const mes = String(d.getMonth() + 1).padStart(2, '0');
+        const anio = d.getFullYear();
+        const fechaFormateada = `${dia}/${mes}/${anio}`;
+
+        // Construir JSON de solicitud para endpoint crearReservaExterna
         const requestData = {
             solicitante: {
                 nombre: formData.nombre,
                 tipo_documento: formData.tipoDocumento,
                 numero_documento: formData.numeroDocumento,
                 correo: formData.correo,
+                correo_alternativo: "", // No lo pedimos en el UI actual
                 telefono: formData.telefono
             },
             empresa: {
                 nombre: formData.empresa,
                 tipo_documento: formData.tipoDocumentoEmpresa,
                 numero_documento: formData.numeroDocumentoEmpresa,
+                digito_verificacion: "0", // Opcional o derivarlo si existe
                 telefono: formData.telefonoEmpresa,
                 direccion: formData.direccionEmpresa
             },
-            espacio: {
-                id: spaceData?.id,
-                codigo: safeRender(spaceData?.codigo),
-                nombre: safeRender(spaceData?.Titulo),
-                sede: safeRender(spaceData?.sede),
-                tipo: safeRender(spaceData?.tipo)
-            },
-            seleccion: {
-                fecha: quoteData?.date,
+            reserva: {
+                espacio_id: spaceData?.id,
+                fecha: fechaFormateada,
                 hora_inicio: quoteData?.startTime,
-                hora_fin: quoteData?.endTime,
-                horas_totales: quoteData?.hours
+                hora_fin: quoteData?.endTime
             },
             evento: {
                 tipo: formData.tipoEvento,
@@ -125,11 +127,17 @@ const QuoteRequestModal = ({ isOpen, onClose, spaceData, quoteData, onBack, isEm
         };
 
         try {
-            await sendQuoteRequest(requestData);
+            await crearReservaExterna(requestData);
             setShowSuccess(true);
         } catch (err) {
-            setError("Hubo un error al enviar la solicitud. Por favor intenta nuevamente.");
             console.error(err);
+            if (err.errors && Object.keys(err.errors).length > 0) {
+                // Mostrar el primer error de validación
+                const primerError = Object.values(err.errors)[0][0];
+                setError(primerError || err.message);
+            } else {
+                setError(err.message || "Hubo un error al enviar la solicitud. Por favor intenta nuevamente.");
+            }
         } finally {
             setIsLoading(false);
         }
