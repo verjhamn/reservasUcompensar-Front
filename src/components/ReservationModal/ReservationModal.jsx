@@ -11,7 +11,13 @@ import AvailabilityCalendar from "./components/AvailabilityCalendar";
 import CalendarLegend from "./components/CalendarLegend";
 import TimeSlotSelector from "./components/TimeSlotSelector";
 import ReservationForm from "./components/ReservationForm";
-import QuoteRequestModal from "../QuoteRequestModal";
+import QuoteForm from './components/QuoteForm';
+
+// Helper function to calculate end time
+const getEndTime = (lastSelectedHour) => {
+    const hour = parseInt(lastSelectedHour.split(':')[0]);
+    return `${(hour + 1).toString().padStart(2, '0')}:00`;
+};
 
 const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGuestMode, onQuoteRequest }) => {
     const [activeTab, setActiveTab] = useState("info");
@@ -223,17 +229,16 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
             return;
         }
 
-        // Pass validation, proceed to Quote Request
-        // Sort hours just in case
+        // Move to quote tab for Guest Users
         const sortedHours = [...selectedHours].sort();
         const data = {
             date: selectedDate,
             startTime: sortedHours[0],
-            endTime: sortedHours[sortedHours.length - 1],
-            hours: sortedHours
+            endTime: getEndTime(sortedHours[sortedHours.length - 1]),
+            hours: sortedHours,
         };
         setQuoteData(data);
-        setViewMode('quote');
+        setActiveTab("quote");
     };
 
     return (
@@ -261,28 +266,39 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
                         </button>
                     </div>
 
-                    <div className="border-b mb-6">
+                    <div className="border-b mb-6 shrink-0 flex gap-4 overflow-x-auto no-scrollbar">
                         <button
                             onClick={() => setActiveTab("info")}
-                            className={`py-2 px-4 transition-colors ${activeTab === "info"
+                            className={`py-2 px-4 transition-colors whitespace-nowrap ${activeTab === "info"
                                 ? "border-b-2 border-purple-600 font-bold text-purple-600"
-                                : "text-gray-600 hover:text-gray-800"
+                                : "text-gray-600 hover:text-gray-800 font-medium"
                                 }`}
                         >
                             Información
                         </button>
                         <button
                             onClick={() => setActiveTab("availability")}
-                            className={`py-2 px-4 transition-colors ${activeTab === "availability"
+                            className={`py-2 px-4 transition-colors whitespace-nowrap ${activeTab === "availability"
                                 ? "border-b-2 border-purple-600 font-bold text-purple-600"
-                                : "text-gray-600 hover:text-gray-800"
+                                : "text-gray-600 hover:text-gray-800 font-medium"
                                 }`}
                         >
                             Disponibilidad
                         </button>
+                        {isGuestMode && quoteData && (
+                            <button
+                                onClick={() => setActiveTab("quote")}
+                                className={`py-2 px-4 transition-colors whitespace-nowrap ${activeTab === "quote"
+                                    ? "border-b-2 border-purple-600 font-bold text-purple-600"
+                                    : "text-gray-600 hover:text-gray-800 font-medium"
+                                    }`}
+                            >
+                                Cotización
+                            </button>
+                        )}
                     </div>
 
-                    <div className="flex-1 overflow-y-auto no-scrollbar pb-4 pr-2">
+                    <div className="flex-1 overflow-y-auto no-scrollbar pb-4 pr-2 relative">
                         {activeTab === "info" && (
                             <SpaceInformation spaceData={spaceData} onNext={() => setActiveTab("availability")} />
                         )}
@@ -326,20 +342,16 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
                                 </div>
                             </div>
                         )}
-                    </div>
-                </div>
-            )}
 
-            {viewMode === 'quote' && (
-                <div className="bg-white rounded-lg max-w-6xl w-full h-[95vh] overflow-hidden flex flex-col">
-                    <QuoteRequestModal
-                        isOpen={true}
-                        isEmbedded={true}
-                        spaceData={spaceData}
-                        quoteData={quoteData}
-                        onClose={onClose}
-                        onBack={() => setViewMode('reservation')}
-                    />
+                        {activeTab === "quote" && (
+                            <QuoteForm
+                                spaceData={spaceData}
+                                quoteData={quoteData}
+                                onBack={() => setActiveTab("availability")}
+                                onSuccess={onClose}
+                            />
+                        )}
+                    </div>
                 </div>
             )}
 
