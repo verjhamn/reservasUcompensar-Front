@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import SearchFilters from '../components/SearchFilters';
@@ -10,6 +10,7 @@ import { isSuperAdmin } from '../utils/userHelper';
 const CatalogoView = ({ filters, setFilters, handleFilterChange, goToMyReservations }) => {
     const location = useLocation();
     const isGuestMode = location.state?.guestMode;
+    const [availableFloors, setAvailableFloors] = useState([]);
 
     // Efecto para aplicar modo invitado (Solo Eventos)
     useEffect(() => {
@@ -89,6 +90,7 @@ const CatalogoView = ({ filters, setFilters, handleFilterChange, goToMyReservati
                                 setFilters={setFilters}
                                 onFilterChange={handleFilterChange}
                                 isGuestMode={isGuestMode}
+                                availableFloors={availableFloors}
                             />
                         </div>
                         <div className="w-full lg:flex-1">
@@ -96,6 +98,7 @@ const CatalogoView = ({ filters, setFilters, handleFilterChange, goToMyReservati
                                 filters={filters}
                                 goToMyReservations={goToMyReservations}
                                 isGuestMode={isGuestMode}
+                                setAvailableFloors={setAvailableFloors}
                             />
                         </div>
                     </div>

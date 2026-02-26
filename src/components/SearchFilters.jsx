@@ -18,7 +18,7 @@ const generateTimeOptions = (start, end) => {
   return times;
 };
 
-const SearchFilters = ({ filters, setFilters, onFilterChange, isGuestMode }) => {
+const SearchFilters = ({ filters, setFilters, onFilterChange, isGuestMode, availableFloors = [] }) => {
   // En modo invitado, mostrar filtros expandidos por defecto
   const [showMoreFilters, setShowMoreFilters] = useState(isGuestMode);
 
@@ -60,6 +60,7 @@ const SearchFilters = ({ filters, setFilters, onFilterChange, isGuestMode }) => 
         horaInicio: "",
         horaFin: "",
         tiporecurso: "",
+        piso: "",
       };
       setFilters(updatedFilters);
     }
@@ -245,7 +246,7 @@ const SearchFilters = ({ filters, setFilters, onFilterChange, isGuestMode }) => 
                       className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all duration-200 appearance-none text-gray-700 font-medium cursor-pointer hover:border-purple-300"
                     >
                       <option value="">Seleccionar</option>
-                      {staticOptions.espaciosFisicos.map((espacio, index) => (
+                      {availableFloors?.map((espacio, index) => (
                         <option key={index} value={espacio}>{espacio}</option>
                       ))}
                     </select>
@@ -320,7 +321,7 @@ const SearchFilters = ({ filters, setFilters, onFilterChange, isGuestMode }) => 
                       className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all duration-200 appearance-none text-gray-700 font-medium cursor-pointer hover:border-purple-300"
                     >
                       <option value="">Seleccionar</option>
-                      {staticOptions.espaciosFisicos.map((espacio, index) => (
+                      {availableFloors?.map((espacio, index) => (
                         <option key={index} value={espacio}>{espacio}</option>
                       ))}
                     </select>

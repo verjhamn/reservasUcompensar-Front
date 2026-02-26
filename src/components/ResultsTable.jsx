@@ -7,7 +7,7 @@ import { useMsal } from "@azure/msal-react";
 import { loginRequest } from "../Services/SSOServices/authConfig";
 import { fetchAuthToken } from "../Services/authService";
 
-const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode, onSpaceLoaded }) => {
+const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode, onSpaceLoaded, setAvailableFloors }) => {
   const { instance } = useMsal();
   const [page, setPage] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -61,6 +61,20 @@ const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode, onSpaceLo
 
         console.log('Espacios procesados:', processedSpaces); // Para debug
         setData(processedSpaces);
+
+        // Extraer pisos únicos SOLO SI no hay un filtro de piso activo
+        // Esto evita que al elegir un piso, las demás opciones desaparezcan del select
+        if (typeof setAvailableFloors === 'function' && !filters.piso) {
+          const floors = processedSpaces.map(space => space.piso?.toString()).filter(Boolean);
+          const uniqueFloors = [...new Set(floors)].sort((a, b) => {
+            // Intenta ordenarlos numéricamente si es posible
+            const numA = parseInt(a);
+            const numB = parseInt(b);
+            if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+            return a.localeCompare(b);
+          });
+          setAvailableFloors(uniqueFloors);
+        }
 
         // Notificar al padre cuando los datos están listos (usado por EspacioQRView para apertura automática)
         if (typeof onSpaceLoaded === 'function') {
