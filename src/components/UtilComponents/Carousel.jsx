@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ImageIcon } from 'lucide-react';
 
 const Carousel = ({ images }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -11,7 +12,14 @@ const Carousel = ({ images }) => {
     setCurrentIndex((prevIndex) => (prevIndex - 1 + images.length) % images.length);
   };
 
-  if (!images || images.length === 0) return null;
+  if (!images || images.length === 0) {
+    return (
+      <div className="w-full h-full bg-gray-50 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200">
+        <ImageIcon className="w-12 h-12 text-gray-300 mb-2 opacity-70" />
+        <span className="text-gray-400 font-medium text-sm">Sin imágenes disponibles</span>
+      </div>
+    );
+  }
 
   return (
     <div className="relative w-full h-full">
@@ -39,9 +47,8 @@ const Carousel = ({ images }) => {
               <button
                 key={index}
                 onClick={() => setCurrentIndex(index)}
-                className={`w-2 h-2 rounded-full ${
-                  index === currentIndex ? 'bg-white' : 'bg-white/50'
-                }`}
+                className={`w-2 h-2 rounded-full ${index === currentIndex ? 'bg-white' : 'bg-white/50'
+                  }`}
               />
             ))}
           </div>

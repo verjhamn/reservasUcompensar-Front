@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import ReactPaginate from "react-paginate";
+import { ImageIcon } from "lucide-react";
 import ReservationModal from "./ReservationModal";
 
 import { fetchFilteredReservations } from "../Services/reservasService";
@@ -185,12 +186,19 @@ const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode, onSpaceLo
             tabIndex={0}
             className="relative rounded-2xl overflow-hidden shadow-lg transition-all duration-300 flex flex-col animate-fade-in-up group hover:shadow-2xl hover:-translate-y-1 cursor-pointer bg-white border border-transparent hover:border-purple-200 outline-none focus:ring-4 focus:ring-purple-200"
           >
-            <div className="relative overflow-hidden h-48">
-              <img
-                src={item.imagenes[0]?.img_path}
-                alt={item.codigo}
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-              />
+            <div className="relative overflow-hidden h-48 bg-gray-50 flex items-center justify-center">
+              {item.imagenes && item.imagenes.length > 0 && item.imagenes[0]?.img_path ? (
+                <img
+                  src={item.imagenes[0].img_path}
+                  alt={item.codigo}
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center text-gray-300 group-hover:text-purple-400 transition-colors duration-300">
+                  <ImageIcon className="w-12 h-12 mb-2 opacity-60" />
+                  <span className="text-sm font-medium">Sin imagen</span>
+                </div>
+              )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">
                 <span className="text-white font-medium px-4 py-1 bg-white/20 backdrop-blur-sm rounded-full border border-white/30 text-sm">
                   {isGuestMode ? "Solicitar Cotización" : "Reservar Ahora"}
