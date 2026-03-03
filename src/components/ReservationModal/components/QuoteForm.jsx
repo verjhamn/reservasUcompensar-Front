@@ -22,9 +22,11 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
     const [showSuccess, setShowSuccess] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [policiesAccepted, setPoliciesAccepted] = useState(false);
+    const [dataTreatmentAccepted, setDataTreatmentAccepted] = useState(false);
 
-    const [currentStep, setCurrentStep] = useState(1); // 1: Personales, 2: Empresa, 3: Evento
-    const totalSteps = 3;
+    const [currentStep, setCurrentStep] = useState(1); // 1: Personales, 2: Empresa, 3: Evento, 4: Políticas
+    const totalSteps = 4;
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -45,7 +47,13 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
         if (step === 2) {
             return formData.empresa && formData.tipoDocumentoEmpresa && formData.numeroDocumentoEmpresa && formData.telefonoEmpresa && formData.direccionEmpresa;
         }
-        return formData.tipoEvento;
+        if (step === 3) {
+            return !!formData.tipoEvento;
+        }
+        if (step === 4) {
+            return policiesAccepted && dataTreatmentAccepted;
+        }
+        return false;
     };
 
     const handleNext = () => {
@@ -79,8 +87,15 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!validateStep(3)) {
-            toast.error("Por favor completa todos los campos requeridos para enviar.");
+
+        // Si el usuario presiona "Enter" en un input antes del último paso, avanzamos de paso en vez de emitir error
+        if (currentStep < totalSteps) {
+            handleNext();
+            return;
+        }
+
+        if (!validateStep(4)) {
+            toast.error("Por favor acepta las políticas y tratamiento de datos para enviar la cotización.");
             return;
         }
 
@@ -152,8 +167,8 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                     <CheckCircle className="h-10 w-10 text-purple-600" />
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-3">¡Solicitud de Cotización Recibida!</h3>
-                <p className="text-gray-600 mb-8 max-w-md mx-auto text-lg">
-                    Hemos registrado tu solicitud exitosamente. Un asesor comercial te contactará pronto al correo <strong className="text-gray-800">{formData.correo}</strong> para continuar el proceso.
+                <p className="text-gray-600 mb-8 max-w-md mx-auto text-lg leading-relaxed">
+                    La solicitud de espacio ha sido radicada con éxito. Próximamente se dará respuesta sobre su viabilidad y, una vez validada, se confirmará la reserva por medio del correo electrónico.
                 </p>
                 <div className="flex gap-4">
                     <button
@@ -183,6 +198,7 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                         {currentStep === 1 && "Datos Personales"}
                         {currentStep === 2 && "Datos de Empresa"}
                         {currentStep === 3 && "Detalles del Evento"}
+                        {currentStep === 4 && "Políticas de Uso"}
                     </span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
@@ -427,22 +443,80 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                                         <label className="text-sm font-semibold text-gray-700">Observaciones adicionales</label>
                                         <textarea
                                             name="detalles"
-                                            rows="5"
-                                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white resize-none"
+                                            rows="4"
+                                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white resize-none custom-scrollbar"
                                             placeholder="Número de asistentes estimado, requerimientos especiales (catering, equipos extra...), o algo importante."
                                             value={formData.detalles}
                                             onChange={handleChange}
                                         ></textarea>
                                     </div>
+                                </div>
+                            )}
+
+                            {/* Seccion 4: Políticas y Tratamiento de Datos */}
+                            {currentStep === 4 && (
+                                <div className="animate-fade-in space-y-5 pb-4">
+                                    <h3 className="text-xl font-bold text-gray-800 border-b border-gray-100 pb-3">Política de Escenarios y Tratamiento de Datos</h3>
+
+                                    <div className="bg-purple-50/30 border border-purple-100 rounded-xl p-4 h-48 overflow-y-auto text-sm text-gray-700 space-y-3 shadow-inner custom-scrollbar">
+                                        <p className="font-bold text-purple-900 text-base mb-4">Normas Generales para el uso de instalaciones</p>
+                                        <ul className="list-disc pl-5 space-y-2 marker:text-purple-500">
+                                            <li>No se permite consumir alimentos ni bebidas dentro de los auditorios, salvo autorización expresa.</li>
+                                            <li>Se manejan bloques de 4 horas (8 a.m. a 12 m; 1p.m. a 5 p.m.; 6p.m. a 10 p.m.)</li>
+                                            <li>No se permite el ingreso de alimentos de proveedores no inscritos en la CCF Compensar, Consorcio o UCompensar.</li>
+                                            <li>Se debe incluir dentro de las cotizaciones el valor de las horas de montaje cuando se requieran.</li>
+                                            <li>En horarios fuera de la operación de la universidad, se deberá incluir el personal necesario para la ejecución del evento.</li>
+                                            <li>Los proveedores deberán cumplir con la normativa sanitaria vigente, usar utensilios biodegradables o reutilizables y cumplir con los requerimientos de SST.</li>
+                                            <li>Está prohibido cocinar, calentar o preparar alimentos dentro de los auditorios.</li>
+                                            <li>Cualquier daño ocasionado a las instalaciones será responsabilidad del organizador.</li>
+                                            <li>El incumplimiento de este procedimiento podrá derivar en la suspensión temporal del derecho a uso de espacios institucionales.</li>
+                                            <li>No se permite el consumo de bebidas alcohólicas.</li>
+                                            <li>En las áreas comunes no se puede solicitar exclusividad.</li>
+                                            <li>No se permite el ingreso de mascotas.</li>
+                                            <li>Se deben respetar los aforos establecidos en la ficha técnica y brochure.</li>
+                                            <li>Todas las actividades que se desarrollen en las instalaciones de UCompensar deben estar dentro del marco regulatorio de las instituciones educativas.</li>
+                                        </ul>
+                                    </div>
+
+                                    <div className="space-y-4 pt-4 px-2">
+                                        <label className="flex items-start gap-4 cursor-pointer group">
+                                            <div className="flex items-center h-6 mt-0.5">
+                                                <input
+                                                    type="checkbox"
+                                                    className="w-5 h-5 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 focus:ring-2 cursor-pointer transition-colors"
+                                                    checked={policiesAccepted}
+                                                    onChange={(e) => setPoliciesAccepted(e.target.checked)}
+                                                />
+                                            </div>
+                                            <span className="text-base text-gray-700 group-hover:text-gray-900 transition-colors leading-relaxed">
+                                                He leído, comprendo y <strong>acepto las Políticas de escenarios y normas generales</strong> aplicables a mi reserva.
+                                            </span>
+                                        </label>
+
+                                        <label className="flex items-start gap-4 cursor-pointer group">
+                                            <div className="flex items-center h-6 mt-0.5">
+                                                <input
+                                                    type="checkbox"
+                                                    className="w-5 h-5 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 focus:ring-2 cursor-pointer transition-colors"
+                                                    checked={dataTreatmentAccepted}
+                                                    onChange={(e) => setDataTreatmentAccepted(e.target.checked)}
+                                                />
+                                            </div>
+                                            <span className="text-base text-gray-700 group-hover:text-gray-900 transition-colors leading-relaxed">
+                                                Autorizo el <a href="https://ucompensar.edu.co/pdf/documentos/POL-PAJ-02-V08-Tratamiento-de-datos-personales.pdf" target="_blank" rel="noopener noreferrer" className="text-purple-600 font-bold hover:underline hover:text-purple-800 transition-colors" onClick={(e) => e.stopPropagation()}>Tratamiento de mis Datos Personales</a> conforme a las políticas corporativas.
+                                            </span>
+                                        </label>
+                                    </div>
 
                                     {error && (
-                                        <div className="p-4 mt-2 bg-red-50 text-red-700 rounded-xl text-sm border border-red-200 font-medium animate-fade-in flex items-start gap-2">
+                                        <div className="p-4 mt-4 bg-red-50 text-red-700 rounded-xl text-sm border border-red-200 font-medium animate-fade-in flex items-start gap-2">
                                             <span className="text-red-500">⚠</span>
                                             {error}
                                         </div>
                                     )}
                                 </div>
                             )}
+
                         </div>
 
                         {/* Footer Buttons */}
@@ -455,16 +529,20 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                                 {currentStep === 1 ? 'Volver al calendario' : 'Anterior'}
                             </button>
 
-                            {currentStep < totalSteps ? (
+                            {currentStep < totalSteps && (
                                 <button
+                                    key="next-btn"
                                     type="button"
                                     onClick={handleNext}
                                     className="px-8 py-2.5 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 hover:shadow-lg hover:-translate-y-0.5 shadow-md transition-all duration-200"
                                 >
                                     Siguiente
                                 </button>
-                            ) : (
+                            )}
+
+                            {currentStep === totalSteps && (
                                 <button
+                                    key="submit-btn"
                                     type="submit"
                                     disabled={isLoading}
                                     className={`px-8 py-2.5 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 shadow-md transition-all flex items-center justify-center gap-2 ${isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-lg hover:-translate-y-0.5 duration-200'}`}
