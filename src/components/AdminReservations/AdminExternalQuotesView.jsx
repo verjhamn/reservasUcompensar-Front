@@ -1,36 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { Toaster, toast } from 'react-hot-toast';
-import { Search, Filter, CheckCircle, XCircle, Clock, Building, User, Mail, Calendar as CalendarIcon, FileText, Briefcase, ChevronDown, ChevronUp, AlertCircle, Phone, Info } from 'lucide-react';
+import { Search, Filter, CheckCircle, XCircle, Clock, Building, User, Mail, Calendar as CalendarIcon, FileText, Briefcase, AlertCircle, Phone, Info, X, ChevronRight, FileSignature } from 'lucide-react';
 import { getExternalQuotes, updateExternalQuoteState } from '../../Services/adminReservasService';
 import { format, parseISO } from 'date-fns';
 import es from 'date-fns/locale/es';
-import { showConfirmation, showSuccessToast, showErrorToast } from '../UtilComponents/Confirmation';
+import { showSuccessToast, showErrorToast } from '../UtilComponents/Confirmation';
 
 const AdminExternalQuotesView = () => {
-    // ---- ESTADOS GLOBALES ----
+    // ---- ESTADOS ESTATICOS GLOBALES ----
     const [filters, setFilters] = useState({
-        id: "",
-        id_usuario: "",
-        espacio_id: "",
-        palabra: "",
-        email: "",
-        fecha: "",
-        horaInicio: "",
-        horaFin: "",
-        tipo: "",
-        piso: "",
-        estado: "",
-        fecha_creacion: ""
+        id: "", id_usuario: "", espacio_id: "", palabra: "", email: "", fecha: "", horaInicio: "", horaFin: "", tipo: "", piso: "", estado: "", fecha_creacion: ""
     });
 
     const [quotes, setQuotes] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
-    const [expandedQuotes, setExpandedQuotes] = useState({});
 
-    // ---- ESTADOS DEL MODAL ----
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    // ---- ESTADOS DEL PANEL LATERAL (SLIDE-OVER) ----
+    const [isSlideOverOpen, setIsSlideOverOpen] = useState(false);
     const [selectedQuote, setSelectedQuote] = useState(null);
-    const [modalData, setModalData] = useState({
+    const [actionData, setActionData] = useState({
         estado: 'nueva',
         observacion: '',
         notificar: false
@@ -42,7 +30,6 @@ const AdminExternalQuotesView = () => {
         setIsLoading(true);
         try {
             const data = await getExternalQuotes(filters);
-            // Si el data devuelto es directamente el array o viene wrappeado.
             setQuotes(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error("Error cargando cotizaciones:", error);
@@ -64,40 +51,39 @@ const AdminExternalQuotesView = () => {
         setFilters(prev => ({ ...prev, [name]: value }));
     };
 
-    const toggleExpand = (id) => {
-        setExpandedQuotes(prev => ({ ...prev, [id]: !prev[id] }));
-    };
-
-    // ---- LÓGICA DEL MODAL ----
-    const openManageModal = (quote) => {
+    // ---- LÓGICA DEL PANEL LATERAL ----
+    const openSlideOver = (quote) => {
         setSelectedQuote(quote);
-        setModalData({
+        setActionData({
             estado: quote.estado?.toLowerCase() || 'nueva',
-            observacion: '', // Observación limpia por defecto
-            notificar: false // No notificar por defecto para evitar spam inyectable accidental
+            observacion: '',
+            notificar: false
         });
-        setIsModalOpen(true);
+        setIsSlideOverOpen(true);
+        // Deshabilitar scroll del body html
+        document.body.style.overflow = 'hidden';
     };
 
-    const closeManageModal = () => {
-        setIsModalOpen(false);
-        setSelectedQuote(null);
+    const closeSlideOver = () => {
+        setIsSlideOverOpen(false);
+        setTimeout(() => setSelectedQuote(null), 300); // Esperar que acabe la animacion
+        document.body.style.overflow = 'unset';
     };
 
-    const handleModalSubmit = async (e) => {
+    const handleActionSubmit = async (e) => {
         e.preventDefault();
         if (!selectedQuote) return;
 
         setIsSaving(true);
         try {
             await updateExternalQuoteState(selectedQuote.id, {
-                estado: modalData.estado,
-                observacion: modalData.observacion,
-                notificar: modalData.notificar
+                estado: actionData.estado,
+                observacion: actionData.observacion,
+                notificar: actionData.notificar
             });
-            showSuccessToast(`Solicitud actualizada a "${modalData.estado}"`);
-            closeManageModal();
-            fetchQuotes(); // Recargar grilla
+            showSuccessToast(`Solicitud actualizada correctamente`);
+            closeSlideOver();
+            fetchQuotes();
         } catch (error) {
             showErrorToast("No se pudo actualizar la solicitud");
         } finally {
@@ -105,281 +91,125 @@ const AdminExternalQuotesView = () => {
         }
     };
 
-    // ---- HELPERS DE INTERFAZ ----
+    // ---- HELPERS VISUALES ----
     const getStatusBadge = (estado) => {
         switch (estado?.toLowerCase()) {
             case 'nueva':
-                return <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200">Nueva</span>;
+                return <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200 uppercase tracking-wide">Nueva</span>;
             case 'en curso':
-                return <span className="px-3 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700 border border-purple-200 flex items-center gap-1"><Clock className="w-3 h-3" /> En curso</span>;
+                return <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-purple-100 text-purple-800 border border-purple-200 flex items-center gap-1.5 uppercase tracking-wide"><Clock className="w-3.5 h-3.5" /> En curso</span>;
             case 'en espera':
-                return <span className="px-3 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700 border border-yellow-200 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> En espera</span>;
+                return <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800 border border-yellow-300 flex items-center gap-1.5 uppercase tracking-wide"><AlertCircle className="w-3.5 h-3.5" /> En espera</span>;
             case 'aprobada':
-                return <span className="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 border border-green-200 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Aprobada</span>;
+                return <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-green-100 text-green-700 border border-green-300 flex items-center gap-1.5 uppercase tracking-wide"><CheckCircle className="w-3.5 h-3.5" /> Aprobada</span>;
             case 'no aprobada':
-                return <span className="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 border border-red-200 flex items-center gap-1"><XCircle className="w-3 h-3" /> No Aprobada</span>;
+                return <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-red-100 text-red-700 border border-red-300 flex items-center gap-1.5 uppercase tracking-wide"><XCircle className="w-3.5 h-3.5" /> No Aprobada</span>;
             default:
-                return <span className="px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-700 border border-gray-200">{estado || 'Desconocido'}</span>;
+                return <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-gray-100 text-gray-700 border border-gray-300 uppercase tracking-wide">{estado || 'Desconocido'}</span>;
         }
     };
 
     const formatDateTime = (dateString) => {
         if (!dateString) return 'No definida';
-        try {
-            return format(parseISO(dateString), "dd MMM yyyy, h:mm a", { locale: es });
-        } catch {
-            return dateString;
-        }
+        try { return format(parseISO(dateString), "dd MMM yyyy, h:mm a", { locale: es }); } catch { return dateString; }
     };
 
     const formatDateObj = (dateString) => {
         if (!dateString) return 'No definida';
-        try {
-            return format(parseISO(dateString), "dd MMM yyyy", { locale: es });
-        } catch {
-            return dateString;
-        }
+        try { return format(parseISO(dateString), "dd MMM yyyy", { locale: es }); } catch { return dateString; }
     };
 
     return (
-        <div className="flex flex-col gap-6 animate-fade-in relative">
+        <div className="flex flex-col gap-6 animate-fade-in relative min-h-[70vh]">
             <Toaster />
 
-            {/* Cabecera y Filtros rápidos */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            {/* Cabecera y Filtros */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 z-10 relative">
                 <div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center mb-6">
                     <div>
                         <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
                             <Briefcase className="w-6 h-6 text-purple-600" />
                             Bandeja de Solicitudes Externas
                         </h2>
-                        <p className="text-gray-500 text-sm mt-1">Gestiona las solicitudes de eventos y cotizaciones de clientes externos y corporativos.</p>
+                        <p className="text-gray-500 text-sm mt-1">Revisa y pre-aprueba solicitudes para contratos o montajes en los espacios corporativos.</p>
                     </div>
                 </div>
 
-                {/* Grid Filtros */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Search className="h-4 w-4 text-gray-400" />
-                        </div>
-                        <input
-                            type="text"
-                            name="palabra"
-                            placeholder="Buscar Solicitante, Empresa o ID..."
-                            value={filters.palabra}
-                            onChange={handleFilterChange}
-                            className="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none text-sm transition-all bg-gray-50 hover:bg-white"
-                        />
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Search className="h-4 w-4 text-gray-400" /></div>
+                        <input type="text" name="palabra" placeholder="Buscar Solicitante, Empresa..." value={filters.palabra} onChange={handleFilterChange} className="w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-sm transition-all bg-gray-50 hover:bg-white" />
                     </div>
-
                     <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Mail className="h-4 w-4 text-gray-400" />
-                        </div>
-                        <input
-                            type="email"
-                            name="email"
-                            placeholder="Buscar por correo solicitante..."
-                            value={filters.email}
-                            onChange={handleFilterChange}
-                            className="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none text-sm transition-all bg-gray-50 hover:bg-white"
-                        />
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Mail className="h-4 w-4 text-gray-400" /></div>
+                        <input type="email" name="email" placeholder="Correo solicitante..." value={filters.email} onChange={handleFilterChange} className="w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-sm transition-all bg-gray-50 hover:bg-white" />
                     </div>
-
                     <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Filter className="h-4 w-4 text-gray-400" />
-                        </div>
-                        <select
-                            name="estado"
-                            value={filters.estado}
-                            onChange={handleFilterChange}
-                            className="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none text-sm transition-all bg-gray-50 hover:bg-white appearance-none"
-                        >
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Filter className="h-4 w-4 text-gray-400" /></div>
+                        <select name="estado" value={filters.estado} onChange={handleFilterChange} className="w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-sm transition-all bg-gray-50 hover:bg-white appearance-none">
                             <option value="">Todos los Estados</option>
-                            <option value="nueva">Nueva</option>
+                            <option value="nueva">Nuevas</option>
                             <option value="en curso">En Curso</option>
                             <option value="en espera">En Espera</option>
                             <option value="aprobada">Aprobada</option>
                             <option value="no aprobada">No Aprobada</option>
                         </select>
                     </div>
-
                     <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <CalendarIcon className="h-4 w-4 text-gray-400" />
-                        </div>
-                        <input
-                            type="date"
-                            name="fecha"
-                            value={filters.fecha}
-                            onChange={handleFilterChange}
-                            className="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none text-sm transition-all bg-gray-50 hover:bg-white"
-                        />
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><CalendarIcon className="h-4 w-4 text-gray-400" /></div>
+                        <input type="date" name="fecha" value={filters.fecha} onChange={handleFilterChange} className="w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-sm transition-all bg-gray-50 hover:bg-white" />
                     </div>
                 </div>
             </div>
 
-            {/* Listado de Solicitudes */}
-            <div className="space-y-4">
+            {/* Listado Principal de Tarjetas "Clean" */}
+            <div className="space-y-4 z-0 relative">
                 {isLoading ? (
-                    <div className="flex justify-center items-center py-12">
+                    <div className="flex justify-center items-center py-16">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
-                        <span className="ml-3 text-purple-600 font-medium">Cargando solicitudes V2...</span>
+                        <span className="ml-3 text-purple-600 font-medium">Buscando solicitudes...</span>
                     </div>
                 ) : quotes.length === 0 ? (
-                    <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center shadow-sm">
+                    <div className="bg-white rounded-2xl border border-dashed border-gray-300 p-16 text-center shadow-sm">
                         <div className="mx-auto w-16 h-16 bg-gray-50 rounded-full flex justify-center items-center mb-4">
-                            <FileText className="w-8 h-8 text-gray-400" />
+                            <FileSignature className="w-8 h-8 text-gray-400" />
                         </div>
-                        <h3 className="text-lg font-bold text-gray-800 mb-1">No hay solicitudes</h3>
-                        <p className="text-gray-500">No se encontraron solicitudes externas con los criterios asignados.</p>
-                        {(filters.palabra || filters.email || filters.estado || filters.fecha) && (
-                            <button
-                                onClick={() => setFilters({ id: "", id_usuario: "", espacio_id: "", palabra: "", email: "", fecha: "", horaInicio: "", horaFin: "", tipo: "", piso: "", estado: "", fecha_creacion: "" })}
-                                className="mt-4 px-4 py-2 text-sm text-purple-600 font-semibold hover:bg-purple-50 rounded-lg transition-colors"
-                            >
-                                Limpiar Filtros
-                            </button>
-                        )}
+                        <h3 className="text-lg font-bold text-gray-800 mb-1">Bandeja Vacía</h3>
+                        <p className="text-gray-500">No se encontraron solicitudes con los criterios asignados.</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-5">
                         {quotes.map(quote => (
-                            <div key={quote.id} className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col">
-
-                                {/* 1. VISTA PRINCIPAL (Resumen) */}
-                                <div className="p-5 border-b border-gray-100 bg-gray-50/50 relative">
-                                    <div className="flex justify-between items-start mb-3">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-xs font-bold text-gray-400 bg-white border border-gray-200 px-2 py-1 rounded shadow-sm">#{quote.id}</span>
-                                            {getStatusBadge(quote.estado)}
-                                        </div>
-                                        <div className="text-right">
-                                            <span className="block text-[10px] text-gray-500 uppercase tracking-wide">Radicada</span>
-                                            <span className="text-xs font-semibold text-gray-700">{formatDateTime(quote.created_at)}</span>
-                                        </div>
+                            <div key={quote.id} className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col group cursor-pointer" onClick={() => openSlideOver(quote)}>
+                                {/* Info Status Header */}
+                                <div className="px-5 pt-5 pb-3">
+                                    <div className="flex justify-between items-start mb-4">
+                                        {getStatusBadge(quote.estado)}
+                                        <span className="text-xs font-semibold text-gray-400 bg-gray-50 px-2 py-1 rounded">#{quote.id}</span>
                                     </div>
+                                    <h3 className="text-[17px] font-bold text-gray-900 leading-tight line-clamp-2" title={quote.evento_tipo}>
+                                        {quote.evento_tipo || 'Evento Corporativo Externo'}
+                                    </h3>
+                                    <p className="text-sm font-medium text-purple-700 mt-1 truncate">
+                                        {quote.empresa_nombre || quote.solicitante_nombre}
+                                    </p>
+                                </div>
 
-                                    <h3 className="text-lg font-bold text-gray-900 leading-tight">{quote.evento_tipo || 'Evento sin clasificar'}</h3>
-
-                                    <div className="flex items-center gap-1.5 mt-2 text-gray-600 text-sm">
-                                        <User className="w-4 h-4 text-gray-400" />
-                                        <span>Solicita: <strong className="text-gray-800 tracking-tight">{quote.solicitante_nombre}</strong></span>
+                                {/* Resumen Fechas */}
+                                <div className="px-5 pb-5 mt-auto border-b border-gray-100">
+                                    <div className="flex items-center gap-2 text-sm text-gray-600 font-medium mb-1">
+                                        <CalendarIcon className="w-4 h-4 text-gray-400" /> {formatDateObj(quote.fecha_reserva)}
                                     </div>
-                                    <div className="flex items-center gap-1.5 mt-1 text-purple-700 text-sm font-semibold">
-                                        <Building className="w-4 h-4" />
-                                        <span>{quote.espacio?.nombre || 'Espacio no especificado'} {quote.espacio?.piso ? `(Piso ${quote.espacio.piso})` : ''}</span>
+                                    <div className="flex items-center gap-2 text-sm text-gray-600 font-medium">
+                                        <Clock className="w-4 h-4 text-gray-400" /> {quote.hora_inicio} - {quote.hora_fin}
                                     </div>
                                 </div>
 
-                                {/* Fechas Resumen */}
-                                <div className="px-5 pt-5 pb-3 flex-grow">
-                                    <div className="bg-purple-50/60 rounded-xl p-3 border border-purple-100 flex flex-col gap-2">
-                                        <div className="flex items-center gap-2 text-sm text-gray-800">
-                                            <CalendarIcon className="w-4 h-4 text-purple-600" />
-                                            <span><strong>Para el:</strong> {formatDateObj(quote.fecha_reserva)}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2 text-sm text-gray-800">
-                                            <Clock className="w-4 h-4 text-purple-600" />
-                                            <span><strong>Horario:</strong> {quote.hora_inicio} - {quote.hora_fin} / {quote.tiempo_montaje ? `${quote.tiempo_montaje}h montaje` : ''}</span>
-                                        </div>
-                                    </div>
-
-                                    {/* Botón Ver Más */}
-                                    <button
-                                        onClick={() => toggleExpand(quote.id)}
-                                        className="w-full flex items-center justify-center gap-1.5 py-2 mt-4 text-sm font-semibold text-gray-500 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors border border-dashed border-gray-200"
-                                    >
-                                        {expandedQuotes[quote.id] ? (
-                                            <><ChevronUp className="w-4 h-4" /> Ocultar especificaciones</>
-                                        ) : (
-                                            <><ChevronDown className="w-4 h-4" /> Ver especificaciones ({quote.empresa_nombre})</>
-                                        )}
-                                    </button>
-
-                                    {/* 2. VISTA EXPANDIDA (Acordeón Detalles) */}
-                                    {expandedQuotes[quote.id] && (
-                                        <div className="pt-4 mt-2 border-t border-gray-100 space-y-5 animate-fade-in">
-
-                                            {/* Empresa y Facturación */}
-                                            <div>
-                                                <h4 className="flex items-center gap-1.5 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-                                                    <Building className="w-3.5 h-3.5" /> Datos de Empresa (Facturación)
-                                                </h4>
-                                                <div className="text-sm space-y-1.5 bg-gray-50 border border-gray-100 p-3 rounded-lg text-gray-700">
-                                                    <p><strong>Razón Social:</strong> {quote.empresa_nombre}</p>
-                                                    <p><strong>{quote.empresa_tipo_documento || 'NIT'}:</strong> {quote.empresa_numero_documento}-{quote.empresa_digito_verificacion}</p>
-                                                    <p className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" /> <strong>Tel:</strong> {quote.empresa_telefono}</p>
-                                                    <p><strong>Dirección:</strong> {quote.empresa_direccion}</p>
-                                                </div>
-                                            </div>
-
-                                            {/* Detalles Contacto (Solicitante directo) */}
-                                            <div>
-                                                <h4 className="flex items-center gap-1.5 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-                                                    <User className="w-3.5 h-3.5" /> Contacto Directo Solicitante
-                                                </h4>
-                                                <div className="text-sm space-y-1.5 bg-gray-50 border border-gray-100 p-3 rounded-lg text-gray-700">
-                                                    <p><strong>{quote.solicitante_tipo_documento}:</strong> {quote.solicitante_numero_documento}</p>
-                                                    <p className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" /> <strong>Tel:</strong> {quote.solicitante_telefono}</p>
-                                                    <p className="flex items-center gap-1"><Mail className="w-3.5 h-3.5" /> <strong>Mail:</strong> {quote.solicitante_correo}</p>
-                                                    {quote.solicitante_correo_alternativo && <p className="text-xs text-gray-500 ml-4">({quote.solicitante_correo_alternativo})</p>}
-                                                </div>
-                                            </div>
-
-                                            {/* Detalles Extra Evento */}
-                                            {(quote.evento_detalles || quote.cantidad_personas) && (
-                                                <div>
-                                                    <h4 className="flex items-center gap-1.5 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-                                                        <Info className="w-3.5 h-3.5" /> Detalles del Evento
-                                                    </h4>
-                                                    <div className="text-sm bg-gray-50 border border-gray-100 p-3 rounded-lg text-gray-700">
-                                                        {quote.cantidad_personas && <p className="mb-1"><strong>Pax Est.:</strong> {quote.cantidad_personas} Asistentes</p>}
-                                                        {quote.evento_detalles && <p className="italic text-gray-600">"{quote.evento_detalles}"</p>}
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {/* Detalles Espacio HTML */}
-                                            {quote.espacio?.descripcion && (
-                                                <div>
-                                                    <h4 className="flex items-center gap-1.5 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-                                                        Especificaciones de la Sala Pedida
-                                                    </h4>
-                                                    <div className="bg-purple-50/30 rounded-lg p-3 border border-purple-100">
-                                                        <div
-                                                            className="text-sm text-gray-600 prose prose-sm max-w-none prose-p:my-1 prose-ul:my-1 prose-ul:pl-4 prose-li:list-disc prose-strong:text-purple-900"
-                                                            dangerouslySetInnerHTML={{ __html: quote.espacio.descripcion }}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* 3. AUDITORÍA Y ACCIONES */}
-                                <div className="border-t border-gray-100 bg-gray-50">
-                                    {/* Tracking Layer */}
-                                    {quote.observacion_estado && (
-                                        <div className="px-5 py-3 border-b border-gray-100 bg-white/50 space-y-1">
-                                            <p className="text-xs font-semibold text-gray-500 uppercase">Observación Backend/Admin:</p>
-                                            <p className="text-sm italic text-gray-700 bg-gray-100 p-2 rounded">{quote.observacion_estado}</p>
-                                            <p className="text-[10px] text-gray-400 text-right mt-1">Act. el {formatDateTime(quote.estado_changed_at)}</p>
-                                        </div>
-                                    )}
-
-                                    {/* Botón Maestro de Gestión */}
-                                    <div className="p-4">
-                                        <button
-                                            onClick={() => openManageModal(quote)}
-                                            className="w-full py-2.5 px-4 rounded-xl text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 transform active:scale-[0.98]"
-                                        >
-                                            Gestionar Solicitud
-                                        </button>
-                                    </div>
+                                {/* Area Inferior */}
+                                <div className="bg-gray-50/50 p-3 flex justify-between items-center group-hover:bg-purple-50 transition-colors">
+                                    <span className="text-xs text-gray-500 w-full text-center flex items-center justify-center gap-1 group-hover:text-purple-700 font-semibold transition-colors">
+                                        Revisar Expediente <ChevronRight className="w-4 h-4" />
+                                    </span>
                                 </div>
                             </div>
                         ))}
@@ -387,108 +217,197 @@ const AdminExternalQuotesView = () => {
                 )}
             </div>
 
-            {/* ==== MODAL DE GESTIÓN ==== */}
-            {isModalOpen && selectedQuote && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-fade-in">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden transform transition-all">
-                        {/* Cabecera Modal */}
-                        <div className="bg-purple-600 px-6 py-4 flex justify-between items-center">
-                            <h3 className="text-white font-bold text-lg">
-                                Gestionar Solicitud #{selectedQuote.id}
-                            </h3>
+            {/* ==== PANEL LATERAL: SLIDE-OVER UX ==== */}
+            {/* Backdrop Negro Desenfoque */}
+            {isSlideOverOpen && (
+                <div
+                    className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-40 transition-opacity animate-fade-in"
+                    onClick={closeSlideOver}
+                ></div>
+            )}
+
+            {/* El Panel Deslizante */}
+            <div
+                className={`fixed top-0 right-0 h-full w-full max-w-lg bg-gray-50 z-50 shadow-2xl transform transition-transform duration-300 ease-in-out flex flex-col ${isSlideOverOpen ? 'translate-x-0' : 'translate-x-full'}`}
+            >
+                {selectedQuote && (
+                    <>
+                        {/* Cabecera del Panel */}
+                        <div className="bg-white px-6 py-5 border-b border-gray-200 flex items-center justify-between sticky top-0 z-10">
+                            <div>
+                                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-3">
+                                    Expediente #{selectedQuote.id}
+                                    {getStatusBadge(selectedQuote.estado)}
+                                </h2>
+                                <p className="text-sm text-gray-500 mt-1">Radicada el {formatDateTime(selectedQuote.created_at)}</p>
+                            </div>
                             <button
-                                onClick={closeManageModal}
-                                className="text-purple-200 hover:text-white transition-colors"
+                                onClick={closeSlideOver}
+                                className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900 rounded-full transition-colors"
                             >
-                                <XCircle className="w-6 h-6" />
+                                <X className="w-5 h-5" />
                             </button>
                         </div>
 
-                        <form onSubmit={handleModalSubmit} className="p-6 space-y-5">
-                            {/* Resumen Afectado */}
-                            <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                                <p className="text-sm text-gray-600 font-medium">{selectedQuote.evento_tipo}</p>
-                                <p className="text-xs text-gray-500 mt-0.5">{selectedQuote.solicitante_nombre} • {selectedQuote.empresa_nombre}</p>
-                            </div>
+                        {/* Contenido Scrolleable (Lectura Intensiva) */}
+                        <div className="flex-grow overflow-y-auto p-6 space-y-6">
 
-                            {/* Select del Nuevo Estado */}
-                            <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-2">Nuevo Estado <span className="text-red-500">*</span></label>
-                                <select
-                                    required
-                                    value={modalData.estado}
-                                    onChange={(e) => setModalData({ ...modalData, estado: e.target.value })}
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-purple-500 outline-none transition-shadow text-gray-800 font-medium bg-white"
-                                >
-                                    <option value="nueva">Nueva</option>
-                                    <option value="en curso">En Curso</option>
-                                    <option value="en espera">En Espera</option>
-                                    <option value="aprobada" className="text-green-600 font-bold">Aprobada</option>
-                                    <option value="no aprobada" className="text-red-600 font-bold">No Aprobada</option>
-                                </select>
-                                {modalData.estado === 'aprobada' && (
-                                    <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
-                                        <Info className="w-3 h-3" /> Al aprobar, se creará la reserva y ocupará el espacio de inmediato.
-                                    </p>
+                            {/* Bloque 1: El Evento y Tiempos */}
+                            <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
+                                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                    <FileSignature className="w-4 h-4 text-purple-600" /> Concepto del Evento
+                                </h3>
+
+                                <p className="text-lg font-bold text-gray-800 mb-4">{selectedQuote.evento_tipo}</p>
+
+                                <div className="grid grid-cols-2 gap-y-4">
+                                    <div>
+                                        <p className="text-xs text-gray-500">Fecha de uso</p>
+                                        <p className="font-semibold text-gray-800 flex items-center gap-1.5"><CalendarIcon className="w-3.5 h-3.5" /> {formatDateObj(selectedQuote.fecha_reserva)}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-gray-500">Horario oficial</p>
+                                        <p className="font-semibold text-gray-800 flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> {selectedQuote.hora_inicio} a {selectedQuote.hora_fin}</p>
+                                    </div>
+                                    {selectedQuote.tiempo_montaje && (
+                                        <div>
+                                            <p className="text-xs text-gray-500">T. de Montaje Previsto</p>
+                                            <p className="font-medium text-gray-800">{selectedQuote.tiempo_montaje} Horas extra</p>
+                                        </div>
+                                    )}
+                                    {selectedQuote.cantidad_personas && (
+                                        <div>
+                                            <p className="text-xs text-gray-500">Aforo esperado</p>
+                                            <p className="font-medium text-gray-800">{selectedQuote.cantidad_personas} Personas</p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {selectedQuote.evento_detalles && (
+                                    <div className="mt-4 pt-4 border-t border-gray-100">
+                                        <p className="text-xs text-gray-500 mb-1">Detalles / Logística declarada:</p>
+                                        <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded italic">{selectedQuote.evento_detalles}</p>
+                                    </div>
                                 )}
                             </div>
 
-                            {/* Textarea Observación */}
-                            <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-2">Observación (Opcional)</label>
-                                <textarea
-                                    rows="3"
-                                    value={modalData.observacion}
-                                    onChange={(e) => setModalData({ ...modalData, observacion: e.target.value })}
-                                    placeholder="Agrega un motivo para rechazo, espera o un comentario de auditoría interno..."
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 outline-none text-sm text-gray-800"
-                                />
+                            {/* Bloque 2: Contratante y Persona a cargo */}
+                            <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
+                                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                    <Building className="w-4 h-4 text-purple-600" /> Entidad y Solicitante
+                                </h3>
+
+                                <div className="space-y-4">
+                                    <div>
+                                        <p className="font-bold text-gray-800 text-base">{selectedQuote.empresa_nombre}</p>
+                                        <p className="text-sm text-gray-600">{selectedQuote.empresa_tipo_documento || 'ID'}: {selectedQuote.empresa_numero_documento}-{selectedQuote.empresa_digito_verificacion}</p>
+                                        <p className="text-sm text-gray-600 flex items-center gap-1.5 mt-1"><Phone className="w-3.5 h-3.5 text-gray-400" /> {selectedQuote.empresa_telefono} - {selectedQuote.empresa_direccion}</p>
+                                    </div>
+
+                                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                                        <span className="text-xs font-bold text-purple-700 uppercase tracking-wide">Responsable del contrato</span>
+                                        <div className="mt-2 text-sm text-gray-700 space-y-1.5">
+                                            <p><strong>{selectedQuote.solicitante_nombre}</strong> ({selectedQuote.solicitante_tipo_documento}: {selectedQuote.solicitante_numero_documento})</p>
+                                            <p className="flex items-center gap-2"><Phone className="w-3.5 h-3.5 text-purple-400" /> {selectedQuote.solicitante_telefono}</p>
+                                            <p className="flex items-center gap-2"><Mail className="w-3.5 h-3.5 text-purple-400" /> {selectedQuote.solicitante_correo}</p>
+                                            {selectedQuote.solicitante_correo_alternativo && <p className="text-gray-500 pl-5.5 text-xs">Alt: {selectedQuote.solicitante_correo_alternativo}</p>}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
-                            {/* Toggle Notificar */}
-                            <div className="flex items-center gap-3 pt-2">
-                                <div
-                                    onClick={() => setModalData({ ...modalData, notificar: !modalData.notificar })}
-                                    className={`relative inline-flex h-6 w-11 items-center rounded-full cursor-pointer transition-colors ${modalData.notificar ? 'bg-purple-600' : 'bg-gray-300'}`}
-                                >
-                                    <span
-                                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${modalData.notificar ? 'translate-x-6' : 'translate-x-1'}`}
+                            {/* Bloque 3: Asset Solicitado (Espacio) */}
+                            <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
+                                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                    <Briefcase className="w-4 h-4 text-purple-600" /> Espacio Pre-asignado
+                                </h3>
+
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="bg-purple-100 text-purple-700 p-3 rounded-lg"><Building className="w-6 h-6" /></div>
+                                    <div>
+                                        <p className="font-bold text-gray-900 text-[15px]">{selectedQuote.espacio?.nombre || 'General'}</p>
+                                        <p className="text-xs font-semibold text-gray-500 uppercase">{selectedQuote.espacio?.tipo_espacio} • Piso {selectedQuote.espacio?.piso}</p>
+                                    </div>
+                                </div>
+
+                                {selectedQuote.espacio?.descripcion && (
+                                    <div className="bg-gray-50/50 rounded-lg p-3 border border-gray-200/60">
+                                        <div
+                                            className="text-[13px] text-gray-700 prose prose-sm max-w-none prose-p:my-1 prose-ul:my-1 prose-ul:pl-4 prose-li:list-disc prose-strong:text-purple-900"
+                                            dangerouslySetInnerHTML={{ __html: selectedQuote.espacio.descripcion }}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Optional: Tracking History Panel */}
+                            {selectedQuote.observacion_estado && (
+                                <div className="bg-blue-50/50 rounded-xl p-5 border border-blue-100">
+                                    <h3 className="text-xs font-bold text-blue-800 uppercase tracking-wider mb-2 flex items-center gap-1.5"><Info className="w-4 h-4" /> Histórico de Staff Backend</h3>
+                                    <p className="text-sm italic text-gray-700 border-l-2 border-blue-400 pl-3">"{selectedQuote.observacion_estado}"</p>
+                                    <p className="text-[11px] font-medium text-gray-500 mt-2 text-right">Por Gestor. ID: {selectedQuote.estado_changed_by?.substring(0, 8)}...</p>
+                                </div>
+                            )}
+
+                        </div>
+
+                        {/* Zona de Acciones Fixed (Footer del Panel) */}
+                        <div className="bg-white border-t border-gray-200 p-6 sticky bottom-0 z-10 shadow-[0_-10px_30px_rgba(0,0,0,0.03)]">
+                            <form onSubmit={handleActionSubmit} className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-800 mb-1.5">Determinar Nuevo Estado</label>
+                                    <select
+                                        required
+                                        value={actionData.estado}
+                                        onChange={(e) => setActionData({ ...actionData, estado: e.target.value })}
+                                        className="w-full border-2 border-purple-100 rounded-xl px-4 py-3 focus:ring-4 focus:ring-purple-50 focus:border-purple-400 outline-none transition-all text-gray-800 font-bold bg-gray-50/50 hover:bg-white"
+                                    >
+                                        <option value="nueva">Nueva 🟢</option>
+                                        <option value="en curso">En Curso 🟡</option>
+                                        <option value="en espera">En Espera 🟠</option>
+                                        <option value="no aprobada" className="text-red-700">No Aprobada (Rechazar) 🔴</option>
+                                        <option value="aprobada" className="text-green-700">Aprobada (Liquidar/Reservar) ✅</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-[13px] font-bold text-gray-600 mb-1.5">Anotación Oficial (Interna/Externa)</label>
+                                    <textarea
+                                        rows="2"
+                                        value={actionData.observacion}
+                                        onChange={(e) => setActionData({ ...actionData, observacion: e.target.value })}
+                                        placeholder="Escriba condiciones, justificaciones de rechazo o estatus del contrato..."
+                                        className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:border-purple-500 outline-none text-gray-800 resize-none"
                                     />
                                 </div>
-                                <div>
-                                    <span className="text-sm font-bold text-gray-800 cursor-pointer select-none" onClick={() => setModalData({ ...modalData, notificar: !modalData.notificar })}>
-                                        Notificar al solicitante
-                                    </span>
-                                    <p className="text-xs text-gray-500">Enviar un correo electrónico a {selectedQuote.solicitante_correo} con la actualización.</p>
-                                </div>
-                            </div>
 
-                            {/* Acciones */}
-                            <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
-                                <button
-                                    type="button"
-                                    disabled={isSaving}
-                                    onClick={closeManageModal}
-                                    className="px-4 py-2 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-colors"
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={isSaving}
-                                    className="px-5 py-2 rounded-lg text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 transition-all flex items-center gap-2"
-                                >
-                                    {isSaving ? (
-                                        <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div> Procesando...</>
-                                    ) : (
-                                        'Guardar y Aplicar Cambios'
-                                    )}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
+                                <div className="flex items-center justify-between pt-2">
+                                    <div className="flex items-center gap-3">
+                                        <div
+                                            onClick={() => setActionData({ ...actionData, notificar: !actionData.notificar })}
+                                            className={`relative inline-flex h-6 w-[42px] items-center rounded-full cursor-pointer transition-colors border-2 border-transparent focus:outline-none ${actionData.notificar ? 'bg-purple-600' : 'bg-gray-300'}`}
+                                        >
+                                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${actionData.notificar ? 'translate-x-[18px]' : 'translate-x-0.5'}`} />
+                                        </div>
+                                        <span className="text-sm font-bold text-gray-700 cursor-pointer select-none" onClick={() => setActionData({ ...actionData, notificar: !actionData.notificar })}>
+                                            Notificar por E-Mail
+                                        </span>
+                                    </div>
+
+                                    <button
+                                        type="submit"
+                                        disabled={isSaving}
+                                        className="px-6 py-2.5 rounded-xl text-sm font-bold text-white bg-gray-900 hover:bg-purple-700 transition-all flex items-center justify-center min-w-[140px] shadow-md hover:shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                    >
+                                        {isSaving ? <span className="animate-pulse">Autenticando...</span> : 'Guardar Cierre'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </>
+                )}
+            </div>
+
         </div>
     );
 };
