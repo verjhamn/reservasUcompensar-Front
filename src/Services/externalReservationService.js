@@ -9,7 +9,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
  */
 export const crearReservaExterna = async (payload) => {
     try {
-        const response = await fetch(`${API_BASE_URL}/reservas/externas/crear`, {
+        const response = await fetch(`${API_BASE_URL}/solicitudes/externas/crear`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
