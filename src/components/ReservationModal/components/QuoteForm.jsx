@@ -16,7 +16,12 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
         numeroDocumentoEmpresa: '',
         telefonoEmpresa: '',
         direccionEmpresa: '',
+        esCompensar: false,
+        compensarId: '',
+        centroCostos: '',
         tipoEvento: '',
+        tiempoMontajeHoras: '',
+        cantidadPersonas: '',
         detalles: ''
     });
     const [showSuccess, setShowSuccess] = useState(false);
@@ -45,10 +50,14 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
             return formData.nombre && formData.tipoDocumento && formData.numeroDocumento && formData.correo && formData.telefono;
         }
         if (step === 2) {
-            return formData.empresa && formData.tipoDocumentoEmpresa && formData.numeroDocumentoEmpresa && formData.telefonoEmpresa && formData.direccionEmpresa;
+            const baseEmpresa = formData.empresa && formData.tipoDocumentoEmpresa && formData.numeroDocumentoEmpresa && formData.telefonoEmpresa && formData.direccionEmpresa;
+            if (formData.esCompensar) {
+                return baseEmpresa && formData.compensarId && formData.centroCostos;
+            }
+            return baseEmpresa;
         }
         if (step === 3) {
-            return !!formData.tipoEvento;
+            return formData.tipoEvento && formData.tiempoMontajeHoras && formData.cantidadPersonas;
         }
         if (step === 4) {
             return policiesAccepted && dataTreatmentAccepted;
@@ -115,7 +124,8 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                 numero_documento: formData.numeroDocumento,
                 correo: formData.correo,
                 correo_alternativo: "",
-                telefono: formData.telefono
+                telefono: formData.telefono,
+                es_compensar: formData.esCompensar
             },
             empresa: {
                 nombre: formData.empresa,
@@ -123,13 +133,16 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                 numero_documento: formData.numeroDocumentoEmpresa,
                 digito_verificacion: "0",
                 telefono: formData.telefonoEmpresa,
-                direccion: formData.direccionEmpresa
+                direccion: formData.direccionEmpresa,
+                ...(formData.esCompensar ? { compensar_id: formData.compensarId, centro_costo: formData.centroCostos } : {})
             },
             reserva: {
                 espacio_id: spaceData?.id,
                 fecha: fechaFormateada,
                 hora_inicio: quoteData?.startTime,
-                hora_fin: quoteData?.endTime
+                hora_fin: quoteData?.endTime,
+                tiempo_montaje: (parseInt(formData.tiempoMontajeHoras) || 0) * 60,
+                cantidad_personas: parseInt(formData.cantidadPersonas) || 0
             },
             evento: {
                 tipo: formData.tipoEvento,
@@ -345,6 +358,53 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                             {currentStep === 2 && (
                                 <div className="animate-fade-in space-y-5 pb-4">
                                     <h3 className="text-xl font-bold text-gray-800 border-b border-gray-100 pb-3">Datos de su Empresa</h3>
+
+                                    <div className="bg-purple-50 p-4 rounded-xl border border-purple-100 flex items-center justify-between">
+                                        <div>
+                                            <p className="font-bold text-purple-900 text-sm">¿Eres colaborador o aliado interno de Compensar?</p>
+                                            <p className="text-xs text-purple-700 mt-0.5">Se solicitará tu identificador y centro de costos.</p>
+                                        </div>
+                                        <div
+                                            onClick={() => setFormData({ ...formData, esCompensar: !formData.esCompensar })}
+                                            className={`relative inline-flex h-6 w-11 items-center rounded-full cursor-pointer transition-colors focus:outline-none ${formData.esCompensar ? 'bg-purple-600' : 'bg-gray-300'}`}
+                                        >
+                                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData.esCompensar ? 'translate-x-6' : 'translate-x-1'}`} />
+                                        </div>
+                                    </div>
+
+                                    {formData.esCompensar && (
+                                        <div className="grid md:grid-cols-2 gap-5 bg-purple-50/50 p-4 rounded-xl border border-purple-100/50 animate-fade-in">
+                                            <div className="space-y-1.5">
+                                                <label className="text-sm font-semibold text-purple-900">
+                                                    Identificador Compensar <span className="text-red-500">*</span>
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    name="compensarId"
+                                                    required
+                                                    className="w-full px-4 py-2.5 rounded-xl border border-purple-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-white"
+                                                    value={formData.compensarId}
+                                                    onChange={handleChange}
+                                                    placeholder="Ej. ID Interno"
+                                                />
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <label className="text-sm font-semibold text-purple-900">
+                                                    Centro de Costos <span className="text-red-500">*</span>
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    name="centroCostos"
+                                                    required
+                                                    className="w-full px-4 py-2.5 rounded-xl border border-purple-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-white"
+                                                    value={formData.centroCostos}
+                                                    onChange={handleChange}
+                                                    placeholder="Ej. CC-1234"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+
                                     <div className="grid md:grid-cols-2 gap-5">
                                         <div className="space-y-1.5 md:col-span-2">
                                             <label className="text-sm font-semibold text-gray-700">
@@ -427,17 +487,53 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                             {currentStep === 3 && (
                                 <div className="animate-fade-in space-y-5 pb-4">
                                     <h3 className="text-xl font-bold text-gray-800 border-b border-gray-100 pb-3">Detalles de su Evento</h3>
-                                    <div className="space-y-1.5">
-                                        <label className="text-sm font-semibold text-gray-700">Tipo de evento / Propósito <span className="text-red-500">*</span></label>
-                                        <input
-                                            type="text"
-                                            name="tipoEvento"
-                                            required
-                                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white"
-                                            placeholder="Ej: Capacitación, Seminario, Lanzamiento..."
-                                            value={formData.tipoEvento}
-                                            onChange={handleChange}
-                                        />
+
+                                    <div className="grid md:grid-cols-2 gap-5">
+                                        <div className="space-y-1.5 md:col-span-2">
+                                            <label className="text-sm font-semibold text-gray-700">Tipo de evento / Propósito <span className="text-red-500">*</span></label>
+                                            <input
+                                                type="text"
+                                                name="tipoEvento"
+                                                required
+                                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white"
+                                                placeholder="Ej: Capacitación, Seminario, Lanzamiento..."
+                                                value={formData.tipoEvento}
+                                                onChange={handleChange}
+                                            />
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <label className="text-sm font-semibold text-gray-700">Cantidad de asistentes (Aforo) <span className="text-red-500">*</span></label>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                name="cantidadPersonas"
+                                                required
+                                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white"
+                                                placeholder="Ej: 50"
+                                                value={formData.cantidadPersonas}
+                                                onChange={handleChange}
+                                            />
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <label className="text-sm font-semibold text-gray-700">Tiempo de montaje previo <span className="text-red-500">*</span></label>
+                                            <select
+                                                name="tiempoMontajeHoras"
+                                                required
+                                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white text-gray-700"
+                                                value={formData.tiempoMontajeHoras}
+                                                onChange={handleChange}
+                                            >
+                                                <option value="" disabled hidden>Seleccionar tiempo...</option>
+                                                <option value="0">Sin montaje previo (0 horas)</option>
+                                                <option value="1">1 Hora</option>
+                                                <option value="2">2 Horas</option>
+                                                <option value="3">3 Horas</option>
+                                                <option value="4">Medio día (4 Horas)</option>
+                                                <option value="8">Día completo (8 Horas)</option>
+                                            </select>
+                                        </div>
                                     </div>
                                     <div className="space-y-1.5">
                                         <label className="text-sm font-semibold text-gray-700">Observaciones adicionales</label>
