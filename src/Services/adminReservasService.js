@@ -39,11 +39,13 @@ export const getExternalQuotes = async (filters = {}) => {
             tipo: filters.tipo || "",
             piso: filters.piso || "",
             estado: filters.estado || "",
-            fecha_creacion: filters.fecha_creacion || ""
+            fecha_creacion: filters.fecha_creacion || "",
+            page: filters.page || 1,
+            per_page: filters.per_page || 10
         });
 
         if (response.data.success) {
-            return response.data.data;
+            return response.data;
         }
         throw new Error("Error al obtener las solicitudes externas");
     } catch (error) {

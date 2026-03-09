@@ -9,10 +9,13 @@ import { showSuccessToast, showErrorToast } from '../UtilComponents/Confirmation
 const AdminExternalQuotesView = () => {
     // ---- ESTADOS ESTATICOS GLOBALES ----
     const [filters, setFilters] = useState({
-        id: "", id_usuario: "", espacio_id: "", palabra: "", email: "", fecha: "", horaInicio: "", horaFin: "", tipo: "", piso: "", estado: "", fecha_creacion: ""
+        id: "", id_usuario: "", espacio_id: "", palabra: "", email: "", fecha: "", horaInicio: "", horaFin: "", tipo: "", piso: "", estado: "", fecha_creacion: "",
+        page: 1,
+        per_page: 10
     });
 
     const [quotes, setQuotes] = useState([]);
+    const [pagination, setPagination] = useState({ current_page: 1, last_page: 1, total: 0 });
     const [isLoading, setIsLoading] = useState(false);
 
     // ---- ESTADOS DEL PANEL LATERAL (SLIDE-OVER) ----
@@ -29,8 +32,26 @@ const AdminExternalQuotesView = () => {
     const fetchQuotes = async () => {
         setIsLoading(true);
         try {
-            const data = await getExternalQuotes(filters);
-            setQuotes(Array.isArray(data) ? data : []);
+            const response = await getExternalQuotes(filters);
+            let items = [];
+            let pagMeta = { current_page: 1, last_page: 1, total: 0 };
+
+            // Evaluación agnóstica de Payload Paginado (Soportar varios estilos de Laravel)
+            if (response.data && Array.isArray(response.data.data)) {
+                // Native LengthAwarePaginator (data.data.data)
+                items = response.data.data;
+                pagMeta = { current_page: response.data.current_page, last_page: response.data.last_page, total: response.data.total };
+            } else if (Array.isArray(response.data)) {
+                // Formato plano híbrido (data.data es el array, .total afuera)
+                items = response.data;
+                pagMeta = { current_page: response.current_page || 1, last_page: response.last_page || 1, total: response.total || items.length };
+            } else if (Array.isArray(response)) {
+                items = response;
+                pagMeta.total = items.length;
+            }
+
+            setQuotes(items);
+            setPagination(pagMeta);
         } catch (error) {
             console.error("Error cargando cotizaciones:", error);
             showErrorToast("Ocurrió un error al cargar las cotizaciones");
@@ -48,7 +69,7 @@ const AdminExternalQuotesView = () => {
 
     const handleFilterChange = (e) => {
         const { name, value } = e.target;
-        setFilters(prev => ({ ...prev, [name]: value }));
+        setFilters(prev => ({ ...prev, [name]: value, page: 1 }));
     };
 
     // ---- LÓGICA DEL PANEL LATERAL ----
@@ -213,6 +234,45 @@ const AdminExternalQuotesView = () => {
                                 </div>
                             </div>
                         ))}
+                    </div>
+                )}
+
+                {/* ===== PAGINACIÓN ===== */}
+                {!isLoading && quotes.length > 0 && pagination.total > 0 && (
+                    <div className="flex flex-col md:flex-row items-center justify-between bg-white px-5 py-3 border border-gray-200 rounded-xl mt-6 shadow-sm">
+                        <div className="flex items-center gap-3 mb-4 md:mb-0">
+                            <span className="text-sm font-medium text-gray-700">Mostrar</span>
+                            <select
+                                value={filters.per_page}
+                                onChange={(e) => setFilters(prev => ({ ...prev, per_page: e.target.value, page: 1 }))}
+                                className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-gray-50 font-medium transition-all"
+                            >
+                                <option value="10">10</option>
+                                <option value="20">20</option>
+                                <option value="50">50</option>
+                            </select>
+                            <span className="text-sm font-medium text-gray-700">registros de {pagination.total}</span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <button
+                                disabled={pagination.current_page <= 1}
+                                onClick={() => setFilters(prev => ({ ...prev, page: pagination.current_page - 1 }))}
+                                className="px-4 py-1.5 text-sm font-bold bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                            >
+                                Anterior
+                            </button>
+                            <span className="px-4 py-1.5 text-[13px] font-bold text-purple-800 bg-purple-100 rounded-lg">
+                                Página {pagination.current_page} de {pagination.last_page || 1}
+                            </span>
+                            <button
+                                disabled={pagination.current_page >= pagination.last_page}
+                                onClick={() => setFilters(prev => ({ ...prev, page: pagination.current_page + 1 }))}
+                                className="px-4 py-1.5 text-sm font-bold bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                            >
+                                Siguiente
+                            </button>
+                        </div>
                     </div>
                 )}
             </div>
