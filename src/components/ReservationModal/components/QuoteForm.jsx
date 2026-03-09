@@ -29,6 +29,7 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
     const [error, setError] = useState(null);
     const [policiesAccepted, setPoliciesAccepted] = useState(false);
     const [dataTreatmentAccepted, setDataTreatmentAccepted] = useState(false);
+    const [errors, setErrors] = useState({});
 
     const [currentStep, setCurrentStep] = useState(1); // 1: Personales, 2: Empresa, 3: Evento, 4: Políticas
     const totalSteps = 4;
@@ -36,6 +37,9 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+        if (errors[name]) {
+            setErrors(prev => ({ ...prev, [name]: null }));
+        }
     };
 
     const safeRender = (value) => {
@@ -46,41 +50,84 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
     };
 
     const validateStep = (step) => {
+        const newErrors = {};
+        let isValid = true;
+
         if (step === 1) {
-            return formData.nombre && formData.tipoDocumento && formData.numeroDocumento && formData.correo && formData.telefono;
+            if (!formData.nombre) newErrors.nombre = 'El nombre es requerido';
+            else if (!/^[A-Za-zÁÉÍÓÚáéíóúñÑ\s]{3,100}$/.test(formData.nombre)) newErrors.nombre = 'Mínimo 3 letras o espacios';
+
+            if (!formData.tipoDocumento) newErrors.tipoDocumento = 'Requerido';
+
+            if (!formData.numeroDocumento) newErrors.numeroDocumento = 'Requerido';
+            else if (!/^[A-Za-z0-9]{5,20}$/.test(formData.numeroDocumento)) newErrors.numeroDocumento = 'Mínimo 5 caracteres alfanuméricos';
+
+            if (!formData.correo) newErrors.correo = 'El correo es requerido';
+            else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.correo)) newErrors.correo = 'Formato de correo inválido';
+
+            if (!formData.telefono) newErrors.telefono = 'El teléfono es requerido';
+            else if (!/^\d{10}$/.test(formData.telefono)) newErrors.telefono = 'Debe tener exactamente 10 dígitos';
+
+            if (Object.keys(newErrors).length > 0) isValid = false;
         }
+
         if (step === 2) {
-            const baseEmpresa = formData.empresa && formData.tipoDocumentoEmpresa && formData.numeroDocumentoEmpresa && formData.telefonoEmpresa && formData.direccionEmpresa;
+            if (!formData.empresa) newErrors.empresa = 'Requerido';
+            else if (formData.empresa.length < 2) newErrors.empresa = 'Mínimo 2 caracteres';
+
+            if (!formData.tipoDocumentoEmpresa) newErrors.tipoDocumentoEmpresa = 'Requerido';
+
+            if (!formData.numeroDocumentoEmpresa) newErrors.numeroDocumentoEmpresa = 'Requerido';
+            else if (formData.tipoDocumentoEmpresa === 'NIT' && !/^\d{8,15}$/.test(formData.numeroDocumentoEmpresa)) newErrors.numeroDocumentoEmpresa = 'NIT debe tener entre 8 y 15 números';
+            else if (formData.tipoDocumentoEmpresa !== 'NIT' && formData.numeroDocumentoEmpresa.length < 5) newErrors.numeroDocumentoEmpresa = 'Mínimo 5 caracteres';
+
+            if (!formData.telefonoEmpresa) newErrors.telefonoEmpresa = 'Requerido';
+            else if (!/^\d{10}$/.test(formData.telefonoEmpresa)) newErrors.telefonoEmpresa = 'Debe tener exactamente 10 dígitos';
+
+            if (!formData.direccionEmpresa) newErrors.direccionEmpresa = 'Requerido';
+
             if (formData.esCompensar) {
-                return baseEmpresa && formData.compensarId && formData.centroCostos;
+                if (!formData.compensarId) newErrors.compensarId = 'Requerido';
+                if (!formData.centroCostos) newErrors.centroCostos = 'Requerido';
             }
-            return baseEmpresa;
+
+            if (Object.keys(newErrors).length > 0) isValid = false;
         }
+
         if (step === 3) {
-            return formData.tipoEvento && formData.tiempoMontajeHoras && formData.cantidadPersonas;
+            if (!formData.tipoEvento) newErrors.tipoEvento = 'Requerido';
+            if (!formData.cantidadPersonas || formData.cantidadPersonas < 1) newErrors.cantidadPersonas = 'Mínimo 1 persona';
+            if (!formData.tiempoMontajeHoras) newErrors.tiempoMontajeHoras = 'Requerido';
+
+            if (Object.keys(newErrors).length > 0) isValid = false;
         }
+
         if (step === 4) {
-            return policiesAccepted && dataTreatmentAccepted;
+            if (!policiesAccepted || !dataTreatmentAccepted) {
+                isValid = false;
+            }
         }
-        return false;
+
+        setErrors(newErrors);
+        return isValid;
     };
 
     const handleNext = () => {
         if (currentStep < totalSteps) {
             if (validateStep(currentStep)) setCurrentStep(prev => prev + 1);
-            else toast.error("Por favor completa todos los campos requeridos para continuar.", {
+            else toast.error("Por favor revisa los campos en rojo para continuar.", {
                 duration: 4000,
                 position: 'top-center',
                 style: {
-                    background: '#F3E8FF',
-                    color: '#7E22CE',
-                    border: '1px solid #D8B4FE',
+                    background: '#FEF2F2',
+                    color: '#991B1B',
+                    border: '1px solid #FECACA',
                     padding: '16px',
                     fontWeight: '500',
                 },
                 iconTheme: {
-                    primary: '#7E22CE',
-                    secondary: '#FAF5FF',
+                    primary: '#991B1B',
+                    secondary: '#FEF2F2',
                 },
             });
         }
@@ -283,21 +330,20 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                                             <input
                                                 type="text"
                                                 name="nombre"
-                                                required
-                                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white"
+                                                className={`w-full px-4 py-2.5 rounded-xl border outline-none transition-all bg-gray-50/50 hover:bg-white focus:ring-2 ${errors.nombre ? 'border-red-500 focus:ring-red-200 focus:border-red-500' : 'border-gray-200 focus:ring-purple-500 focus:border-purple-500'}`}
                                                 value={formData.nombre}
                                                 onChange={handleChange}
                                                 placeholder="Ej. Juan Pérez"
                                             />
+                                            {errors.nombre && <p className={`text-red-500 text-[11px] font-semibold mt-1 focus:ring-2 ${errors.numeroDocumento ? 'border-red-500 focus:ring-red-200 focus:border-red-500' : 'border-gray-200 focus:ring-purple-500 focus:border-purple-500'}`}>{errors.nombre}</p>}
                                         </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-sm font-semibold text-gray-700">
-                                                Tipo de documento <span className="text-red-500">*</span>
+                                        <div className={`space-y-1.5 focus:ring-2 ${errors.correo ? 'border-red-500 focus:ring-red-200 focus:border-red-500' : 'border-gray-200 focus:ring-purple-500 focus:border-purple-500'}`}>
+                                            <label className={`text-sm font-semibold text-gray-700 focus:ring-2 ${errors.telefono ? 'border-red-500 focus:ring-red-200 focus:border-red-500' : 'border-gray-200 focus:ring-purple-500 focus:border-purple-500'}`}>
+                                                Tipo de documento <span className={`text-red-500 focus:ring-2 ${errors.compensarId ? 'border-red-500 focus:ring-red-200 focus:border-red-500' : 'border-gray-200 focus:ring-purple-500 focus:border-purple-500'}`}>*</span>
                                             </label>
                                             <select
                                                 name="tipoDocumento"
-                                                required
-                                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white text-gray-700"
+                                                className={`w-full px-4 py-2.5 rounded-xl border outline-none transition-all bg-gray-50/50 hover:bg-white text-gray-700 focus:ring-2 ${errors.tipoDocumento ? 'border-red-500 focus:ring-red-200 focus:border-red-500' : 'border-gray-200 focus:ring-purple-500 focus:border-purple-500'}`}
                                                 value={formData.tipoDocumento}
                                                 onChange={handleChange}
                                             >
@@ -307,34 +353,35 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                                                 <option value="TI">Tarjeta de Identidad</option>
                                                 <option value="PA">Pasaporte</option>
                                             </select>
+                                            {errors.tipoDocumento && <p className={`text-red-500 text-[11px] font-semibold mt-1 focus:ring-2 ${errors.centroCostos ? 'border-red-500 focus:ring-red-200 focus:border-red-500' : 'border-gray-200 focus:ring-purple-500 focus:border-purple-500'}`}>{errors.tipoDocumento}</p>}
                                         </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-sm font-semibold text-gray-700">
-                                                Número de documento <span className="text-red-500">*</span>
+                                        <div className={`space-y-1.5 focus:ring-2 ${errors.empresa ? 'border-red-500 focus:ring-red-200 focus:border-red-500' : 'border-gray-200 focus:ring-purple-500 focus:border-purple-500'}`}>
+                                            <label className={`text-sm font-semibold text-gray-700 focus:ring-2 ${errors.tipoDocumentoEmpresa ? 'border-red-500 focus:ring-red-200 focus:border-red-500' : 'border-gray-200 focus:ring-purple-500 focus:border-purple-500'}`}>
+                                                Número de documento <span className={`text-red-500 focus:ring-2 ${errors.numeroDocumentoEmpresa ? 'border-red-500 focus:ring-red-200 focus:border-red-500' : 'border-gray-200 focus:ring-purple-500 focus:border-purple-500'}`}>*</span>
                                             </label>
                                             <input
                                                 type="text"
                                                 name="numeroDocumento"
-                                                required
-                                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white"
+                                                className={`w-full px-4 py-2.5 rounded-xl border outline-none transition-all bg-gray-50/50 hover:bg-white focus:ring-2 ${errors.telefonoEmpresa ? 'border-red-500 focus:ring-red-200 focus:border-red-500' : 'border-gray-200 focus:ring-purple-500 focus:border-purple-500'}`}
                                                 value={formData.numeroDocumento}
                                                 onChange={handleChange}
                                                 placeholder="Ej. 1020304050"
                                             />
+                                            {errors.numeroDocumento && <p className={`text-red-500 text-[11px] font-semibold mt-1 focus:ring-2 ${errors.direccionEmpresa ? 'border-red-500 focus:ring-red-200 focus:border-red-500' : 'border-gray-200 focus:ring-purple-500 focus:border-purple-500'}`}>{errors.numeroDocumento}</p>}
                                         </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-sm font-semibold text-gray-700">
-                                                Correo electrónico <span className="text-red-500">*</span>
+                                        <div className={`space-y-1.5 focus:ring-2 ${errors.tipoEvento ? 'border-red-500 focus:ring-red-200 focus:border-red-500' : 'border-gray-200 focus:ring-purple-500 focus:border-purple-500'}`}>
+                                            <label className={`text-sm font-semibold text-gray-700 focus:ring-2 ${errors.cantidadPersonas ? 'border-red-500 focus:ring-red-200 focus:border-red-500' : 'border-gray-200 focus:ring-purple-500 focus:border-purple-500'}`}>
+                                                Correo electrónico <span className={`text-red-500 focus:ring-2 ${errors.tiempoMontajeHoras ? 'border-red-500 focus:ring-red-200 focus:border-red-500' : 'border-gray-200 focus:ring-purple-500 focus:border-purple-500'}`}>*</span>
                                             </label>
                                             <input
                                                 type="email"
                                                 name="correo"
-                                                required
                                                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white"
                                                 value={formData.correo}
                                                 onChange={handleChange}
                                                 placeholder="correo@ejemplo.com"
                                             />
+                                            {errors.correo && <p className="text-red-500 text-[11px] font-semibold mt-1">{errors.correo}</p>}
                                         </div>
                                         <div className="space-y-1.5">
                                             <label className="text-sm font-semibold text-gray-700">
@@ -343,12 +390,12 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                                             <input
                                                 type="tel"
                                                 name="telefono"
-                                                required
                                                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white"
                                                 value={formData.telefono}
                                                 onChange={handleChange}
                                                 placeholder="Ej. 300 123 4567"
                                             />
+                                            {errors.telefono && <p className="text-red-500 text-[11px] font-semibold mt-1">{errors.telefono}</p>}
                                         </div>
                                     </div>
                                 </div>
@@ -381,12 +428,12 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                                                 <input
                                                     type="text"
                                                     name="compensarId"
-                                                    required
                                                     className="w-full px-4 py-2.5 rounded-xl border border-purple-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-white"
                                                     value={formData.compensarId}
                                                     onChange={handleChange}
                                                     placeholder="Ej. ID Interno"
                                                 />
+                                                {errors.compensarId && <p className="text-red-500 text-[11px] font-semibold mt-1">{errors.compensarId}</p>}
                                             </div>
                                             <div className="space-y-1.5">
                                                 <label className="text-sm font-semibold text-purple-900">
@@ -395,12 +442,12 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                                                 <input
                                                     type="text"
                                                     name="centroCostos"
-                                                    required
                                                     className="w-full px-4 py-2.5 rounded-xl border border-purple-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-white"
                                                     value={formData.centroCostos}
                                                     onChange={handleChange}
                                                     placeholder="Ej. CC-1234"
                                                 />
+                                                {errors.centroCostos && <p className="text-red-500 text-[11px] font-semibold mt-1">{errors.centroCostos}</p>}
                                             </div>
                                         </div>
                                     )}
@@ -413,12 +460,12 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                                             <input
                                                 type="text"
                                                 name="empresa"
-                                                required
                                                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white"
                                                 value={formData.empresa}
                                                 onChange={handleChange}
                                                 placeholder="Ej. Empresa SA"
                                             />
+                                            {errors.empresa && <p className="text-red-500 text-[11px] font-semibold mt-1">{errors.empresa}</p>}
                                         </div>
                                         <div className="space-y-1.5">
                                             <label className="text-sm font-semibold text-gray-700">
@@ -426,7 +473,6 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                                             </label>
                                             <select
                                                 name="tipoDocumentoEmpresa"
-                                                required
                                                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white text-gray-700"
                                                 value={formData.tipoDocumentoEmpresa}
                                                 onChange={handleChange}
@@ -436,6 +482,7 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                                                 <option value="RUT">RUT</option>
                                                 <option value="Otro">Otro</option>
                                             </select>
+                                            {errors.tipoDocumentoEmpresa && <p className="text-red-500 text-[11px] font-semibold mt-1">{errors.tipoDocumentoEmpresa}</p>}
                                         </div>
                                         <div className="space-y-1.5">
                                             <label className="text-sm font-semibold text-gray-700">
@@ -444,12 +491,12 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                                             <input
                                                 type="text"
                                                 name="numeroDocumentoEmpresa"
-                                                required
                                                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white"
                                                 value={formData.numeroDocumentoEmpresa}
                                                 onChange={handleChange}
                                                 placeholder="Sin dígito de verificación"
                                             />
+                                            {errors.numeroDocumentoEmpresa && <p className="text-red-500 text-[11px] font-semibold mt-1">{errors.numeroDocumentoEmpresa}</p>}
                                         </div>
                                         <div className="space-y-1.5">
                                             <label className="text-sm font-semibold text-gray-700">
@@ -458,12 +505,12 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                                             <input
                                                 type="tel"
                                                 name="telefonoEmpresa"
-                                                required
                                                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white"
                                                 value={formData.telefonoEmpresa}
                                                 onChange={handleChange}
                                                 placeholder="Teléfono fijo o celular"
                                             />
+                                            {errors.telefonoEmpresa && <p className="text-red-500 text-[11px] font-semibold mt-1">{errors.telefonoEmpresa}</p>}
                                         </div>
                                         <div className="space-y-1.5">
                                             <label className="text-sm font-semibold text-gray-700">
@@ -472,12 +519,12 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                                             <input
                                                 type="text"
                                                 name="direccionEmpresa"
-                                                required
                                                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white"
                                                 value={formData.direccionEmpresa}
                                                 onChange={handleChange}
                                                 placeholder="Ej. Calle 123 #45-67"
                                             />
+                                            {errors.direccionEmpresa && <p className="text-red-500 text-[11px] font-semibold mt-1">{errors.direccionEmpresa}</p>}
                                         </div>
                                     </div>
                                 </div>
@@ -494,12 +541,12 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                                             <input
                                                 type="text"
                                                 name="tipoEvento"
-                                                required
                                                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white"
                                                 placeholder="Ej: Capacitación, Seminario, Lanzamiento..."
                                                 value={formData.tipoEvento}
                                                 onChange={handleChange}
                                             />
+                                            {errors.tipoEvento && <p className="text-red-500 text-[11px] font-semibold mt-1">{errors.tipoEvento}</p>}
                                         </div>
 
                                         <div className="space-y-1.5">
@@ -508,19 +555,18 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                                                 type="number"
                                                 min="1"
                                                 name="cantidadPersonas"
-                                                required
                                                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white"
                                                 placeholder="Ej: 50"
                                                 value={formData.cantidadPersonas}
                                                 onChange={handleChange}
                                             />
+                                            {errors.cantidadPersonas && <p className="text-red-500 text-[11px] font-semibold mt-1">{errors.cantidadPersonas}</p>}
                                         </div>
 
                                         <div className="space-y-1.5">
                                             <label className="text-sm font-semibold text-gray-700">Tiempo de montaje previo <span className="text-red-500">*</span></label>
                                             <select
                                                 name="tiempoMontajeHoras"
-                                                required
                                                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white text-gray-700"
                                                 value={formData.tiempoMontajeHoras}
                                                 onChange={handleChange}
@@ -533,6 +579,7 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                                                 <option value="4">Medio día (4 Horas)</option>
                                                 <option value="8">Día completo (8 Horas)</option>
                                             </select>
+                                            {errors.tiempoMontajeHoras && <p className="text-red-500 text-[11px] font-semibold mt-1">{errors.tiempoMontajeHoras}</p>}
                                         </div>
                                     </div>
                                     <div className="space-y-1.5">
