@@ -4,7 +4,7 @@ export const getGeneralReport = async (params = {}) => {
   try {
     // Crear un objeto de filtros limpio (solo con valores no vacíos)
     const cleanFilters = {};
-    
+
     // Iterar sobre los filtros y solo incluir los que tienen valor
     Object.entries(params.columnFilters || {}).forEach(([key, value]) => {
       if (value && value.toString().trim() !== '') {
@@ -13,24 +13,22 @@ export const getGeneralReport = async (params = {}) => {
       }
     });
 
-    // Construir los parámetros de la query
-    const queryParams = {
-      pagina: params.page || 1, // Cambiado a 'pagina' si así lo espera el backend
-      registros: params.perPage || 10, // Cambiado a 'registros' si así lo espera el backend
+    // Construir los parámetros del body
+    const bodyParams = {
+      page: params.page || 1,
+      per_page: params.perPage || 10,
       ...cleanFilters
     };
 
     // Añadir parámetros de ordenamiento si existen
     if (params.sortField) {
-      queryParams.ordenar_por = params.sortField;
-      queryParams.direccion = params.sortDirection;
+      bodyParams.ordenar_por = params.sortField;
+      bodyParams.direccion = params.sortDirection;
     }
 
-    console.log('Parámetros de la petición:', queryParams);
+    console.log('Parámetros de la petición:', bodyParams);
 
-    const response = await axiosInstance.get("/reportes/general", {
-      params: queryParams
-    });
+    const response = await axiosInstance.post("/reportes/general", bodyParams);
 
     console.log('Respuesta del servidor:', response.data);
     return response.data;

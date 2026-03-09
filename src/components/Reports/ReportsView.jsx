@@ -16,8 +16,8 @@ import { es } from 'date-fns/locale';
 const ReportsView = () => {
   // Modificar la definición de columnas para incluir estado al inicio
   const columns = [
-    { 
-      key: 'estado', 
+    {
+      key: 'estado',
       label: 'ESTADO',
       options: ['Creada', 'Cancelada'] // Opciones para el filtro dropdown
     },
@@ -46,16 +46,73 @@ const ReportsView = () => {
   });
   const [showDatePicker, setShowDatePicker] = useState({});
   const [showTimePicker, setShowTimePicker] = useState({});
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
   // Obtener datos del servidor
   const fetchData = async () => {
     setLoading(true);
     try {
-      const response = await getGeneralReport();
-      if (response && response.data) {
-        setAllData(response.data);
-        setFilteredData(response.data);
+      const response = await getGeneralReport({
+        page: currentPage,
+        perPage: perPage,
+        columnFilters: filters,
+        sortField: sortConfig.field,
+        sortDirection: sortConfig.direction
+      });
+      let items = [];
+      let t_records = 0;
+      let t_pages = 1;
+
+      if (response && response.data && response.data.pagination) {
+        // Formato Envoltorio doble: { data: { data: [], pagination: {} } }
+        items = Array.isArray(response.data.data) ? response.data.data : [];
+        t_records = response.data.pagination.total_records || 0;
+        t_pages = response.data.pagination.last_page || 1;
+      } else if (response && response.pagination) {
+        // Formato Reportes Laravel Personalizado (data = [], pagination = {})
+        items = Array.isArray(response.data) ? response.data : [];
+        t_records = response.pagination.total_records || 0;
+        t_pages = response.pagination.last_page || 1;
+      } else if (response && response.data && Array.isArray(response.data.data)) {
+        // Native LengthAwarePaginator en response.data
+        items = response.data.data;
+        t_records = response.data.total;
+        t_pages = response.data.last_page;
+      } else if (response && response.data && typeof response.data === 'object' && response.data.current_page) {
+        // Formato híbrido alternativo donde todo está en response.data
+        items = Array.isArray(response.data.data) ? response.data.data : [];
+        t_records = response.data.total;
+        t_pages = response.data.last_page;
+      } else if (response && Array.isArray(response.data)) {
+        // Formato plano simple
+        items = response.data;
+        t_records = response.total || items.length;
+        t_pages = response.last_page || Math.ceil(t_records / perPage);
+      } else if (Array.isArray(response)) {
+        // Array directo
+        items = response;
+        t_records = items.length;
+        t_pages = Math.ceil(t_records / perPage);
+      } else if (response && Array.isArray(response.items)) {
+        // Formato items personalizado antiguo
+        items = response.items;
+        t_records = response.total || items.length;
+        t_pages = response.last_page || response.totalPages || Math.ceil(t_records / perPage);
       }
+
+      // Consola silenciosa de Debug para desarrolladores si se abre en Chrome
+      console.log("[Pagination Debug] Final Parsed -> Records:", t_records, "Pages:", t_pages, "Items:", items.length);
+
+      // Seguridad total: Evitar mostrar menos de 1 página
+      t_pages = Math.max(1, t_pages);
+      t_records = Math.max(0, t_records);
+
+      setAllData(items); // Set allData with the fetched items
+      setFilteredData(items); // Initially, filteredData is the same as allData
+      setDisplayData(items);  // <-- Inyecta a la vista principal JSX 
+      setTotalRecords(t_records);
+      setTotalPages(t_pages);
     } catch (error) {
       console.error("Error al obtener datos:", error);
     } finally {
@@ -67,13 +124,13 @@ const ReportsView = () => {
   const normalizeFecha = (fecha) => {
     try {
       if (!fecha) return '';
-      
+
       // Si la fecha está en formato "Viernes, 21 de febrero"
       if (fecha.includes('de')) {
         const parsedDate = parse(fecha, "EEEE, d 'de' MMMM", new Date(), { locale: es });
         return format(parsedDate, 'dd/MM/yyyy');
       }
-      
+
       // Si la fecha viene en formato yyyy-MM-dd (del input type="date")
       if (fecha.includes('-')) {
         const [year, month, day] = fecha.split('-');
@@ -88,59 +145,20 @@ const ReportsView = () => {
     }
   };
 
-  // Aplicar filtros y ordenamiento
+  // Monitoreo Reactivo unificado (con Debounce)
   useEffect(() => {
-    let result = [...allData];
-
-    // Aplicar filtros
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value && value.toString().trim() !== '') {
-        if (key === 'fecha_reserva') {
-          const normalizedFilterDate = normalizeFecha(value);
-          result = result.filter(item => {
-            const normalizedItemDate = normalizeFecha(item[key]);
-            return normalizedItemDate === normalizedFilterDate;
-          });
-        } else {
-          result = result.filter(item => 
-            item[key]?.toString().toLowerCase().includes(value.toLowerCase())
-          );
-        }
-      }
-    });
-
-    // Aplicar ordenamiento
-    if (sortConfig.field) {
-      result.sort((a, b) => {
-        if (a[sortConfig.field] < b[sortConfig.field]) 
-          return sortConfig.direction === 'asc' ? -1 : 1;
-        if (a[sortConfig.field] > b[sortConfig.field]) 
-          return sortConfig.direction === 'asc' ? 1 : -1;
-        return 0;
-      });
-    }
-
-    setFilteredData(result);
-    setCurrentPage(1); // Reset a primera página cuando cambian filtros
-  }, [filters, sortConfig, allData]);
-
-  // Aplicar paginación
-  useEffect(() => {
-    const start = (currentPage - 1) * perPage;
-    const end = start + perPage;
-    setDisplayData(filteredData.slice(start, end));
-  }, [currentPage, perPage, filteredData]);
-
-  // Cargar datos iniciales
-  useEffect(() => {
-    fetchData();
-  }, []);
+    const timer = setTimeout(() => {
+      fetchData();
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [filters, currentPage, perPage, sortConfig]);
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({
       ...prev,
       [key]: value
     }));
+    if (currentPage !== 1) setCurrentPage(1);
   };
 
   const handleSort = (field) => {
@@ -148,6 +166,7 @@ const ReportsView = () => {
       field,
       direction: prev.field === field && prev.direction === 'asc' ? 'desc' : 'asc'
     }));
+    if (currentPage !== 1) setCurrentPage(1);
   };
 
   const handleDownload = async () => {
@@ -195,7 +214,7 @@ const ReportsView = () => {
     }
 
     const type = getFilterType(key);
-    
+
     switch (type) {
       case 'date':
         return (
@@ -209,7 +228,7 @@ const ReportsView = () => {
             <CalendarIcon className="w-4 h-4 text-gray-400 absolute left-2 top-1/2 transform -translate-y-1/2" />
           </div>
         );
-      
+
       case 'time':
         return (
           <div className="relative">
@@ -222,7 +241,7 @@ const ReportsView = () => {
             <ClockIcon className="w-4 h-4 text-gray-400 absolute left-2 top-1/2 transform -translate-y-1/2" />
           </div>
         );
-      
+
       default:
         return (
           <input
@@ -236,9 +255,6 @@ const ReportsView = () => {
     }
   };
 
-  const totalRecords = filteredData.length;
-  const totalPages = Math.ceil(totalRecords / perPage);
-
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
@@ -246,7 +262,7 @@ const ReportsView = () => {
         <div className="flex gap-4">
           <select
             value={perPage}
-            onChange={(e) => setPerPage(Number(e.target.value))}
+            onChange={(e) => { setPerPage(Number(e.target.value)); if (currentPage !== 1) setCurrentPage(1); }}
             className="border rounded px-3 py-1 w-32"
           >
             <option value={10}>10 / pág</option>
@@ -290,7 +306,7 @@ const ReportsView = () => {
                       <span className="text-xs font-semibold text-gray-700 uppercase tracking-wider">
                         {label}
                       </span>
-                      <ChevronUpDownIcon 
+                      <ChevronUpDownIcon
                         className={`w-4 h-4 text-gray-400 transition-colors group-hover:text-turquesa
                           ${sortConfig.field === key ? 'text-turquesa' : ''}`}
                       />
@@ -341,31 +357,30 @@ const ReportsView = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-700">
-                Mostrando {Math.min((currentPage - 1) * perPage + 1, totalRecords)} a{' '}
+                Mostrando {Math.min((currentPage - 1) * perPage + 1, totalRecords > 0 ? totalRecords : 0)} a{' '}
                 {Math.min(currentPage * perPage, totalRecords)} de {totalRecords} resultados
               </p>
             </div>
-            {totalPages > 1 && (
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage === 1 || loading}
-                  className="px-3 py-1 border rounded hover:bg-gray-50 disabled:bg-gray-100"
-                >
-                  <ChevronLeftIcon className="w-5 h-5" />
-                </button>
-                <span className="px-3 py-1">
-                  Página {currentPage} de {totalPages}
-                </span>
-                <button
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages || loading}
-                  className="px-3 py-1 border rounded hover:bg-gray-50 disabled:bg-gray-100"
-                >
-                  <ChevronRightIcon className="w-5 h-5" />
-                </button>
-              </div>
-            )}
+            {/* Se retiró la condición excluyente totalPages > 1 para debug constante */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage <= 1 || loading}
+                className="px-3 py-1 border rounded hover:bg-gray-50 disabled:bg-gray-100"
+              >
+                <ChevronLeftIcon className="w-5 h-5" />
+              </button>
+              <span className="px-3 py-1 font-medium text-sm">
+                Página {currentPage} de {totalPages}
+              </span>
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage >= totalPages || loading}
+                className="px-3 py-1 border rounded hover:bg-gray-50 disabled:bg-gray-100"
+              >
+                <ChevronRightIcon className="w-5 h-5" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
