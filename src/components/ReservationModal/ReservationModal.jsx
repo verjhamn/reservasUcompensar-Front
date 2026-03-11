@@ -299,11 +299,11 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
                     </div>
 
                     <div className="flex-1 overflow-y-auto no-scrollbar pb-4 pr-2 relative">
-                        {activeTab === "info" && (
+                        <div className={activeTab === "info" ? "block h-full" : "hidden"}>
                             <SpaceInformation spaceData={spaceData} onNext={() => setActiveTab("availability")} />
-                        )}
+                        </div>
 
-                        {activeTab === "availability" && (
+                        <div className={activeTab === "availability" ? "block h-full" : "hidden"}>
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 h-full">
                                 {/* Columna Izquierda: Calendario */}
                                 <div className="flex flex-col h-full">
@@ -341,15 +341,18 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
                                     />
                                 </div>
                             </div>
-                        )}
+                        </div>
 
-                        {activeTab === "quote" && (
-                            <QuoteForm
-                                spaceData={spaceData}
-                                quoteData={quoteData}
-                                onBack={() => setActiveTab("availability")}
-                                onSuccess={onClose}
-                            />
+                        {/* Solo destruimos el QuoteForm si literalmente dejaron de existir los Guest/Quote properties */}
+                        {isGuestMode && quoteData && (
+                            <div className={activeTab === "quote" ? "block h-full" : "hidden"}>
+                                <QuoteForm
+                                    spaceData={spaceData}
+                                    quoteData={quoteData}
+                                    onBack={() => setActiveTab("availability")}
+                                    onSuccess={onClose}
+                                />
+                            </div>
                         )}
                     </div>
                 </div>
