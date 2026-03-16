@@ -565,6 +565,9 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
 
                                         <div className="space-y-1.5">
                                             <label className="text-sm font-semibold text-gray-700">Tiempo de montaje previo <span className="text-red-500">*</span></label>
+                                            <p className="text-[11px] text-purple-700 leading-tight bg-purple-50/50 p-2 rounded-lg border border-purple-100">
+                                                * Nota: Este tiempo de montaje debe estar contemplado dentro del horario de la reserva. No es tiempo adicional extra.
+                                            </p>
                                             <select
                                                 name="tiempoMontajeHoras"
                                                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white text-gray-700"
@@ -605,7 +608,7 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                                         <p className="font-bold text-purple-900 text-base mb-4">Normas Generales para el uso de instalaciones</p>
                                         <ul className="list-disc pl-5 space-y-2 marker:text-purple-500">
                                             <li>No se permite consumir alimentos ni bebidas dentro de los auditorios, salvo autorización expresa.</li>
-                                            <li>Se manejan bloques de 4 horas (8 a.m. a 12 m; 1p.m. a 5 p.m.; 6p.m. a 10 p.m.)</li>
+                                            <li>Se manejan bloques de 4 horas </li>
                                             <li>No se permite el ingreso de alimentos de proveedores no inscritos en la CCF Compensar, Consorcio o UCompensar.</li>
                                             <li>Se debe incluir dentro de las cotizaciones el valor de las horas de montaje cuando se requieran.</li>
                                             <li>En horarios fuera de la operación de la universidad, se deberá incluir el personal necesario para la ejecución del evento.</li>

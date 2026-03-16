@@ -12,13 +12,7 @@ const ReservationForm = ({
     return (
         <div className="flex flex-col flex-1 h-full max-h-min relative">
             <div className="bg-transparent flex-1">
-                {isGuestMode ? (
-                    <div className="bg-purple-50 p-4 rounded-xl border border-purple-100 mb-4">
-                        <p className="text-purple-800 text-sm font-medium">
-                            Selecciona la fecha y hora de tu interés. En el siguiente paso podrás ingresar tus datos de contacto para la cotización.
-                        </p>
-                    </div>
-                ) : (
+                {isGuestMode ? null : (
                     isCoworking ? (
                         <>
                             <h3 className="text-sm font-bold text-gray-700 mb-2">Observaciones (opcional)</h3>

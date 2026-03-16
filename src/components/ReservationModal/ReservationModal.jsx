@@ -322,6 +322,14 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
 
                                 {/* Columna Derecha: Horas y Formulario */}
                                 <div className="flex flex-col h-full bg-gray-50/50 rounded-2xl p-4 md:p-6 border border-gray-100">
+                                    <div className="mb-4 bg-purple-50 text-purple-800 p-3.5 rounded-xl border border-purple-100/60 shadow-sm flex items-start gap-2 shrink-0">
+                                        <svg className="w-5 h-5 shrink-0 mt-0.5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <p className="text-sm leading-relaxed">
+                                            <strong>¡Ten en cuenta!</strong> Si tu espacio requiere tiempo de montaje previo, este <strong>debe estar incluido</strong> dentro de las horas que selecciones para tu reserva.
+                                        </p>
+                                    </div>
                                     <TimeSlotSelector
                                         timeSlots={generateTimeSlots()}
                                         selectedHours={selectedHours}
