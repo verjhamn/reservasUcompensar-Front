@@ -41,7 +41,8 @@ export const getExternalQuotes = async (filters = {}) => {
             estado: filters.estado || "",
             fecha_creacion: filters.fecha_creacion || "",
             page: filters.page || 1,
-            per_page: filters.per_page || 10
+            per_page: filters.per_page || 10,
+            include_timeline: true
         });
 
         if (response.data.success) {
@@ -64,6 +65,19 @@ export const updateExternalQuoteState = async (id, payload) => {
         throw new Error("Error al actualizar el estado de la solicitud");
     } catch (error) {
         console.error("Error en updateExternalQuoteState:", error);
+        throw error;
+    }
+};
+
+export const addExternalQuoteComment = async (id, commentPayload) => {
+    try {
+        const response = await axiosInstance.post(`${API_URL}/solicitudes/externas/${id}/comentarios`, commentPayload);
+        if (response.data.success || response.status === 200 || response.status === 201) {
+            return response.data;
+        }
+        throw new Error("Error al agregar el comentario a la solicitud");
+    } catch (error) {
+        console.error("Error en addExternalQuoteComment:", error);
         throw error;
     }
 };

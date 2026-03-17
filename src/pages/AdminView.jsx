@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Calendar, Briefcase } from 'lucide-react';
 import AdminReservationsView from '../components/AdminReservations/AdminReservationsView';
-import AdminExternalQuotesView from '../components/AdminReservations/AdminExternalQuotesView';
+import ExternalQuotesIndex from '../components/AdminReservations/ExternalQuotes';
 
 const AdminView = () => {
     const [activeTab, setActiveTab] = useState('internas');
@@ -37,7 +37,7 @@ const AdminView = () => {
                 {activeTab === 'internas' ? (
                     <AdminReservationsView />
                 ) : (
-                    <AdminExternalQuotesView />
+                    <ExternalQuotesIndex />
                 )}
             </div>
         </div>
