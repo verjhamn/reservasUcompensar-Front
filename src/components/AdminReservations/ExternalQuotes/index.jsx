@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { getExternalQuotes, updateExternalQuoteState, addExternalQuoteComment } from '../../../Services/adminReservasService';
-import { showSuccessToast, showErrorToast } from '../../UtilComponents/Confirmation';
+import { showConfirmation, showSuccessToast, showErrorToast } from '../../UtilComponents/Confirmation';
 
 import QuotesFilterBar from './QuotesFilterBar';
 import QuotesGrid from './QuotesGrid';
@@ -99,6 +99,14 @@ const ExternalQuotesIndex = () => {
     const handleActionSubmit = async (e) => {
         e.preventDefault();
         if (!selectedQuote) return;
+
+        if (actionData.estado === 'aprobada') {
+            const confirmed = await showConfirmation(
+                () => {},
+                "¿Estás seguro de aprobar esta solicitud? Al hacerlo, se generará y confirmará automáticamente una reserva en los horarios solicitados. Esta acción no se puede deshacer rechazando la solicitud posteriormente."
+            );
+            if (!confirmed) return;
+        }
 
         setIsSaving(true);
         try {

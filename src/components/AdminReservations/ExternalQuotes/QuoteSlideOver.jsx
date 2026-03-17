@@ -152,56 +152,68 @@ const QuoteSlideOver = ({
 
                         {/* Zona de Acciones Fixed (Footer del Panel) */}
                         <div className="bg-white border-t border-gray-200 p-6 sticky bottom-0 z-10 shadow-[0_-10px_30px_rgba(0,0,0,0.03)]">
-                            <form onSubmit={handleActionSubmit} className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-800 mb-1.5">Determinar Nuevo Estado</label>
-                                    <select
-                                        required
-                                        value={actionData.estado}
-                                        onChange={(e) => setActionData({ ...actionData, estado: e.target.value })}
-                                        className="w-full border-2 border-purple-100 rounded-xl px-4 py-3 focus:ring-4 focus:ring-purple-50 focus:border-purple-400 outline-none transition-all text-gray-800 font-bold bg-gray-50/50 hover:bg-white"
-                                    >
-                                        <option value="nueva">Nueva 🟢</option>
-                                        <option value="en curso">En Curso 🟡</option>
-                                        <option value="en espera">En Espera 🟠</option>
-                                        <option value="no aprobada" className="text-red-700">No Aprobada (Rechazar) 🔴</option>
-                                        <option value="aprobada" className="text-green-700">Aprobada (Liquidar/Reservar) ✅</option>
-                                    </select>
+                            {selectedQuote?.estado?.toLowerCase() === 'aprobada' ? (
+                                <div className="bg-green-50 rounded-xl border border-green-200 p-4">
+                                    <h4 className="text-sm font-bold text-green-800 flex items-center gap-2 mb-1">
+                                        Solicitud Aprobada y Confirmada
+                                    </h4>
+                                    <p className="text-sm text-green-700 leading-relaxed">
+                                        Esta solicitud ya fue aprobada y generó una reserva de forma exitosa. 
+                                        Para realizar modificaciones adicionales o cancelarla, debes gestionar la reserva directamente desde el calendario principal de operaciones.
+                                    </p>
                                 </div>
-
-                                <div>
-                                    <label className="block text-[13px] font-bold text-gray-600 mb-1.5">Anotación Oficial (Interna/Externa)</label>
-                                    <textarea
-                                        rows="2"
-                                        value={actionData.observacion}
-                                        onChange={(e) => setActionData({ ...actionData, observacion: e.target.value })}
-                                        placeholder="Escriba condiciones, justificaciones de rechazo o estatus del contrato..."
-                                        className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:border-purple-500 outline-none text-gray-800 resize-none"
-                                    />
-                                </div>
-
-                                <div className="flex items-center justify-between pt-2">
-                                    <div className="flex items-center gap-3">
-                                        <div
-                                            onClick={() => setActionData({ ...actionData, notificar: !actionData.notificar })}
-                                            className={`relative inline-flex h-6 w-[42px] items-center rounded-full cursor-pointer transition-colors border-2 border-transparent focus:outline-none ${actionData.notificar ? 'bg-purple-600' : 'bg-gray-300'}`}
+                            ) : (
+                                <form onSubmit={handleActionSubmit} className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-800 mb-1.5">Determinar Nuevo Estado</label>
+                                        <select
+                                            required
+                                            value={actionData.estado}
+                                            onChange={(e) => setActionData({ ...actionData, estado: e.target.value })}
+                                            className="w-full border-2 border-purple-100 rounded-xl px-4 py-3 focus:ring-4 focus:ring-purple-50 focus:border-purple-400 outline-none transition-all text-gray-800 font-bold bg-gray-50/50 hover:bg-white"
                                         >
-                                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${actionData.notificar ? 'translate-x-[18px]' : 'translate-x-0.5'}`} />
-                                        </div>
-                                        <span className="text-sm font-bold text-gray-700 cursor-pointer select-none" onClick={() => setActionData({ ...actionData, notificar: !actionData.notificar })}>
-                                            Notificar por email
-                                        </span>
+                                            <option value="nueva">Nueva 🟢</option>
+                                            <option value="en curso">En Curso 🟡</option>
+                                            <option value="en espera">En Espera 🟠</option>
+                                            <option value="no aprobada" className="text-red-700">No Aprobada (Rechazar) 🔴</option>
+                                            <option value="aprobada" className="text-green-700">Aprobada (Liquidar/Reservar) ✅</option>
+                                        </select>
                                     </div>
 
-                                    <button
-                                        type="submit"
-                                        disabled={isSaving}
-                                        className="px-6 py-2.5 rounded-xl text-sm font-bold text-white bg-gray-900 hover:bg-purple-700 transition-all flex items-center justify-center min-w-[140px] shadow-md hover:shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed"
-                                    >
-                                        {isSaving ? <span className="animate-pulse">Autenticando...</span> : 'Guardar Cierre'}
-                                    </button>
-                                </div>
-                            </form>
+                                    <div>
+                                        <label className="block text-[13px] font-bold text-gray-600 mb-1.5">Anotación Oficial (Interna/Externa)</label>
+                                        <textarea
+                                            rows="2"
+                                            value={actionData.observacion}
+                                            onChange={(e) => setActionData({ ...actionData, observacion: e.target.value })}
+                                            placeholder="Escriba condiciones, justificaciones de rechazo o estatus del contrato..."
+                                            className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:border-purple-500 outline-none text-gray-800 resize-none"
+                                        />
+                                    </div>
+
+                                    <div className="flex items-center justify-between pt-2">
+                                        <div className="flex items-center gap-3">
+                                            <div
+                                                onClick={() => setActionData({ ...actionData, notificar: !actionData.notificar })}
+                                                className={`relative inline-flex h-6 w-[42px] items-center rounded-full cursor-pointer transition-colors border-2 border-transparent focus:outline-none ${actionData.notificar ? 'bg-purple-600' : 'bg-gray-300'}`}
+                                            >
+                                                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${actionData.notificar ? 'translate-x-[18px]' : 'translate-x-0.5'}`} />
+                                            </div>
+                                            <span className="text-sm font-bold text-gray-700 cursor-pointer select-none" onClick={() => setActionData({ ...actionData, notificar: !actionData.notificar })}>
+                                                Notificar por email
+                                            </span>
+                                        </div>
+
+                                        <button
+                                            type="submit"
+                                            disabled={isSaving}
+                                            className="px-6 py-2.5 rounded-xl text-sm font-bold text-white bg-gray-900 hover:bg-purple-700 transition-all flex items-center justify-center min-w-[140px] shadow-md hover:shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                        >
+                                            {isSaving ? <span className="animate-pulse">Autenticando...</span> : 'Guardar Cierre'}
+                                        </button>
+                                    </div>
+                                </form>
+                            )}
                         </div>
                     </>
                 )}
