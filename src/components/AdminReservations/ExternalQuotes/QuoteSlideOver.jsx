@@ -180,16 +180,7 @@ const QuoteSlideOver = ({
                                         </select>
                                     </div>
 
-                                    <div>
-                                        <label className="block text-[13px] font-bold text-gray-600 mb-1.5">Anotación Oficial (Interna/Externa)</label>
-                                        <textarea
-                                            rows="2"
-                                            value={actionData.observacion}
-                                            onChange={(e) => setActionData({ ...actionData, observacion: e.target.value })}
-                                            placeholder="Escriba condiciones, justificaciones de rechazo o estatus del contrato..."
-                                            className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:border-purple-500 outline-none text-gray-800 resize-none"
-                                        />
-                                    </div>
+
 
                                     <div className="flex items-center justify-between pt-2">
                                         <div className="flex items-center gap-3">

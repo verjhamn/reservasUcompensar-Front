@@ -102,8 +102,8 @@ const ExternalQuotesIndex = () => {
 
         if (actionData.estado === 'aprobada') {
             const confirmed = await showConfirmation(
-                () => {},
-                "¿Estás seguro de aprobar esta solicitud? Al hacerlo, se generará y confirmará automáticamente una reserva en los horarios solicitados. Esta acción no se puede deshacer rechazando la solicitud posteriormente."
+                () => { },
+                "¿Estás seguro de aprobar esta solicitud? Al hacerlo, se generará y confirmará automáticamente una reserva en los horarios solicitados."
             );
             if (!confirmed) return;
         }
@@ -155,13 +155,13 @@ const ExternalQuotesIndex = () => {
             <Toaster />
 
             {/* Cabecera y Filtros */}
-            <QuotesFilterBar 
-                filters={filters} 
-                handleFilterChange={handleFilterChange} 
+            <QuotesFilterBar
+                filters={filters}
+                handleFilterChange={handleFilterChange}
             />
 
             {/* Listado Principal de Tarjetas y Paginación */}
-            <QuotesGrid 
+            <QuotesGrid
                 isLoading={isLoading}
                 quotes={quotes}
                 pagination={pagination}
