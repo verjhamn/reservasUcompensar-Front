@@ -17,21 +17,21 @@ const SpaceInformation = ({ spaceData, onNext }) => {
 
                 <div className="grid grid-cols-2 gap-3 shrink-0">
                     <div className="bg-gray-50/80 p-3 rounded-xl border border-gray-100">
-                        <h3 className="text-xs font-bold text-purple-800 uppercase tracking-widest mb-1 truncate">Código</h3>
+                        <h3 className="text-xs font-bold text-purple-800  tracking-widest mb-1 truncate">Código</h3>
                         <p className="text-gray-800 text-sm font-medium truncate">{spaceData.codigo}</p>
                     </div>
                     <div className="bg-gray-50/80 p-3 rounded-xl border border-gray-100">
-                        <h3 className="text-xs font-bold text-purple-800 uppercase tracking-widest mb-1 truncate">Tipo</h3>
+                        <h3 className="text-xs font-bold text-purple-800  tracking-widest mb-1 truncate">Tipo</h3>
                         <p className="text-gray-800 text-sm font-medium truncate" title={spaceData.tipoEspecifico || spaceData.tipo}>
                             {spaceData.tipoEspecifico || spaceData.tipo}
                         </p>
                     </div>
                     <div className="bg-gray-50/80 p-3 rounded-xl border border-gray-100">
-                        <h3 className="text-xs font-bold text-purple-800 uppercase tracking-widest mb-1 truncate">Piso</h3>
+                        <h3 className="text-xs font-bold text-purple-800  tracking-widest mb-1 truncate">Piso</h3>
                         <p className="text-gray-800 text-sm font-medium truncate">{spaceData.piso}</p>
                     </div>
                     <div className="bg-gray-50/80 p-3 rounded-xl border border-gray-100">
-                        <h3 className="text-xs font-bold text-purple-800 uppercase tracking-widest mb-1 truncate">Equipos</h3>
+                        <h3 className="text-xs font-bold text-purple-800  tracking-widest mb-1 truncate">Equipos</h3>
                         <p className="text-gray-800 text-sm font-medium truncate">{spaceData.cantidad_equipos}</p>
                     </div>
                 </div>

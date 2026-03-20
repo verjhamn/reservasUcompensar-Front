@@ -255,10 +255,10 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                         Paso {currentStep} de {totalSteps}
                     </span>
                     <span className="text-sm font-semibold text-gray-600">
-                        {currentStep === 1 && "Datos Personales"}
-                        {currentStep === 2 && "Datos de Empresa"}
-                        {currentStep === 3 && "Detalles del Evento"}
-                        {currentStep === 4 && "Políticas de Uso"}
+                        {currentStep === 1 && "Datos personales"}
+                        {currentStep === 2 && "Datos de empresa"}
+                        {currentStep === 3 && "Detalles del evento"}
+                        {currentStep === 4 && "Políticas de uso"}
                     </span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
@@ -280,9 +280,9 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
 
                         <div className="space-y-4">
                             <div>
-                                <p className="text-xs font-semibold text-purple-800 uppercase tracking-wider mb-1">Espacio Seleccionado</p>
+                                <p className="text-xs font-semibold text-purple-800 tracking-wider mb-1">Espacio seleccionado</p>
                                 <p className="text-sm text-gray-800 font-medium">
-                                    {safeRender(spaceData?.Titulo)} - {safeRender(spaceData?.codigo)}
+                                    {safeRender(spaceData?.Titulo)}  {safeRender(spaceData?.codigo)}
                                 </p>
                                 <p className="text-xs text-gray-600 mt-0.5">
                                     Tipo: {safeRender(spaceData?.tipo)}
@@ -293,12 +293,12 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                             </div>
 
                             <div className="pt-4 border-t border-purple-200/60">
-                                <p className="text-xs font-semibold text-purple-800 uppercase tracking-wider mb-1">Fecha Preferida</p>
+                                <p className="text-xs font-semibold text-purple-800 tracking-wider mb-1">Fecha seleccionada</p>
                                 <p className="text-sm text-gray-800 font-medium">{formattedDate}</p>
                             </div>
 
                             <div className="pt-4 border-t border-purple-200/60">
-                                <p className="text-xs font-semibold text-purple-800 uppercase tracking-wider mb-1">Horarios Preferidos</p>
+                                <p className="text-xs font-semibold text-purple-800 tracking-wider mb-1">Horarios</p>
                                 <div className="flex flex-wrap gap-2 mt-2">
                                     {quoteData?.hours?.map(h => (
                                         <span key={h} className="bg-white border border-purple-200 text-purple-700 text-xs py-1 px-3 rounded-md shadow-sm font-medium">
@@ -321,7 +321,7 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                             {/* Seccion 1: Datos Personales */}
                             {currentStep === 1 && (
                                 <div className="animate-fade-in space-y-5 pb-4">
-                                    <h3 className="text-xl font-bold text-gray-800 border-b border-gray-100 pb-3">Datos del Solicitante</h3>
+                                    <h3 className="text-xl font-bold text-gray-800 border-b border-gray-100 pb-3">Datos del solicitante</h3>
                                     <div className="grid md:grid-cols-2 gap-5">
                                         <div className="space-y-1.5 md:col-span-2">
                                             <label className="text-sm font-semibold text-gray-700">
@@ -350,7 +350,6 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                                                 <option value="" disabled hidden>Seleccionar</option>
                                                 <option value="CC">Cédula de Ciudadanía</option>
                                                 <option value="CE">Cédula de Extranjería</option>
-                                                <option value="TI">Tarjeta de Identidad</option>
                                                 <option value="PA">Pasaporte</option>
                                             </select>
                                             {errors.tipoDocumento && <p className={`text-red-500 text-[11px] font-semibold mt-1 focus:ring-2 ${errors.centroCostos ? 'border-red-500 focus:ring-red-200 focus:border-red-500' : 'border-gray-200 focus:ring-purple-500 focus:border-purple-500'}`}>{errors.tipoDocumento}</p>}
@@ -385,7 +384,7 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                                         </div>
                                         <div className="space-y-1.5">
                                             <label className="text-sm font-semibold text-gray-700">
-                                                Teléfono / celular <span className="text-red-500">*</span>
+                                                Teléfono <span className="text-red-500">*</span>
                                             </label>
                                             <input
                                                 type="tel"
@@ -404,11 +403,11 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                             {/* Seccion 2: Datos de la empresa */}
                             {currentStep === 2 && (
                                 <div className="animate-fade-in space-y-5 pb-4">
-                                    <h3 className="text-xl font-bold text-gray-800 border-b border-gray-100 pb-3">Datos de su Empresa</h3>
+                                    <h3 className="text-xl font-bold text-gray-800 border-b border-gray-100 pb-3">Datos de su empresa</h3>
 
                                     <div className="bg-purple-50 p-4 rounded-xl border border-purple-100 flex items-center justify-between">
                                         <div>
-                                            <p className="font-bold text-purple-900 text-sm">¿Eres colaborador o aliado interno de Compensar?</p>
+                                            <p className="font-bold text-purple-900 text-sm">¿Eres colaborador Compensar?</p>
                                             <p className="text-xs text-purple-700 mt-0.5">Se solicitará tu identificador y centro de costos.</p>
                                         </div>
                                         <div
@@ -423,7 +422,7 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                                         <div className="grid md:grid-cols-2 gap-5 bg-purple-50/50 p-4 rounded-xl border border-purple-100/50 animate-fade-in">
                                             <div className="space-y-1.5">
                                                 <label className="text-sm font-semibold text-purple-900">
-                                                    Identificador Compensar <span className="text-red-500">*</span>
+                                                    ID Compensar <span className="text-red-500">*</span>
                                                 </label>
                                                 <input
                                                     type="text"
@@ -455,7 +454,7 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                                     <div className="grid md:grid-cols-2 gap-5">
                                         <div className="space-y-1.5 md:col-span-2">
                                             <label className="text-sm font-semibold text-gray-700">
-                                                Razón Social / Nombre <span className="text-red-500">*</span>
+                                                Razón social / Nombre <span className="text-red-500">*</span>
                                             </label>
                                             <input
                                                 type="text"
@@ -533,7 +532,7 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                             {/* Seccion 3: Detalles del evento */}
                             {currentStep === 3 && (
                                 <div className="animate-fade-in space-y-5 pb-4">
-                                    <h3 className="text-xl font-bold text-gray-800 border-b border-gray-100 pb-3">Detalles de su Evento</h3>
+                                    <h3 className="text-xl font-bold text-gray-800 border-b border-gray-100 pb-3">Detalles del evento</h3>
 
                                     <div className="grid md:grid-cols-2 gap-5">
                                         <div className="space-y-1.5 md:col-span-2">
@@ -550,7 +549,7 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                                         </div>
 
                                         <div className="space-y-1.5">
-                                            <label className="text-sm font-semibold text-gray-700">Cantidad de asistentes (Aforo) <span className="text-red-500">*</span></label>
+                                            <label className="text-sm font-semibold text-gray-700">Cantidad de asistentes (aforo) <span className="text-red-500">*</span></label>
                                             <input
                                                 type="number"
                                                 min="1"
@@ -566,7 +565,7 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                                         <div className="space-y-1.5">
                                             <label className="text-sm font-semibold text-gray-700">Tiempo de montaje previo <span className="text-red-500">*</span></label>
                                             <p className="text-[11px] text-purple-700 leading-tight bg-purple-50/50 p-2 rounded-lg border border-purple-100">
-                                                * Nota: Este tiempo de montaje debe estar contemplado dentro del horario de la reserva. No es tiempo adicional extra.
+                                                * Nota: El tiempo de montaje debe estar contemplado dentro del horario de la reserva. No es tiempo adicional extra.
                                             </p>
                                             <select
                                                 name="tiempoMontajeHoras"
@@ -602,10 +601,10 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                             {/* Seccion 4: Políticas y Tratamiento de Datos */}
                             {currentStep === 4 && (
                                 <div className="animate-fade-in space-y-5 pb-4">
-                                    <h3 className="text-xl font-bold text-gray-800 border-b border-gray-100 pb-3">Política de Escenarios y Tratamiento de Datos</h3>
+                                    <h3 className="text-xl font-bold text-gray-800 border-b border-gray-100 pb-3">Política de escenarios y tratamiento de datos</h3>
 
                                     <div className="bg-purple-50/30 border border-purple-100 rounded-xl p-4 h-48 overflow-y-auto text-sm text-gray-700 space-y-3 shadow-inner custom-scrollbar">
-                                        <p className="font-bold text-purple-900 text-base mb-4">Normas Generales para el uso de instalaciones</p>
+                                        <p className="font-bold text-purple-900 text-base mb-4">Normas generales para el uso de instalaciones</p>
                                         <ul className="list-disc pl-5 space-y-2 marker:text-purple-500">
                                             <li>No se permite consumir alimentos ni bebidas dentro de los auditorios, salvo autorización expresa.</li>
                                             <li>Se manejan bloques de 4 horas </li>
@@ -635,7 +634,7 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                                                 />
                                             </div>
                                             <span className="text-base text-gray-700 group-hover:text-gray-900 transition-colors leading-relaxed">
-                                                He leído, comprendo y <strong>acepto las Políticas de escenarios y normas generales</strong> aplicables a mi reserva.
+                                                He leído, comprendo y <strong>acepto las políticas de escenarios y normas generales</strong> aplicables a mi reserva.
                                             </span>
                                         </label>
 
@@ -649,7 +648,7 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                                                 />
                                             </div>
                                             <span className="text-base text-gray-700 group-hover:text-gray-900 transition-colors leading-relaxed">
-                                                Autorizo el <a href="https://ucompensar.edu.co/pdf/documentos/POL-PAJ-02-V08-Tratamiento-de-datos-personales.pdf" target="_blank" rel="noopener noreferrer" className="text-purple-600 font-bold hover:underline hover:text-purple-800 transition-colors" onClick={(e) => e.stopPropagation()}>Tratamiento de mis Datos Personales</a> conforme a las políticas corporativas.
+                                                Autorizo el <a href="https://ucompensar.edu.co/pdf/documentos/POL-PAJ-02-V08-Tratamiento-de-datos-personales.pdf" target="_blank" rel="noopener noreferrer" className="text-purple-600 font-bold hover:underline hover:text-purple-800 transition-colors" onClick={(e) => e.stopPropagation()}>Tratamiento de mis datos personales</a> conforme a las políticas corporativas.
                                             </span>
                                         </label>
                                     </div>

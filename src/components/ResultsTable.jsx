@@ -42,7 +42,7 @@ const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode, onSpaceLo
               ...item,
               imagenes: item.imagenes,
               coworking_contenedor: "NO",
-              Titulo: "Espacio",
+              /* Titulo: "Espacio", */
               tipo: item.key
             }];
           } else {

@@ -7,7 +7,7 @@ const campuses = [
         id: 'av68',
         name: 'Campus Av. 68',
         address: 'Av Carrera 68 No. 68 B – 45',
-        description: 'Campus principal con instalaciones completas',
+        description: 'Sede administrativa y académica',
         value: '1',
     },
     {

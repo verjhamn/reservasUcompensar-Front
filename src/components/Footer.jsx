@@ -35,7 +35,7 @@ const Footer = () => {
           </div>
           <div className="mb-6 w-full">
             <h3 className="text-xl font-semibold mb-4 text-orange-500">Villavicencio</h3>
-            <p>Cra. 33 ·39-55</p>
+            <p>Cra. 33 No. 39-55</p>
           </div>
         </div>
 
