@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMsal } from "@azure/msal-react";
 import { GraduationCap, CalendarDays, ArrowRight } from 'lucide-react';
@@ -7,21 +7,31 @@ import campusBg from '../assets/campus_av68.webp';
 
 const LandingView = ({ isLoggedIn }) => {
     const navigate = useNavigate();
-    const { instance, accounts } = useMsal();
+    const { instance } = useMsal();
+    const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-    // Redireccionar si ya está logueado
+    // Redireccionar si ya está logueado en el backend
     useEffect(() => {
-        if (isLoggedIn || accounts.length > 0) {
+        if (isLoggedIn) {
             navigate('/catalogo');
         }
-    }, [isLoggedIn, accounts, navigate]);
+    }, [isLoggedIn, navigate]);
 
     const handleLogin = async () => {
+        if (isLoggingIn) return;
+        setIsLoggingIn(true);
         try {
-            await instance.loginPopup(loginRequest);
-            // El componente App/Header manejará el éxito del login
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            if (isMobile) {
+                await instance.loginRedirect(loginRequest);
+            } else {
+                await instance.loginPopup(loginRequest);
+                // Mantenemos el estado 'isLoggingIn' en true porque App.jsx está manejando 
+                // el fetch de roles en segundo plano y asíncronamente lanzará true a `isLoggedIn`
+            }
         } catch (error) {
             console.error("Error en login:", error);
+            setIsLoggingIn(false);
         }
     };
 
@@ -59,7 +69,7 @@ const LandingView = ({ isLoggedIn }) => {
                     {/* Opción A: Comunidad UCompensar */}
                     <div
                         onClick={handleLogin}
-                        className="group relative bg-white rounded-2xl p-8 cursor-pointer shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden ring-1 ring-transparent hover:ring-primary-100"
+                        className={`group relative bg-white rounded-2xl p-8 shadow-lg transition-all duration-300 transform overflow-hidden ring-1 ring-transparent ${isLoggingIn ? "opacity-75 cursor-not-allowed" : "cursor-pointer hover:shadow-2xl hover:-translate-y-1 hover:ring-primary-100"}`}
                     >
                         <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary-500 to-purple-600 opacity-80 group-hover:opacity-100 transition-opacity" />
 
@@ -75,8 +85,20 @@ const LandingView = ({ isLoggedIn }) => {
                         </p>
 
                         <div className="flex items-center justify-center text-primary-600 font-semibold group-hover:gap-2 transition-all">
-                            <span>Iniciar Sesión</span>
-                            <ArrowRight className="h-5 w-5 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all" />
+                            {isLoggingIn ? (
+                                <span className="flex items-center gap-2">
+                                    <svg className="animate-spin h-5 w-5 text-primary-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Cargando sesión...
+                                </span>
+                            ) : (
+                                <>
+                                    <span>Iniciar Sesión</span>
+                                    <ArrowRight className="h-5 w-5 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all" />
+                                </>
+                            )}
                         </div>
                     </div>
 

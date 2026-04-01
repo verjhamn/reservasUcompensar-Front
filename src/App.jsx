@@ -10,6 +10,9 @@ import { hasAdminAccess, canAccessReports } from './utils/userHelper';
 import { EVENTS } from './config/events';
 import roleSyncService from './Services/roleSyncService';
 import AppRoutes from './components/AppRoutes';
+import { EventType } from "@azure/msal-browser";
+import { getUserData } from "./Services/SSOServices/graphService";
+import { fetchAuthToken } from "./Services/authService";
 
 const msalInstance = new PublicClientApplication(msalConfig);
 
@@ -82,12 +85,43 @@ function App() {
         };
     }, []);
 
+    // Escuchar el éxito de login a nivel global (útil para redirects móviles y LandingView)
+    useEffect(() => {
+        const callbackId = msalInstance.addEventCallback(async (message) => {
+            if (message.eventType === EventType.LOGIN_SUCCESS && message.payload) {
+                const payload = message.payload;
+                const accessToken = payload.accessToken;
+                
+                try {
+                    // Evitar fetch doble si el componente SignInButton ya lo hizo
+                    const currentData = localStorage.getItem("userData");
+                    if (!currentData || currentData === "null") {
+                        console.log("Global login success intercepted. Fetching user and roles...");
+                        const userData = await getUserData(accessToken);
+                        localStorage.setItem("userData", JSON.stringify(userData));
+                        setIsLoggedIn(true);
+                        
+                        // Disparar evento para que Header.jsx actualice el `user`
+                        window.dispatchEvent(new Event("storage"));
+
+                        // Recuperar roles desde el backend para este nuevo usuario
+                        await fetchAuthToken();
+                    }
+                } catch (error) {
+                    console.error("Error manejando el login global:", error);
+                }
+            }
+        });
+
+        return () => {
+            if (callbackId) {
+                msalInstance.removeEventCallback(callbackId);
+            }
+        };
+    }, []);
+
     const handleCloseModal = () => {
         setShowModal(false);
-    };
-
-    const handleLoginSuccess = (userData) => {
-        setIsLoggedIn(true);
     };
 
     const handleLogout = () => {
@@ -100,7 +134,6 @@ function App() {
                 <div className="min-h-screen flex flex-col">
                     {showModal && <InfoModal onClose={handleCloseModal} />}
                     <Header
-                        onLoginSuccess={handleLoginSuccess}
                         onLogout={handleLogout}
                         isLoggedIn={isLoggedIn}
                         isAdmin={isAdmin}

@@ -3,9 +3,7 @@ import { useMsal } from "@azure/msal-react";
 import { Menu, X, User } from "lucide-react";
 import SignInButton from "./SSOComponents/SignInButton";
 import SignOutButton from "./SSOComponents/SignOutButton";
-import { getUserData } from "../Services/SSOServices/graphService";
 import { getUserRoleFromBackend } from "../utils/userHelper";
-import { fetchAuthToken, getUserRoles } from "../Services/authService";
 import { ADMIN_ROLES } from "../config/adminRoles";
 
 const Header = ({ onLoginSuccess, onLogout }) => {
@@ -48,20 +46,8 @@ const Header = ({ onLoginSuccess, onLogout }) => {
     checkExistingUser();
   }, []);
 
-  const handleLoginSuccess = async (accessToken) => {
-    try {
-      const userData = await getUserData(accessToken);
-      localStorage.setItem("userData", JSON.stringify(userData));
-      setUser(userData);
-      onLoginSuccess(userData);
-
-      // IMPORTANTE: Llamar a fetchAuthToken para obtener roles del backend
-      await fetchAuthToken();
-
-    } catch (error) {
-      console.error("Error al obtener datos del usuario:", error);
-    }
-  };
+  // La lógica de hidratación del usuario (fetching userData, auth token) ahora se maneja globalmente en App.jsx.
+  // SignInButton.jsx no necesita un handler y el Header se actualiza a partir del evento "storage".
 
   const getUserRoleLabel = () => {
     const role = getUserRoleFromBackend();
@@ -134,7 +120,7 @@ const Header = ({ onLoginSuccess, onLogout }) => {
                 />
               </div>
             ) : (
-              <SignInButton onLoginSuccess={handleLoginSuccess} />
+              <SignInButton />
             )}
           </div>
 
@@ -185,7 +171,7 @@ const Header = ({ onLoginSuccess, onLogout }) => {
               </div>
             ) : (
               <div className="px-4" onClick={() => setIsMenuOpen(false)}>
-                <SignInButton onLoginSuccess={handleLoginSuccess} />
+                <SignInButton />
               </div>
             )}
           </div>

@@ -4,18 +4,18 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSignInAlt } from "@fortawesome/free-solid-svg-icons";
 import { loginRequest } from "../../Services/SSOServices/authConfig";
 
-const SignInButton = ({ onLoginSuccess }) => {
+const SignInButton = () => {
     const { instance } = useMsal();
 
     const handleLogin = async () => {
-
         try {
-            const response = await instance.loginPopup(loginRequest).catch(e => {
-                console.log(e);
-            });
-            const accessToken = response.accessToken;
-
-            onLoginSuccess(accessToken);
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            if (isMobile) {
+                await instance.loginRedirect(loginRequest);
+            } else {
+                await instance.loginPopup(loginRequest).catch(e => console.log(e));
+            }
+            // La lógica de inicio de sesión se maneja globalmente en App.jsx
         } catch (error) {
             console.error("Error en el inicio de sesión con Microsoft:", error);
         }
