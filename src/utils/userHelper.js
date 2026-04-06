@@ -70,6 +70,15 @@ export const canReserveAnySpace = () => {
 
 // Verificar si el usuario es específicamente super admin
 export const isSuperAdmin = () => {
-  const role = getUserRoleFromBackend();
-  return role === ADMIN_ROLES.SUPER_ADMIN;
+  try {
+    // Evita usar roles residuales si no hay sesión activa
+    const userData = getUserData();
+    if (!userData) return false;
+
+    const role = getUserRoleFromBackend();
+    return role === ADMIN_ROLES.SUPER_ADMIN;
+  } catch (error) {
+    console.error("Error checking super admin access:", error);
+    return false;
+  }
 };

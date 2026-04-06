@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { getUserId, fetchAuthToken } from '../Services/authService';
@@ -14,6 +14,8 @@ import CheckInModal from '../components/CheckInModal';
 import CheckOutModal from '../components/CheckOutModal';
 import ReservationModal from '../components/ReservationModal';
 import ResultsTable from '../components/ResultsTable';
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const EspacioQRView = ({ isLoggedIn, goToMyReservations }) => {
     const { codigo } = useParams();
@@ -82,15 +84,23 @@ const EspacioQRView = ({ isLoggedIn, goToMyReservations }) => {
         if (espacios && espacios.length === 1) {
             flujoIniciadoRef.current = true;
             const espacioCargado = espacios[0];
+            const requiresLoginByUrlId = UUID_REGEX.test(codigo);
+            const hasStoredUserData = !!localStorage.getItem("userData");
 
-            // Revisar si existe sesión en la app, O cuentas cacheadas en MSAL
-            const currentAccounts = instance.getAllAccounts();
+            // Si hay userData pero no userId backend, intentar reconstruir la sesión antes de pedir login.
+            if (hasStoredUserData && !getUserId()) {
+                await fetchAuthToken();
+            }
 
-            if (isLoggedIn || currentAccounts.length > 0) {
-                // Ya está logueado, flujo interno directo
+            const hasInternalSession = !!localStorage.getItem("userData") && !!getUserId();
+
+            if (hasInternalSession) {
                 await verificarFlujoInterno(espacioCargado);
-            } else {
-                // No está logueado, forzar popup de login
+                return;
+            }
+
+            // Solo forzar popup si el QR viene con ID (UUID) en la URL.
+            if (requiresLoginByUrlId) {
                 try {
                     const response = await instance.loginPopup(loginRequest);
                     const accessToken = response.accessToken;
@@ -108,14 +118,16 @@ const EspacioQRView = ({ isLoggedIn, goToMyReservations }) => {
 
                     // Login exitoso → flujo interno
                     await verificarFlujoInterno(espacioCargado);
-                } catch (error) {
+                    return;
+                } catch {
                     console.info("[EspacioQR] Usuario canceló el login o hubo error. Flujo externo iniciado.");
-                    // Login cancelado → flujo externo
-                    setGuestMode(true);
-                    setSelectedSpace(espacioCargado);
-                    setShowReservationModal(true);
                 }
             }
+
+            // Flujo externo (sin login o URL sin ID)
+            setGuestMode(true);
+            setSelectedSpace(espacioCargado);
+            setShowReservationModal(true);
         }
     };
 

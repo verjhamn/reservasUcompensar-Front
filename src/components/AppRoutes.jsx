@@ -39,6 +39,14 @@ const AppRoutes = ({ isLoggedIn, isAdmin, canViewReports }) => {
 
     // Check if we are on landing page
     const isLanding = location.pathname === '/';
+    const tabs = [
+        { path: '/catalogo', label: 'Catálogo' },
+        ...(isLoggedIn ? [
+            { path: '/mis-reservas', label: 'Mis reservas' },
+            ...(isAdmin ? [{ path: '/admin-reservas', label: 'Administrar reservas' }] : []),
+            ...((isAdmin || canViewReports) ? [{ path: '/reportes', label: 'Reportes' }] : [])
+        ] : [])
+    ];
 
     // Strict Landing Redirect: If on /catalogo, not logged in, and not guest mode -> Redirect to Landing
     if (location.pathname === '/catalogo' && !isLoggedIn && !location.state?.guestMode) {
@@ -49,29 +57,28 @@ const AppRoutes = ({ isLoggedIn, isAdmin, canViewReports }) => {
         <>
             {/* Navigation Tabs (Hidden on Landing) */}
             {!isLanding && (
-                <div className="flex justify-center items-center space-x-2 mt-8 mb-2 bg-neutral-100 p-1.5 rounded-xl w-fit mx-auto shadow-inner animate-fade-in">
-                    {[
-                        { path: '/catalogo', label: 'Catálogo' },
-                        ...(isLoggedIn ? [
-                            { path: '/mis-reservas', label: 'Mis reservas' },
-                            ...(isAdmin ? [{ path: '/admin-reservas', label: 'Administrar reservas' }] : []),
-                            ...((isAdmin || canViewReports) ? [{ path: '/reportes', label: 'Reportes' }] : [])
-                        ] : [])
-                    ].map((tab) => (
-                        <Link
-                            key={tab.path}
-                            to={tab.path}
-                            className={`
-                                relative px-6 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ease-out
-                                ${isActive(tab.path)
-                                    ? "bg-purple-600 text-white shadow-md transform scale-[1.02]"
-                                    : "text-neutral-500 hover:text-purple-700 hover:bg-white/60"
-                                }
-                            `}
-                        >
-                            {tab.label}
-                        </Link>
-                    ))}
+                <div className="mt-8 mb-2 w-full px-2">
+                    <div
+                        className={`flex items-center gap-2 bg-neutral-100 p-1.5 rounded-xl max-w-full overflow-x-auto shadow-inner animate-fade-in sm:w-fit sm:mx-auto ${
+                            tabs.length === 1 ? "justify-center" : ""
+                        }`}
+                    >
+                        {tabs.map((tab) => (
+                            <Link
+                                key={tab.path}
+                                to={tab.path}
+                                className={`
+                                    relative shrink-0 whitespace-nowrap px-4 sm:px-6 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-300 ease-out
+                                    ${isActive(tab.path)
+                                        ? "bg-purple-600 text-white shadow-md transform scale-[1.02]"
+                                        : "text-neutral-500 hover:text-purple-700 hover:bg-white/60"
+                                    }
+                                `}
+                            >
+                                {tab.label}
+                            </Link>
+                        ))}
+                    </div>
                 </div>
             )}
 

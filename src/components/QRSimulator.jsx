@@ -1,8 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { QrCode } from 'lucide-react';
+import { isSuperAdmin } from '../utils/userHelper';
 
 const QRSimulator = () => {
+    if (!isSuperAdmin()) {
+        return null;
+    }
+
     const navigate = useNavigate();
     const [qrCode, setQrCode] = useState('');
     const [isVisible, setIsVisible] = useState(false);

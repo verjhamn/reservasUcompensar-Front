@@ -70,7 +70,7 @@ const Footer = () => {
               <a href="https://www.instagram.com/ucompensar/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="hover:text-orange-500 transition-colors hover:scale-110 transform duration-200">
                 <Instagram className="w-6 h-6" />
               </a>
-              <a href="https://www.youtube.com/user/UCompensar" target="_blank" rel="noopener noreferrer" aria-label="YouTube" className="hover:text-orange-500 transition-colors hover:scale-110 transform duration-200">
+              <a href="https://www.youtube.com/@ucompensar" target="_blank" rel="noopener noreferrer" aria-label="YouTube" className="hover:text-orange-500 transition-colors hover:scale-110 transform duration-200">
                 <Youtube className="w-6 h-6" />
               </a>
             </div>
