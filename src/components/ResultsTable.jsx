@@ -5,8 +5,8 @@ import ReservationModal from "./ReservationModal";
 
 import { fetchFilteredReservations } from "../Services/reservasService";
 import { useMsal } from "@azure/msal-react";
-import { loginRequest } from "../Services/SSOServices/authConfig";
 import { fetchAuthToken } from "../Services/authService";
+import { startMicrosoftLogin } from "../Services/SSOServices/loginFlowService";
 
 const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode, onSpaceLoaded, setAvailableFloors }) => {
   const { instance } = useMsal();
@@ -17,7 +17,6 @@ const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode, onSpaceLo
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -93,41 +92,29 @@ const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode, onSpaceLo
 
 
   const handleReserveClick = async (item) => {
-    // For both guests and logged in users, we show ReservationModal first to check availability
-    setSelectedSpace(item);
-    setIsModalOpen(true);
-
     if (!isGuestMode) {
-      let userData = localStorage.getItem("userData");
-      if (!userData) {
+      const userData = localStorage.getItem("userData");
+      if (!userData || userData === "null") {
         try {
-          const response = await instance.loginPopup(loginRequest);
-          const accessToken = response.accessToken;
-
-          // Obtener datos del usuario desde Microsoft Graph
-          const graphResponse = await fetch("https://graph.microsoft.com/v1.0/me", {
-            headers: { Authorization: `Bearer ${accessToken}` },
+          await startMicrosoftLogin(instance, {
+            redirectStartPage: window.location.href,
           });
-          const user = await graphResponse.json();
-
-          if (user) {
-            localStorage.setItem("userData", JSON.stringify(user));
-            window.dispatchEvent(new Event("storage"));
-            await fetchAuthToken();
-          }
-
-          setIsLoggedIn(true);
         } catch (error) {
-          console.error("Error en el inicio de sesión con Microsoft:", error);
-          // Si el usuario cierra el popup sin iniciar sesión, continuar
-          // el flujo sin autenticación (el modal ya está abierto)
-          // No hacer return para no bloquear el uso de la app
+          console.error("Error iniciando sesión con Microsoft:", error);
         }
+        return;
       } else {
-        await fetchAuthToken();
+        try {
+          await fetchAuthToken();
+        } catch (error) {
+          console.error("Error sincronizando sesión interna:", error);
+        }
       }
     }
-    // Guest mode just opens modal (already set above)
+
+    // Guests o usuarios autenticados: abrir modal de reserva normalmente
+    setSelectedSpace(item);
+    setIsModalOpen(true);
   };
 
 

@@ -13,6 +13,7 @@ import AppRoutes from './components/AppRoutes';
 import { EventType } from "@azure/msal-browser";
 import { getUserData } from "./Services/SSOServices/graphService";
 import { fetchAuthToken } from "./Services/authService";
+import { clearAuthFlowState } from "./Services/SSOServices/loginFlowService";
 
 const msalInstance = new PublicClientApplication(msalConfig);
 
@@ -109,7 +110,13 @@ function App() {
                     }
                 } catch (error) {
                     console.error("Error manejando el login global:", error);
+                } finally {
+                    clearAuthFlowState();
                 }
+            }
+
+            if (message.eventType === EventType.LOGIN_FAILURE) {
+                clearAuthFlowState();
             }
         });
 

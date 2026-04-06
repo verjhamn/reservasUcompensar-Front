@@ -3,13 +3,18 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { getUserId, fetchAuthToken } from '../Services/authService';
 import { useMsal } from '@azure/msal-react';
-import { loginRequest } from '../Services/SSOServices/authConfig';
 import {
     getDisponibilidadCheckIn,
     getDisponibilidadCheckOut,
     verificarReservaUsuario,
     verificarReservaConCheckIn
 } from '../Services/getDisponibilidadService';
+import {
+    AUTH_FLOW_SOURCES,
+    clearAuthFlowState,
+    isQrAuthPending,
+    startMicrosoftLogin
+} from '../Services/SSOServices/loginFlowService';
 import CheckInModal from '../components/CheckInModal';
 import CheckOutModal from '../components/CheckOutModal';
 import ReservationModal from '../components/ReservationModal';
@@ -85,42 +90,47 @@ const EspacioQRView = ({ isLoggedIn, goToMyReservations }) => {
             flujoIniciadoRef.current = true;
             const espacioCargado = espacios[0];
             const requiresLoginByUrlId = UUID_REGEX.test(codigo);
+            const qrAuthPending = isQrAuthPending(codigo);
             const hasStoredUserData = !!localStorage.getItem("userData");
 
             // Si hay userData pero no userId backend, intentar reconstruir la sesión antes de pedir login.
             if (hasStoredUserData && !getUserId()) {
-                await fetchAuthToken();
+                try {
+                    await fetchAuthToken();
+                } catch (error) {
+                    console.error("[EspacioQR] Error reconstruyendo sesión interna:", error);
+                }
             }
 
             const hasInternalSession = !!localStorage.getItem("userData") && !!getUserId();
 
             if (hasInternalSession) {
+                clearAuthFlowState();
                 await verificarFlujoInterno(espacioCargado);
                 return;
             }
 
-            // Solo forzar popup si el QR viene con ID (UUID) en la URL.
+            // Solo forzar login Microsoft si el QR viene con ID (UUID) en la URL.
             if (requiresLoginByUrlId) {
+                // Si ya hubo intento de redirect desde QR y seguimos sin sesión, evitar loop.
+                if (qrAuthPending) {
+                    clearAuthFlowState();
+                    setGuestMode(true);
+                    setSelectedSpace(espacioCargado);
+                    setShowReservationModal(true);
+                    return;
+                }
+
                 try {
-                    const response = await instance.loginPopup(loginRequest);
-                    const accessToken = response.accessToken;
-
-                    const graphResponse = await fetch("https://graph.microsoft.com/v1.0/me", {
-                        headers: { Authorization: `Bearer ${accessToken}` },
+                    await startMicrosoftLogin(instance, {
+                        source: AUTH_FLOW_SOURCES.QR,
+                        redirectStartPage: window.location.href,
+                        metadata: { codigo },
                     });
-                    const user = await graphResponse.json();
-
-                    if (user) {
-                        localStorage.setItem("userData", JSON.stringify(user));
-                        window.dispatchEvent(new Event("storage")); // Notificar a la app del cambio de sesión
-                        await fetchAuthToken();
-                    }
-
-                    // Login exitoso → flujo interno
-                    await verificarFlujoInterno(espacioCargado);
                     return;
                 } catch {
-                    console.info("[EspacioQR] Usuario canceló el login o hubo error. Flujo externo iniciado.");
+                    console.info("[EspacioQR] Error en redirect de login. Flujo externo iniciado.");
+                    clearAuthFlowState();
                 }
             }
 

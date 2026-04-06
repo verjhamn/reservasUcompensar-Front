@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMsal } from "@azure/msal-react";
 import { GraduationCap, CalendarDays, ArrowRight } from 'lucide-react';
-import { loginRequest } from "../Services/SSOServices/authConfig";
+import { startMicrosoftLogin } from "../Services/SSOServices/loginFlowService";
 import campusBg from '../assets/campus_av68.webp';
 
 const LandingView = ({ isLoggedIn }) => {
@@ -21,14 +21,11 @@ const LandingView = ({ isLoggedIn }) => {
         if (isLoggingIn) return;
         setIsLoggingIn(true);
         try {
-            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-            if (isMobile) {
-                await instance.loginRedirect(loginRequest);
-            } else {
-                await instance.loginPopup(loginRequest);
-                // Mantenemos el estado 'isLoggingIn' en true porque App.jsx está manejando 
-                // el fetch de roles en segundo plano y asíncronamente lanzará true a `isLoggedIn`
-            }
+            await startMicrosoftLogin(instance, {
+                redirectStartPage: window.location.href,
+            });
+            // Mantenemos el estado 'isLoggingIn' en true porque App.jsx maneja
+            // el fetch de roles y luego actualizará `isLoggedIn`.
         } catch (error) {
             console.error("Error en login:", error);
             setIsLoggingIn(false);
