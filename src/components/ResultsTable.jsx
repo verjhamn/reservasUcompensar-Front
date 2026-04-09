@@ -7,6 +7,7 @@ import { fetchFilteredReservations } from "../Services/reservasService";
 import { useMsal } from "@azure/msal-react";
 import { fetchAuthToken } from "../Services/authService";
 import { startMicrosoftLogin } from "../Services/SSOServices/loginFlowService";
+import { getContactEmailBySpaceType } from "../utils/spaceContactEmail";
 
 const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode, onSpaceLoaded, setAvailableFloors }) => {
   const { instance } = useMsal();
@@ -122,6 +123,7 @@ const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode, onSpaceLo
   const renderInfoMessage = () => {
     // En modo invitado no mostramos la alerta de correo porque usan el formulario de cotización
     if (filters.tipo && filters.tipo !== "Coworking" && !isGuestMode) {
+      const contactEmail = getContactEmailBySpaceType(filters.tipo);
       return (
         <div className="bg-amber-50 border-l-4 border-amber-400 p-4 mb-4 rounded">
           <div className="flex">
@@ -132,7 +134,7 @@ const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode, onSpaceLo
             </div>
             <div className="ml-3">
               <p className="text-sm text-amber-700">
-                Para reservar este tipo de espacio, por favor escribir al correo reservas.campus@ucompensar.edu.co.
+                Para reservar este tipo de espacio, por favor escribir al correo {contactEmail}.
               </p>
             </div>
           </div>
@@ -250,3 +252,4 @@ const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode, onSpaceLo
 };
 
 export default ResultsTable;
+

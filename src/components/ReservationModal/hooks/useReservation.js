@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { createReservation } from "../../../Services/createReservationService";
 import { getUserId } from "../../../Services/authService";
 import { canReserveAnySpace } from "../../../utils/userHelper";
+import { getContactEmailBySpaceType } from "../../../utils/spaceContactEmail";
 
 export const useReservation = ({
     spaceData,
@@ -22,8 +23,9 @@ export const useReservation = ({
         const isAdmin = canReserveAnySpace(userData?.mail);
 
         if (!isAdmin && spaceData.coworking_contenedor !== "SI") {
+            const contactEmail = getContactEmailBySpaceType(spaceData?.tipo);
             toast.error(
-                'Por favor, para reservar este espacio escribir al correo reservas.campus@ucompensar.edu.co',
+                `Por favor, para reservar este espacio escribir al correo ${contactEmail}`,
                 {
                     duration: 5000,
                     position: 'top-right',
