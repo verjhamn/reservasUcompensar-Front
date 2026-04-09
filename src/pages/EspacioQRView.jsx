@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { getUserId, fetchAuthToken } from '../Services/authService';
@@ -21,6 +21,8 @@ import ReservationModal from '../components/ReservationModal';
 import ResultsTable from '../components/ResultsTable';
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const SESSION_HYDRATION_TIMEOUT_MS = 4000;
+const SESSION_HYDRATION_POLL_MS = 200;
 
 const EspacioQRView = ({ isLoggedIn, goToMyReservations }) => {
     const { codigo } = useParams();
@@ -35,20 +37,78 @@ const EspacioQRView = ({ isLoggedIn, goToMyReservations }) => {
     const [reservaCheckOut, setReservaCheckOut] = useState(null);
     const [selectedSpace, setSelectedSpace] = useState(null);
 
-    // guestMode determina si el ReservationModal se abre en modo externo
+    // guestMode decides if ReservationModal opens as guest mode
     const [guestMode, setGuestMode] = useState(!isLoggedIn);
     const [filters] = useState({ id: codigo });
 
-    // Ref para evitar interactuar procesar múltiples veces el cargue del espacio
+    // Avoid triggering automatic flow more than once per load
     const flujoIniciadoRef = useRef(false);
 
-    // Lógica para verificar check-in y check-out (usuario interno)
+    useEffect(() => {
+        if (isLoggedIn) {
+            setGuestMode(false);
+        }
+    }, [isLoggedIn]);
+
+    const hasInternalSession = () => {
+        const storedUser = localStorage.getItem('userData');
+        return !!storedUser && storedUser !== 'null' && !!getUserId();
+    };
+
+    const hydrateBackendSessionIfPossible = async () => {
+        const storedUser = localStorage.getItem('userData');
+
+        if (storedUser && storedUser !== 'null' && !getUserId()) {
+            try {
+                await fetchAuthToken();
+            } catch (error) {
+                console.error('[EspacioQR] Error rebuilding backend session:', error);
+            }
+        }
+
+        return hasInternalSession();
+    };
+
+    const waitForInternalSession = async (timeoutMs = SESSION_HYDRATION_TIMEOUT_MS) => {
+        const startedAt = Date.now();
+        let backendHydrationRequested = false;
+
+        while (Date.now() - startedAt < timeoutMs) {
+            const storedUser = localStorage.getItem('userData');
+            const hasUserData = !!storedUser && storedUser !== 'null';
+            const userId = getUserId();
+
+            if (hasUserData && userId) {
+                return true;
+            }
+
+            if (hasUserData && !userId && !backendHydrationRequested) {
+                backendHydrationRequested = true;
+
+                try {
+                    await fetchAuthToken();
+                } catch (error) {
+                    console.error('[EspacioQR] Error completing backend session after redirect:', error);
+                }
+
+                if (hasInternalSession()) {
+                    return true;
+                }
+            }
+
+            await new Promise((resolve) => setTimeout(resolve, SESSION_HYDRATION_POLL_MS));
+        }
+
+        return hasInternalSession();
+    };
+
+    // Internal user flow: check-out -> check-in -> reservation modal
     const verificarFlujoInterno = async (espacioCargado) => {
         try {
             const userId = getUserId();
-            const fecha = format(new Date(), "dd/MM/yyyy");
+            const fecha = format(new Date(), 'dd/MM/yyyy');
 
-            // 1. Verificar check-out
+            // 1. Check check-out first
             const dispCheckOut = await getDisponibilidadCheckOut(codigo, fecha, userId);
             const reservaCheckOutUsuario = verificarReservaConCheckIn(dispCheckOut.reservas, userId);
 
@@ -58,31 +118,34 @@ const EspacioQRView = ({ isLoggedIn, goToMyReservations }) => {
                 return;
             }
 
-            // 2. Verificar check-in
+            // 2. Then check check-in
             const dispCheckIn = await getDisponibilidadCheckIn(codigo, fecha, userId);
             const reservaCheckInUsuario = verificarReservaUsuario(dispCheckIn.reservas, userId);
 
-            if (reservaCheckInUsuario && reservaCheckInUsuario.estado !== "Confirmada" && reservaCheckInUsuario.estado !== "Completada") {
+            if (
+                reservaCheckInUsuario &&
+                reservaCheckInUsuario.estado !== 'Confirmada' &&
+                reservaCheckInUsuario.estado !== 'Completada'
+            ) {
                 setReservaCheckIn({ ...reservaCheckInUsuario, espacio: dispCheckIn.espacio });
                 setShowCheckInModal(true);
                 return;
             }
 
-            // 3. No hay check-in ni check-out pendiente → Abrir modal de reserva (interno)
+            // 3. No pending check-in/check-out: open internal reservation modal
             setGuestMode(false);
             setSelectedSpace(espacioCargado);
             setShowReservationModal(true);
-
         } catch (error) {
-            console.error("[EspacioQR] Error en flujo interno:", error);
-            // Si falla la verificación por alguna razón, abrir modal interno por defecto
+            console.error('[EspacioQR] Error in internal flow:', error);
+            // Fallback to internal modal by default
             setGuestMode(false);
             setSelectedSpace(espacioCargado);
             setShowReservationModal(true);
         }
     };
 
-    // Callback de ResultsTable cuando carga los datos
+    // Called by ResultsTable after loading spaces
     const handleSpaceLoaded = async (espacios) => {
         if (flujoIniciadoRef.current) return;
 
@@ -91,34 +154,26 @@ const EspacioQRView = ({ isLoggedIn, goToMyReservations }) => {
             const espacioCargado = espacios[0];
             const requiresLoginByUrlId = UUID_REGEX.test(codigo);
             const qrAuthPending = isQrAuthPending(codigo);
-            const hasStoredUserData = !!localStorage.getItem("userData");
 
-            // Si hay userData pero no userId backend, intentar reconstruir la sesión antes de pedir login.
-            if (hasStoredUserData && !getUserId()) {
-                try {
-                    await fetchAuthToken();
-                } catch (error) {
-                    console.error("[EspacioQR] Error reconstruyendo sesión interna:", error);
-                }
-            }
-
-            const hasInternalSession = !!localStorage.getItem("userData") && !!getUserId();
-
-            if (hasInternalSession) {
+            if (await hydrateBackendSessionIfPossible()) {
                 clearAuthFlowState();
                 await verificarFlujoInterno(espacioCargado);
                 return;
             }
 
-            // Solo forzar login Microsoft si el QR viene con ID (UUID) en la URL.
+            // Only auto-login for UUID QR URLs
             if (requiresLoginByUrlId) {
-                // Si ya hubo intento de redirect desde QR y seguimos sin sesión, evitar loop.
+                // If we just returned from redirect, wait briefly for session hydration
+                // before falling back to guest flow.
                 if (qrAuthPending) {
+                    const hydratedAfterRedirect = await waitForInternalSession();
+                    if (hydratedAfterRedirect) {
+                        clearAuthFlowState();
+                        await verificarFlujoInterno(espacioCargado);
+                        return;
+                    }
+
                     clearAuthFlowState();
-                    setGuestMode(true);
-                    setSelectedSpace(espacioCargado);
-                    setShowReservationModal(true);
-                    return;
                 }
 
                 try {
@@ -129,12 +184,12 @@ const EspacioQRView = ({ isLoggedIn, goToMyReservations }) => {
                     });
                     return;
                 } catch {
-                    console.info("[EspacioQR] Error en redirect de login. Flujo externo iniciado.");
+                    console.info('[EspacioQR] Login redirect failed. Starting guest flow.');
                     clearAuthFlowState();
                 }
             }
 
-            // Flujo externo (sin login o URL sin ID)
+            // Guest flow (no login or non-UUID URL)
             setGuestMode(true);
             setSelectedSpace(espacioCargado);
             setShowReservationModal(true);
@@ -160,7 +215,7 @@ const EspacioQRView = ({ isLoggedIn, goToMyReservations }) => {
     const handleCloseReservationModal = () => {
         setShowReservationModal(false);
         setSelectedSpace(null);
-        // Permitir que se vuelva a abrir el modal si se clickea la tarjeta
+        // Allow reopening if user clicks card again
         flujoIniciadoRef.current = false;
     };
 

@@ -12,7 +12,7 @@ import roleSyncService from './Services/roleSyncService';
 import AppRoutes from './components/AppRoutes';
 import { EventType } from "@azure/msal-browser";
 import { getUserData } from "./Services/SSOServices/graphService";
-import { fetchAuthToken } from "./Services/authService";
+import { fetchAuthToken, getUserId } from "./Services/authService";
 import { clearAuthFlowState } from "./Services/SSOServices/loginFlowService";
 
 const msalInstance = new PublicClientApplication(msalConfig);
@@ -94,18 +94,24 @@ function App() {
                 const accessToken = payload.accessToken;
                 
                 try {
-                    // Evitar fetch doble si el componente SignInButton ya lo hizo
+                    // Marcar sesión como activa de inmediato al volver del redirect.
+                    setIsLoggedIn(true);
+
                     const currentData = localStorage.getItem("userData");
-                    if (!currentData || currentData === "null") {
+                    let hasValidUserData = !!currentData && currentData !== "null";
+
+                    if (!hasValidUserData) {
                         console.log("Global login success intercepted. Fetching user and roles...");
                         const userData = await getUserData(accessToken);
                         localStorage.setItem("userData", JSON.stringify(userData));
-                        setIsLoggedIn(true);
+                        hasValidUserData = true;
                         
                         // Disparar evento para que Header.jsx actualice el `user`
                         window.dispatchEvent(new Event("storage"));
+                    }
 
-                        // Recuperar roles desde el backend para este nuevo usuario
+                    // Si falta userId de backend, terminar hidratación de sesión interna.
+                    if (hasValidUserData && !getUserId()) {
                         await fetchAuthToken();
                     }
                 } catch (error) {
