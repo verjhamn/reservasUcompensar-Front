@@ -10,15 +10,19 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
         tipoDocumento: '',
         numeroDocumento: '',
         correo: '',
+        correoAlternativo: '',
         telefono: '',
         empresa: '',
         tipoDocumentoEmpresa: '',
         numeroDocumentoEmpresa: '',
+        digitoVerificacionEmpresa: '',
         telefonoEmpresa: '',
         direccionEmpresa: '',
         esCompensar: false,
+        empresaCompensarInterno: false,
         compensarId: '',
         centroCostos: '',
+        nombreEvento: '',
         tipoEvento: '',
         tiempoMontajeHoras: '',
         cantidadPersonas: '',
@@ -49,6 +53,17 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
         return value;
     };
 
+    const formatPayloadDate = (dateValue) => {
+        const d = dateValue ? new Date(dateValue) : new Date();
+        const dia = String(d.getDate()).padStart(2, '0');
+        const mes = String(d.getMonth() + 1).padStart(2, '0');
+        const anio = d.getFullYear();
+        return `${dia}/${mes}/${anio}`;
+    };
+
+    const startDate = quoteData?.startDate || quoteData?.date;
+    const endDate = quoteData?.endDate || quoteData?.date || quoteData?.startDate;
+
     const validateStep = (step) => {
         const newErrors = {};
         let isValid = true;
@@ -62,6 +77,8 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
             if (!formData.numeroDocumento) newErrors.numeroDocumento = 'Requerido';
             else if (!/^[A-Za-z0-9]{5,20}$/.test(formData.numeroDocumento)) newErrors.numeroDocumento = 'Mínimo 5 caracteres alfanuméricos';
 
+            if (formData.correoAlternativo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.correoAlternativo)) newErrors.correoAlternativo = 'Formato de correo invalido';
+
             if (!formData.correo) newErrors.correo = 'El correo es requerido';
             else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.correo)) newErrors.correo = 'Formato de correo inválido';
 
@@ -72,6 +89,7 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
         }
 
         if (step === 2) {
+            if (!formData.empresaCompensarInterno) {
             if (!formData.empresa) newErrors.empresa = 'Requerido';
             else if (formData.empresa.length < 2) newErrors.empresa = 'Mínimo 2 caracteres';
 
@@ -81,10 +99,14 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
             else if (formData.tipoDocumentoEmpresa === 'NIT' && !/^\d{8,15}$/.test(formData.numeroDocumentoEmpresa)) newErrors.numeroDocumentoEmpresa = 'NIT debe tener entre 8 y 15 números';
             else if (formData.tipoDocumentoEmpresa !== 'NIT' && formData.numeroDocumentoEmpresa.length < 5) newErrors.numeroDocumentoEmpresa = 'Mínimo 5 caracteres';
 
+            if (formData.tipoDocumentoEmpresa === 'NIT' && !/^\d$/.test(formData.digitoVerificacionEmpresa)) newErrors.digitoVerificacionEmpresa = 'Debe ser un digito';
+
             if (!formData.telefonoEmpresa) newErrors.telefonoEmpresa = 'Requerido';
             else if (!/^\d{10}$/.test(formData.telefonoEmpresa)) newErrors.telefonoEmpresa = 'Debe tener exactamente 10 dígitos';
 
             if (!formData.direccionEmpresa) newErrors.direccionEmpresa = 'Requerido';
+
+            }
 
             if (formData.esCompensar) {
                 if (!formData.compensarId) newErrors.compensarId = 'Requerido';
@@ -95,6 +117,7 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
         }
 
         if (step === 3) {
+            if (!formData.nombreEvento) newErrors.nombreEvento = 'Requerido';
             if (!formData.tipoEvento) newErrors.tipoEvento = 'Requerido';
             if (!formData.cantidadPersonas || formData.cantidadPersonas < 1) newErrors.cantidadPersonas = 'Mínimo 1 persona';
             if (!formData.tiempoMontajeHoras) newErrors.tiempoMontajeHoras = 'Requerido';
@@ -158,11 +181,8 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
         setIsLoading(true);
         setError(null);
 
-        const d = quoteData?.date ? new Date(quoteData.date) : new Date();
-        const dia = String(d.getDate()).padStart(2, '0');
-        const mes = String(d.getMonth() + 1).padStart(2, '0');
-        const anio = d.getFullYear();
-        const fechaFormateada = `${dia}/${mes}/${anio}`;
+        const fechaFormateada = formatPayloadDate(startDate);
+        const fechaFinFormateada = formatPayloadDate(endDate || startDate);
 
         const requestData = {
             solicitante: {
@@ -170,28 +190,32 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                 tipo_documento: formData.tipoDocumento,
                 numero_documento: formData.numeroDocumento,
                 correo: formData.correo,
-                correo_alternativo: "",
+                correo_alternativo: formData.correoAlternativo,
                 telefono: formData.telefono,
                 es_compensar: formData.esCompensar
             },
             empresa: {
-                nombre: formData.empresa,
-                tipo_documento: formData.tipoDocumentoEmpresa,
-                numero_documento: formData.numeroDocumentoEmpresa,
-                digito_verificacion: "0",
-                telefono: formData.telefonoEmpresa,
-                direccion: formData.direccionEmpresa,
-                ...(formData.esCompensar ? { compensar_id: formData.compensarId, centro_costo: formData.centroCostos } : {})
+                nombre: formData.empresaCompensarInterno ? 'Compensar' : formData.empresa,
+                tipo_documento: formData.empresaCompensarInterno ? '' : formData.tipoDocumentoEmpresa,
+                numero_documento: formData.empresaCompensarInterno ? '' : formData.numeroDocumentoEmpresa,
+                digito_verificacion: formData.empresaCompensarInterno ? '0' : (formData.digitoVerificacionEmpresa || '0'),
+                compensar_interno: formData.empresaCompensarInterno,
+                compensar_id: formData.esCompensar ? formData.compensarId : '',
+                compensar_id_cc: formData.esCompensar ? formData.centroCostos : '',
+                telefono: formData.empresaCompensarInterno ? '' : formData.telefonoEmpresa,
+                direccion: formData.empresaCompensarInterno ? '' : formData.direccionEmpresa
             },
             reserva: {
                 espacio_id: spaceData?.id,
                 fecha: fechaFormateada,
+                fecha_fin: fechaFinFormateada,
                 hora_inicio: quoteData?.startTime,
                 hora_fin: quoteData?.endTime,
                 tiempo_montaje: (parseInt(formData.tiempoMontajeHoras) || 0) * 60,
                 cantidad_personas: parseInt(formData.cantidadPersonas) || 0
             },
             evento: {
+                nombre: formData.nombreEvento,
                 tipo: formData.tipoEvento,
                 detalles: formData.detalles,
                 fecha_solicitud: new Date().toISOString()
@@ -242,7 +266,8 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
         );
     }
 
-    const formattedDate = quoteData?.date ? new Date(quoteData.date).toLocaleDateString() : '';
+    const formattedStartDate = startDate ? new Date(startDate).toLocaleDateString() : '';
+    const formattedEndDate = endDate ? new Date(endDate).toLocaleDateString() : formattedStartDate;
 
     return (
         <div className="flex flex-col h-full bg-white animate-fade-in relative z-10 w-full max-w-5xl mx-auto rounded-xl">
@@ -293,19 +318,14 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                             </div>
 
                             <div className="pt-4 border-t border-purple-200/60">
-                                <p className="text-xs font-semibold text-purple-800 tracking-wider mb-1">Fecha seleccionada</p>
-                                <p className="text-sm text-gray-800 font-medium">{formattedDate}</p>
+                                <p className="text-xs font-semibold text-purple-800 tracking-wider mb-1">Rango seleccionado</p>
+                                <p className="text-sm text-gray-800 font-medium">
+                                    {formattedStartDate} - {formattedEndDate}
+                                </p>
                             </div>
 
                             <div className="pt-4 border-t border-purple-200/60">
                                 <p className="text-xs font-semibold text-purple-800 tracking-wider mb-1">Horarios</p>
-                                <div className="flex flex-wrap gap-2 mt-2">
-                                    {quoteData?.hours?.map(h => (
-                                        <span key={h} className="bg-white border border-purple-200 text-purple-700 text-xs py-1 px-3 rounded-md shadow-sm font-medium">
-                                            {h}
-                                        </span>
-                                    ))}
-                                </div>
                                 <p className="text-xs text-purple-700 mt-3 font-medium bg-purple-100/50 p-2 rounded-lg border border-purple-100 text-center">
                                     Rango: {quoteData?.startTime} - {quoteData?.endTime}
                                 </p>
@@ -384,6 +404,20 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                                         </div>
                                         <div className="space-y-1.5">
                                             <label className="text-sm font-semibold text-gray-700">
+                                                Correo alternativo
+                                            </label>
+                                            <input
+                                                type="email"
+                                                name="correoAlternativo"
+                                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white"
+                                                value={formData.correoAlternativo}
+                                                onChange={handleChange}
+                                                placeholder="correo.alterno@ejemplo.com"
+                                            />
+                                            {errors.correoAlternativo && <p className="text-red-500 text-[11px] font-semibold mt-1">{errors.correoAlternativo}</p>}
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-sm font-semibold text-gray-700">
                                                 Teléfono <span className="text-red-500">*</span>
                                             </label>
                                             <input
@@ -451,6 +485,20 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                                         </div>
                                     )}
 
+                                    <div className="bg-purple-50 p-4 rounded-xl border border-purple-100 flex items-center justify-between">
+                                        <div>
+                                            <p className="font-bold text-purple-900 text-sm">La empresa que asistira es Compensar?</p>
+                                            <p className="text-xs text-purple-700 mt-0.5">Si es Compensar, no se solicitaran datos de empresa externa.</p>
+                                        </div>
+                                        <div
+                                            onClick={() => setFormData({ ...formData, empresaCompensarInterno: !formData.empresaCompensarInterno })}
+                                            className={`relative inline-flex h-6 w-11 items-center rounded-full cursor-pointer transition-colors focus:outline-none ${formData.empresaCompensarInterno ? 'bg-purple-600' : 'bg-gray-300'}`}
+                                        >
+                                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData.empresaCompensarInterno ? 'translate-x-6' : 'translate-x-1'}`} />
+                                        </div>
+                                    </div>
+
+                                    {!formData.empresaCompensarInterno && (
                                     <div className="grid md:grid-cols-2 gap-5">
                                         <div className="space-y-1.5 md:col-span-2">
                                             <label className="text-sm font-semibold text-gray-700">
@@ -497,6 +545,23 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                                             />
                                             {errors.numeroDocumentoEmpresa && <p className="text-red-500 text-[11px] font-semibold mt-1">{errors.numeroDocumentoEmpresa}</p>}
                                         </div>
+                                        {formData.tipoDocumentoEmpresa === 'NIT' && (
+                                            <div className="space-y-1.5">
+                                                <label className="text-sm font-semibold text-gray-700">
+                                                    Digito de verificacion <span className="text-red-500">*</span>
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    name="digitoVerificacionEmpresa"
+                                                    maxLength="1"
+                                                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white"
+                                                    value={formData.digitoVerificacionEmpresa}
+                                                    onChange={handleChange}
+                                                    placeholder="Ej. 0"
+                                                />
+                                                {errors.digitoVerificacionEmpresa && <p className="text-red-500 text-[11px] font-semibold mt-1">{errors.digitoVerificacionEmpresa}</p>}
+                                            </div>
+                                        )}
                                         <div className="space-y-1.5">
                                             <label className="text-sm font-semibold text-gray-700">
                                                 Teléfono corporativo <span className="text-red-500">*</span>
@@ -526,6 +591,7 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                                             {errors.direccionEmpresa && <p className="text-red-500 text-[11px] font-semibold mt-1">{errors.direccionEmpresa}</p>}
                                         </div>
                                     </div>
+                                    )}
                                 </div>
                             )}
 
@@ -535,6 +601,18 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                                     <h3 className="text-xl font-bold text-gray-800 border-b border-gray-100 pb-3">Detalles del evento</h3>
 
                                     <div className="grid md:grid-cols-2 gap-5">
+                                        <div className="space-y-1.5 md:col-span-2">
+                                            <label className="text-sm font-semibold text-gray-700">Nombre del evento <span className="text-red-500">*</span></label>
+                                            <input
+                                                type="text"
+                                                name="nombreEvento"
+                                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white"
+                                                placeholder="Ej: Convencion comercial"
+                                                value={formData.nombreEvento}
+                                                onChange={handleChange}
+                                            />
+                                            {errors.nombreEvento && <p className="text-red-500 text-[11px] font-semibold mt-1">{errors.nombreEvento}</p>}
+                                        </div>
                                         <div className="space-y-1.5 md:col-span-2">
                                             <label className="text-sm font-semibold text-gray-700">Tipo de evento / Propósito <span className="text-red-500">*</span></label>
                                             <input

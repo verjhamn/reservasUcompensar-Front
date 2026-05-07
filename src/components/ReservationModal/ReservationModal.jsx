@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Toaster, toast } from 'react-hot-toast';
 import { addHours, startOfDay, isBefore, format } from "date-fns";
 
 import LoadingSpinner from '../UtilComponents/LoadingSpinner';
 import { useAvailability } from "./hooks/useAvailability";
 import { useReservation } from "./hooks/useReservation";
+import { getDisponibilidad, processOccupiedHours } from "../../Services/getDisponibilidadService";
 
 import SpaceInformation from "./components/SpaceInformation";
 import AvailabilityCalendar from "./components/AvailabilityCalendar";
@@ -13,17 +14,19 @@ import TimeSlotSelector from "./components/TimeSlotSelector";
 import ReservationForm from "./components/ReservationForm";
 import QuoteForm from './components/QuoteForm';
 
-// Helper function to calculate end time
-const getEndTime = (lastSelectedHour) => {
-    const hour = parseInt(lastSelectedHour.split(':')[0]);
-    return `${(hour + 1).toString().padStart(2, '0')}:00`;
-};
-
 const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGuestMode, onQuoteRequest }) => {
     const [activeTab, setActiveTab] = useState("info");
     const [selectedHours, setSelectedHours] = useState([]);
     const [viewMode, setViewMode] = useState('reservation'); // 'reservation' or 'quote'
     const [quoteData, setQuoteData] = useState(null);
+    const [guestRange, setGuestRange] = useState({
+        startDate: null,
+        endDate: null,
+        startTime: '',
+        endTime: ''
+    });
+    const [guestAvailabilityByDate, setGuestAvailabilityByDate] = useState({});
+    const [guestAvailabilityLoading, setGuestAvailabilityLoading] = useState(false);
 
     const isCoworking = spaceData?.coworking_contenedor === "SI";
 
@@ -64,6 +67,27 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
                 duration: 4000,
                 position: 'top-right',
                 style: { background: '#fee2e2', color: '#dc2626' },
+            });
+            return;
+        }
+
+        if (isGuestMode) {
+            if (!hasAvailabilityForDate(selectedStart)) {
+                toast.error('Este día no tiene disponibilidad. Por favor seleccione otro día.', {
+                    duration: 4000,
+                    position: 'top-right',
+                    style: { background: '#fee2e2', color: '#dc2626' },
+                });
+                return;
+            }
+
+            setSelectedDate(selectedStart);
+            setGuestRange(prev => {
+                if (!prev.startDate || prev.endDate || isBefore(selectedStart, prev.startDate)) {
+                    return { ...prev, startDate: selectedStart, endDate: null };
+                }
+
+                return { ...prev, endDate: selectedStart };
             });
             return;
         }
@@ -166,6 +190,49 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
             };
         }
 
+        if (isGuestMode) {
+            const day = startOfDay(date);
+            const start = guestRange.startDate ? startOfDay(guestRange.startDate) : null;
+            const end = guestRange.endDate ? startOfDay(guestRange.endDate) : null;
+            const isStart = isSameCalendarDay(day, start);
+            const isEnd = isSameCalendarDay(day, end);
+            const isBetween = start && end && day > start && day < end;
+
+            if (isBetween && !hasAvailabilityForDate(date)) {
+                return {
+                    style: {
+                        backgroundColor: "#ffebee",
+                        color: "#d32f2f",
+                        border: "2px solid #f44336",
+                        borderRadius: "4px",
+                        fontWeight: "bold",
+                    },
+                    className: "rbc-day-no-availability",
+                };
+            }
+
+            if (isStart || isEnd) {
+                return {
+                    style: {
+                        backgroundColor: "#722070",
+                        color: "#fff",
+                        borderRadius: "4px",
+                        fontWeight: "bold",
+                    },
+                };
+            }
+
+            if (isBetween) {
+                return {
+                    style: {
+                        backgroundColor: "#f3e8ff",
+                        color: "#581c87",
+                        borderRadius: "4px",
+                    },
+                };
+            }
+        }
+
         if (!hasAvailabilityForDate(date)) {
             if (format(date, "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd")) {
                 return {
@@ -217,29 +284,236 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
         return {};
     };
 
+    const isSameCalendarDay = (a, b) => {
+        if (!a || !b) return false;
+        return format(a, "yyyy-MM-dd") === format(b, "yyyy-MM-dd");
+    };
+
+    const buildDateTime = (date, time) => {
+        if (!date || !time) return null;
+        return new Date(`${format(date, "yyyy-MM-dd")}T${time}`);
+    };
+
+    const isActiveReservationEvent = (event) => {
+        const estado = event?.estado?.toLowerCase?.() || '';
+        return estado !== 'completada' && estado !== 'cancelada';
+    };
+
+    const hasReservationOverlap = (rangeStart, rangeEnd) => {
+        return filteredEvents.some(event => (
+            isActiveReservationEvent(event) &&
+            rangeStart < event.end &&
+            rangeEnd > event.start
+        ));
+    };
+
+    const getDateKey = (date) => format(date, "yyyy-MM-dd");
+
+    const getDatesInRange = (start, end) => {
+        if (!start || !end) return [];
+
+        const dates = [];
+        let cursor = startOfDay(start);
+        const last = startOfDay(end);
+
+        while (cursor <= last && dates.length < 90) {
+            dates.push(cursor);
+            cursor = addHours(cursor, 24);
+        }
+
+        return dates;
+    };
+
+    const getReservedHoursForDate = (date) => {
+        if (!date) return [];
+
+        const key = getDateKey(date);
+        if (guestAvailabilityByDate[key]) return guestAvailabilityByDate[key];
+        if (monthAvailability[key]) return monthAvailability[key];
+        if (isSameCalendarDay(date, selectedDate)) return reservedHours;
+
+        return [];
+    };
+
+    const isHourAvailableOnDate = (date, time) => {
+        if (!date || !time) return true;
+        return !getReservedHoursForDate(date).includes(time);
+    };
+
+    const isRangeHourReserved = (date, time) => {
+        if (!date || !time) return false;
+        const rangeEnd = addHours(buildDateTime(date, time), 1);
+        const rangeStart = buildDateTime(date, time);
+        return filteredEvents.some(event => (
+            isActiveReservationEvent(event) &&
+            rangeStart < event.end &&
+            rangeEnd > event.start
+        ));
+    };
+
+    const timeOptions = generateTimeSlots();
+    const endTimeOptions = [...timeOptions.slice(1), '22:00'];
+
+    const getPreviousSlotFromEndTime = (time) => {
+        const hour = parseInt(time.split(':')[0], 10) - 1;
+        return `${hour.toString().padStart(2, '0')}:00`;
+    };
+
+    const isStartTimeChoiceAvailable = (time) => {
+        if (!guestRange.startDate || !time) return true;
+        if (!isHourAvailableOnDate(guestRange.startDate, time)) return false;
+        if (isRangeHourReserved(guestRange.startDate, time)) return false;
+
+        if (guestRange.endDate && guestRange.endTime && isSameCalendarDay(guestRange.startDate, guestRange.endDate)) {
+            return buildDateTime(guestRange.startDate, time) < buildDateTime(guestRange.endDate, guestRange.endTime);
+        }
+
+        return true;
+    };
+
+    const isEndTimeChoiceAvailable = (time) => {
+        if (!guestRange.endDate || !time) return true;
+
+        const previousSlot = getPreviousSlotFromEndTime(time);
+        if (!isHourAvailableOnDate(guestRange.endDate, previousSlot)) return false;
+        if (isRangeHourReserved(guestRange.endDate, previousSlot)) return false;
+
+        if (guestRange.startDate && guestRange.startTime && isSameCalendarDay(guestRange.startDate, guestRange.endDate)) {
+            return buildDateTime(guestRange.endDate, time) > buildDateTime(guestRange.startDate, guestRange.startTime);
+        }
+
+        return true;
+    };
+
+    const getRangeOccupiedSummary = () => {
+        if (!guestRange.startDate || !guestRange.endDate) return [];
+        const rangeStart = buildDateTime(guestRange.startDate, guestRange.startTime);
+        const rangeEnd = buildDateTime(guestRange.endDate, guestRange.endTime);
+        const shouldFilterBySelectedTime = rangeStart && rangeEnd && rangeEnd > rangeStart;
+
+        return getDatesInRange(guestRange.startDate, guestRange.endDate)
+            .map(date => ({
+                date,
+                hours: getReservedHoursForDate(date).filter(time => {
+                    if (!shouldFilterBySelectedTime) return true;
+
+                    const slotStart = buildDateTime(date, time);
+                    const slotEnd = addHours(slotStart, 1);
+                    return slotStart < rangeEnd && slotEnd > rangeStart;
+                })
+            }))
+            .filter(day => day.hours.length > 0);
+    };
+
+    const hasAvailabilityOverlap = (rangeStart, rangeEnd) => {
+        return getDatesInRange(rangeStart, rangeEnd).some(date => (
+            getReservedHoursForDate(date).some(time => {
+                const slotStart = buildDateTime(date, time);
+                const slotEnd = addHours(slotStart, 1);
+                return slotStart < rangeEnd && slotEnd > rangeStart;
+            })
+        ));
+    };
+
+    useEffect(() => {
+        const fetchGuestAvailability = async () => {
+            if (!isGuestMode || !spaceData?.id) return;
+
+            const datesToFetch = guestRange.startDate && guestRange.endDate
+                ? getDatesInRange(guestRange.startDate, guestRange.endDate)
+                : [guestRange.startDate, guestRange.endDate].filter(Boolean);
+
+            const uniqueDates = [...new Map(datesToFetch.map(date => [getDateKey(date), date])).values()]
+                .filter(date => !guestAvailabilityByDate[getDateKey(date)]);
+
+            if (uniqueDates.length === 0) return;
+
+            setGuestAvailabilityLoading(true);
+            try {
+                const entries = await Promise.all(uniqueDates.map(async (date) => {
+                    const disponibilidad = await getDisponibilidad(spaceData.id, format(date, "dd/MM/yyyy"));
+                    return [getDateKey(date), processOccupiedHours(disponibilidad)];
+                }));
+
+                setGuestAvailabilityByDate(prev => ({
+                    ...prev,
+                    ...Object.fromEntries(entries)
+                }));
+            } catch (error) {
+                console.error("Error al cargar disponibilidad del rango externo:", error);
+                toast.error('No se pudo validar la disponibilidad del rango seleccionado.');
+            } finally {
+                setGuestAvailabilityLoading(false);
+            }
+        };
+
+        fetchGuestAvailability();
+    }, [isGuestMode, spaceData?.id, guestRange.startDate, guestRange.endDate]);
+
     if (!isOpen || !spaceData) return null;
 
     const handleGuestSubmit = () => {
-        if (!selectedDate) {
-            toast.error('Por favor seleccione una fecha', { duration: 3000 });
-            return;
-        }
-        if (selectedHours.length === 0) {
-            toast.error('Por favor seleccione al menos una hora', { duration: 3000 });
+        if (!guestRange.startDate || !guestRange.endDate) {
+            toast.error('Por favor seleccione la fecha de inicio y la fecha de fin', { duration: 3000 });
             return;
         }
 
-        // Move to quote tab for Guest Users
-        const sortedHours = [...selectedHours].sort();
+        if (!guestRange.startTime || !guestRange.endTime) {
+            toast.error('Por favor seleccione la hora de inicio y la hora de fin', { duration: 3000 });
+            return;
+        }
+
+        if (guestAvailabilityLoading) {
+            toast.error('Espera un momento mientras validamos la disponibilidad del rango.', { duration: 3000 });
+            return;
+        }
+
+        if (!isStartTimeChoiceAvailable(guestRange.startTime)) {
+            toast.error('La hora de inicio seleccionada no está disponible.', { duration: 4000 });
+            return;
+        }
+
+        if (!isEndTimeChoiceAvailable(guestRange.endTime)) {
+            toast.error('La hora de fin seleccionada no está disponible.', { duration: 4000 });
+            return;
+        }
+
+        const rangeStart = buildDateTime(guestRange.startDate, guestRange.startTime);
+        const rangeEnd = buildDateTime(guestRange.endDate, guestRange.endTime);
+
+        if (!rangeStart || !rangeEnd || rangeEnd <= rangeStart) {
+            toast.error('La fecha y hora de fin deben ser posteriores al inicio.', { duration: 4000 });
+            return;
+        }
+
+        if (rangeStart < new Date()) {
+            toast.error('No se puede solicitar una cotizaciÃ³n para una fecha u hora anterior a la actual.', { duration: 4000 });
+            return;
+        }
+
+        if (hasReservationOverlap(rangeStart, rangeEnd)) {
+            toast.error('El rango seleccionado se cruza con una reserva existente. Por favor ajusta fechas u horarios.', { duration: 5000 });
+            return;
+        }
+
+        if (hasAvailabilityOverlap(rangeStart, rangeEnd)) {
+            toast.error('El rango seleccionado contiene horas ocupadas. Por favor ajusta fechas u horarios.', { duration: 5000 });
+            return;
+        }
+
         const data = {
-            date: selectedDate,
-            startTime: sortedHours[0],
-            endTime: getEndTime(sortedHours[sortedHours.length - 1]),
-            hours: sortedHours,
+            date: guestRange.startDate,
+            startDate: guestRange.startDate,
+            endDate: guestRange.endDate,
+            startTime: guestRange.startTime,
+            endTime: guestRange.endTime,
+            hours: [],
         };
         setQuoteData(data);
         setActiveTab("quote");
     };
+
+    const rangeOccupiedSummary = getRangeOccupiedSummary();
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -330,13 +604,129 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
                                             <strong>¡Ten en cuenta!</strong> Si tu espacio requiere tiempo de montaje previo, este <strong>debe estar incluido</strong> dentro de las horas que selecciones para tu reserva.
                                         </p>
                                     </div>
-                                    <TimeSlotSelector
-                                        timeSlots={generateTimeSlots()}
-                                        selectedHours={selectedHours}
-                                        onTimeSelect={handleTimeSelect}
-                                        isAvailable={isTimeSlotAvailable}
-                                        isCoworking={isCoworking}
-                                    />
+                                    {isGuestMode ? (
+                                        <div className="bg-transparent mb-4 space-y-4">
+                                            <div>
+                                                <h3 className="text-lg font-bold text-gray-800">Seleccionar rango del evento</h3>
+                                                <p className="text-sm text-gray-600 mt-1">
+                                                    Haz clic en el calendario para elegir la fecha de inicio y luego la fecha de fin.
+                                                </p>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                <div className="bg-white border border-purple-100 rounded-xl p-3 shadow-sm">
+                                                    <p className="text-xs font-bold text-purple-800 uppercase tracking-wide">Fecha inicio</p>
+                                                    <p className="text-sm font-semibold text-gray-800 mt-1">
+                                                        {guestRange.startDate ? guestRange.startDate.toLocaleDateString() : 'Sin seleccionar'}
+                                                    </p>
+                                                </div>
+                                                <div className="bg-white border border-purple-100 rounded-xl p-3 shadow-sm">
+                                                    <p className="text-xs font-bold text-purple-800 uppercase tracking-wide">Fecha fin</p>
+                                                    <p className="text-sm font-semibold text-gray-800 mt-1">
+                                                        {guestRange.endDate ? guestRange.endDate.toLocaleDateString() : 'Sin seleccionar'}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                                                <div className="bg-white border border-gray-100 rounded-xl p-3 shadow-sm">
+                                                    <p className="text-sm font-semibold text-gray-700 mb-2">Hora inicio</p>
+                                                    <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+                                                        {timeOptions.map((time) => {
+                                                            const available = isStartTimeChoiceAvailable(time);
+                                                            const selected = guestRange.startTime === time;
+                                                            return (
+                                                                <button
+                                                                    key={`start-${time}`}
+                                                                    type="button"
+                                                                    disabled={!guestRange.startDate || !available}
+                                                                    onClick={() => setGuestRange(prev => ({ ...prev, startTime: time }))}
+                                                                    className={`p-2 rounded-md text-xs font-semibold transition-all border ${selected
+                                                                        ? 'bg-purple-600 text-white border-purple-600 shadow-sm'
+                                                                        : available && guestRange.startDate
+                                                                            ? 'bg-white text-gray-800 border-purple-300 hover:bg-purple-50'
+                                                                            : 'bg-gray-200 text-gray-500 border-gray-300 line-through cursor-not-allowed'
+                                                                        }`}
+                                                                >
+                                                                    {time}
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+
+                                                <div className="bg-white border border-gray-100 rounded-xl p-3 shadow-sm">
+                                                    <p className="text-sm font-semibold text-gray-700 mb-2">Hora fin</p>
+                                                    <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+                                                        {endTimeOptions.map((time) => {
+                                                            const available = isEndTimeChoiceAvailable(time);
+                                                            const selected = guestRange.endTime === time;
+                                                            return (
+                                                                <button
+                                                                    key={`end-${time}`}
+                                                                    type="button"
+                                                                    disabled={!guestRange.endDate || !available}
+                                                                    onClick={() => setGuestRange(prev => ({ ...prev, endTime: time }))}
+                                                                    className={`p-2 rounded-md text-xs font-semibold transition-all border ${selected
+                                                                        ? 'bg-purple-600 text-white border-purple-600 shadow-sm'
+                                                                        : available && guestRange.endDate
+                                                                            ? 'bg-white text-gray-800 border-purple-300 hover:bg-purple-50'
+                                                                            : 'bg-gray-200 text-gray-500 border-gray-300 line-through cursor-not-allowed'
+                                                                        }`}
+                                                                >
+                                                                    {time}
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="bg-white border border-gray-100 rounded-xl p-3 shadow-sm text-xs">
+                                                <div className="flex flex-wrap gap-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="w-4 h-4 bg-purple-600 rounded"></span>
+                                                        <span className="font-semibold text-gray-700">Seleccionada</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="w-4 h-4 bg-white border-2 border-purple-300 rounded"></span>
+                                                        <span className="font-semibold text-gray-700">Disponible</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="w-4 h-4 bg-gray-200 border border-gray-300 rounded"></span>
+                                                        <span className="font-semibold text-gray-500">Ocupada</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {guestAvailabilityLoading && (
+                                                <p className="text-sm text-purple-700 font-medium bg-purple-50 border border-purple-100 rounded-lg p-3">
+                                                    Validando disponibilidad del rango...
+                                                </p>
+                                            )}
+
+                                            {rangeOccupiedSummary.length > 0 && (
+                                                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
+                                                    <p className="text-sm font-bold text-amber-800 mb-2">Horas ocupadas en el rango</p>
+                                                    <div className="space-y-1.5 max-h-24 overflow-y-auto custom-scrollbar">
+                                                        {rangeOccupiedSummary.map(day => (
+                                                            <p key={getDateKey(day.date)} className="text-xs text-amber-800">
+                                                                <span className="font-semibold">{day.date.toLocaleDateString()}:</span> {day.hours.join(', ')}
+                                                            </p>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <TimeSlotSelector
+                                            timeSlots={generateTimeSlots()}
+                                            selectedHours={selectedHours}
+                                            onTimeSelect={handleTimeSelect}
+                                            isAvailable={isTimeSlotAvailable}
+                                            isCoworking={isCoworking}
+                                        />
+                                    )}
 
                                     <ReservationForm
                                         isCoworking={isCoworking}
