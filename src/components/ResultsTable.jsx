@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+/* eslint-disable react/prop-types */
+import { useState, useEffect } from "react";
 import ReactPaginate from "react-paginate";
 import { ImageIcon } from "lucide-react";
 import ReservationModal from "./ReservationModal";
@@ -7,7 +8,7 @@ import { fetchFilteredReservations } from "../Services/reservasService";
 import { useMsal } from "@azure/msal-react";
 import { fetchAuthToken } from "../Services/authService";
 import { startMicrosoftLogin } from "../Services/SSOServices/loginFlowService";
-import { getContactEmailBySpaceType } from "../utils/spaceContactEmail";
+import { canReserveAnySpace } from "../utils/userHelper";
 
 const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode, onSpaceLoaded, setAvailableFloors }) => {
   const { instance } = useMsal();
@@ -121,9 +122,8 @@ const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode, onSpaceLo
 
 
   const renderInfoMessage = () => {
-    // En modo invitado no mostramos la alerta de correo porque usan el formulario de cotización
-    if (filters.tipo && filters.tipo !== "Coworking" && !isGuestMode) {
-      const contactEmail = getContactEmailBySpaceType(filters.tipo);
+    // En modo invitado no mostramos alerta porque usan el formulario de cotizacion.
+    if (filters.tipo && filters.tipo !== "Coworking" && !isGuestMode && !canReserveAnySpace()) {
       return (
         <div className="bg-amber-50 border-l-4 border-amber-400 p-4 mb-4 rounded">
           <div className="flex">
@@ -134,7 +134,7 @@ const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode, onSpaceLo
             </div>
             <div className="ml-3">
               <p className="text-sm text-amber-700">
-                Para reservar este tipo de espacio, por favor escribir al correo {contactEmail}.
+                Estos espacios requieren solicitud y validacion previa. Selecciona el espacio para diligenciar la solicitud.
               </p>
             </div>
           </div>
@@ -148,20 +148,20 @@ const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode, onSpaceLo
   if (error) return <p>{error}</p>;
   if (data.length === 0) return <p>No se encontraron resultados para los filtros seleccionados.</p>;
 
-  const handleBackFromQuote = () => {
-    setIsQuoteModalOpen(false);
-    // Reopen reservation modal with same selected space
-    // We might need to ensure ReservationModal state is preserved or re-initialized if needed
-    // But since selectedSpace is in state, it should be fine.
-    setTimeout(() => setIsModalOpen(true), 150);
-  };
-
   return (
     <div className="bg-white shadow-md p-4 md:p-6 rounded-xl">
       {/* ... (rest of render) ... */}
       {renderInfoMessage()}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-        {data.slice(page * itemsPerPage, (page + 1) * itemsPerPage).map((item, index) => (
+        {data.slice(page * itemsPerPage, (page + 1) * itemsPerPage).map((item, index) => {
+          const usesInternalRequestFlow = !isGuestMode && item.coworking_contenedor !== "SI" && !canReserveAnySpace();
+          const actionLabel = isGuestMode
+            ? "Solicitar Cotizacion"
+            : usesInternalRequestFlow
+              ? "Solicitar"
+              : "Reservar Ahora";
+
+          return (
           <div
             key={`${item.id}-${index}`}
             onClick={() => handleReserveClick(item)}
@@ -190,7 +190,7 @@ const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode, onSpaceLo
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">
                 <span className="text-white font-medium px-4 py-1 bg-white/20 backdrop-blur-sm rounded-full border border-white/30 text-sm">
-                  {isGuestMode ? "Solicitar Cotización" : "Reservar Ahora"}
+                  {actionLabel}
                 </span>
               </div>
             </div>
@@ -219,7 +219,8 @@ const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode, onSpaceLo
               </div>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="mt-4 md:mt-6">

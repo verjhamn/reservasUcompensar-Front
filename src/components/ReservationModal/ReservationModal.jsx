@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+/* eslint-disable react/prop-types */
+import { useEffect, useState } from "react";
 import { Toaster, toast } from 'react-hot-toast';
 import { addHours, startOfDay, isBefore, format } from "date-fns";
 
@@ -6,6 +7,7 @@ import LoadingSpinner from '../UtilComponents/LoadingSpinner';
 import { useAvailability } from "./hooks/useAvailability";
 import { useReservation } from "./hooks/useReservation";
 import { getDisponibilidad, processOccupiedHours } from "../../Services/getDisponibilidadService";
+import { canReserveAnySpace } from "../../utils/userHelper";
 
 import SpaceInformation from "./components/SpaceInformation";
 import AvailabilityCalendar from "./components/AvailabilityCalendar";
@@ -14,10 +16,9 @@ import TimeSlotSelector from "./components/TimeSlotSelector";
 import ReservationForm from "./components/ReservationForm";
 import QuoteForm from './components/QuoteForm';
 
-const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGuestMode, onQuoteRequest }) => {
+const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGuestMode }) => {
     const [activeTab, setActiveTab] = useState("info");
     const [selectedHours, setSelectedHours] = useState([]);
-    const [viewMode, setViewMode] = useState('reservation'); // 'reservation' or 'quote'
     const [quoteData, setQuoteData] = useState(null);
     const [guestRange, setGuestRange] = useState({
         startDate: null,
@@ -29,6 +30,10 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
     const [guestAvailabilityLoading, setGuestAvailabilityLoading] = useState(false);
 
     const isCoworking = spaceData?.coworking_contenedor === "SI";
+    const isInternalRequestMode = !isGuestMode && !isCoworking && !canReserveAnySpace();
+    const usesRequestFlow = isGuestMode || isInternalRequestMode;
+    const requestFlowLabel = isInternalRequestMode ? "Solicitud" : "Cotizacion";
+    const requestMode = isInternalRequestMode ? "internal" : "external";
 
     const {
         selectedDate,
@@ -71,7 +76,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
             return;
         }
 
-        if (isGuestMode) {
+        if (usesRequestFlow) {
             if (!hasAvailabilityForDate(selectedStart)) {
                 toast.error('Este día no tiene disponibilidad. Por favor seleccione otro día.', {
                     duration: 4000,
@@ -190,7 +195,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
             };
         }
 
-        if (isGuestMode) {
+        if (usesRequestFlow) {
             const day = startOfDay(date);
             const start = guestRange.startDate ? startOfDay(guestRange.startDate) : null;
             const end = guestRange.endDate ? startOfDay(guestRange.endDate) : null;
@@ -417,7 +422,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
 
     useEffect(() => {
         const fetchGuestAvailability = async () => {
-            if (!isGuestMode || !spaceData?.id) return;
+            if (!usesRequestFlow || !spaceData?.id) return;
 
             const datesToFetch = guestRange.startDate && guestRange.endDate
                 ? getDatesInRange(guestRange.startDate, guestRange.endDate)
@@ -440,7 +445,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
                     ...Object.fromEntries(entries)
                 }));
             } catch (error) {
-                console.error("Error al cargar disponibilidad del rango externo:", error);
+                console.error("Error al cargar disponibilidad del rango seleccionado:", error);
                 toast.error('No se pudo validar la disponibilidad del rango seleccionado.');
             } finally {
                 setGuestAvailabilityLoading(false);
@@ -448,7 +453,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
         };
 
         fetchGuestAvailability();
-    }, [isGuestMode, spaceData?.id, guestRange.startDate, guestRange.endDate]);
+    }, [usesRequestFlow, spaceData?.id, guestRange.startDate, guestRange.endDate]);
 
     if (!isOpen || !spaceData) return null;
 
@@ -487,7 +492,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
         }
 
         if (rangeStart < new Date()) {
-            toast.error('No se puede solicitar una cotizaciÃ³n para una fecha u hora anterior a la actual.', { duration: 4000 });
+            toast.error('No se puede solicitar para una fecha u hora anterior a la actual.', { duration: 4000 });
             return;
         }
 
@@ -518,8 +523,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <Toaster />
-            {viewMode === 'reservation' && (
-                <div className="bg-white rounded-2xl p-6 lg:p-8 max-w-7xl w-full max-h-[95vh] flex flex-col shadow-2xl overflow-hidden">
+            <div className="bg-white rounded-2xl p-6 lg:p-8 max-w-7xl w-full max-h-[95vh] flex flex-col shadow-2xl overflow-hidden">
                     <div className="flex justify-between items-start mb-4 shrink-0">
                         <h2 className="text-2xl font-bold text-gray-800">{spaceData.tipo}: {spaceData.codigo}</h2>
                         <button
@@ -559,7 +563,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
                         >
                             Disponibilidad
                         </button>
-                        {isGuestMode && quoteData && (
+                        {usesRequestFlow && quoteData && (
                             <button
                                 onClick={() => setActiveTab("quote")}
                                 className={`py-2 px-4 transition-colors whitespace-nowrap ${activeTab === "quote"
@@ -567,7 +571,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
                                     : "text-gray-600 hover:text-gray-800 font-medium"
                                     }`}
                             >
-                                Cotización
+                                {requestFlowLabel}
                             </button>
                         )}
                     </div>
@@ -604,7 +608,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
                                             <strong>¡Ten en cuenta!</strong> Si tu espacio requiere tiempo de montaje previo, este <strong>debe estar incluido</strong> dentro de las horas que selecciones para tu reserva.
                                         </p>
                                     </div>
-                                    {isGuestMode ? (
+                                    {usesRequestFlow ? (
                                         <div className="bg-transparent mb-4 space-y-4">
                                             <div>
                                                 <h3 className="text-lg font-bold text-gray-800">Seleccionar rango del evento</h3>
@@ -734,27 +738,28 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
                                         setTitle={setReservationTitle}
                                         description={reservationDescription}
                                         setDescription={setReservationDescription}
-                                        onSubmit={isGuestMode ? handleGuestSubmit : handleConfirmReservation}
-                                        isGuestMode={isGuestMode}
+                                        onSubmit={usesRequestFlow ? handleGuestSubmit : handleConfirmReservation}
+                                        isGuestMode={usesRequestFlow}
+                                        requestFlowLabel={requestFlowLabel}
                                     />
                                 </div>
                             </div>
                         </div>
 
                         {/* Solo destruimos el QuoteForm si literalmente dejaron de existir los Guest/Quote properties */}
-                        {isGuestMode && quoteData && (
+                        {usesRequestFlow && quoteData && (
                             <div className={activeTab === "quote" ? "block h-full" : "hidden"}>
                                 <QuoteForm
                                     spaceData={spaceData}
                                     quoteData={quoteData}
                                     onBack={() => setActiveTab("availability")}
                                     onSuccess={onClose}
+                                    requestMode={requestMode}
                                 />
                             </div>
                         )}
                     </div>
-                </div>
-            )}
+            </div>
 
             <LoadingSpinner loading={loadingAvailability || reservationLoading} />
         </div >

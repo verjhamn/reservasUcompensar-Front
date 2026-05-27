@@ -1,4 +1,4 @@
-import React from 'react';
+/* eslint-disable react/prop-types */
 
 const ReservationForm = ({
     isCoworking,
@@ -7,7 +7,8 @@ const ReservationForm = ({
     description,
     setDescription,
     onSubmit,
-    isGuestMode
+    isGuestMode,
+    requestFlowLabel = "Cotizacion"
 }) => {
     return (
         <div className="flex flex-col flex-1 h-full max-h-min relative">
@@ -55,7 +56,7 @@ const ReservationForm = ({
                         : "bg-purple-600 hover:bg-purple-700"
                         }`}
                 >
-                    {isGuestMode ? "Continuar Cotización" : "Confirmar Reserva"}
+                    {isGuestMode ? `Continuar ${requestFlowLabel}` : "Confirmar Reserva"}
                 </button>
             </div>
         </div>
