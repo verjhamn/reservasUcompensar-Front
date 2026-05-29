@@ -20,6 +20,7 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
         compensarId: '',
         centroCostos: '',
         tipoEvento: '',
+        nombreEvento: '',
         tiempoMontajeHoras: '',
         cantidadPersonas: '',
         detalles: ''
@@ -179,6 +180,7 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                 tipo_documento: formData.tipoDocumentoEmpresa,
                 numero_documento: formData.numeroDocumentoEmpresa,
                 digito_verificacion: "0",
+                compensar_interno: formData.esCompensar,
                 telefono: formData.telefonoEmpresa,
                 direccion: formData.direccionEmpresa,
                 ...(formData.esCompensar ? { compensar_id: formData.compensarId, centro_costo: formData.centroCostos } : {})
@@ -193,6 +195,7 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
             },
             evento: {
                 tipo: formData.tipoEvento,
+                nombre: formData.nombreEvento || formData.tipoEvento,
                 detalles: formData.detalles,
                 fecha_solicitud: new Date().toISOString()
             }
@@ -547,6 +550,21 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                                             />
                                             {errors.tipoEvento && <p className="text-red-500 text-[11px] font-semibold mt-1">{errors.tipoEvento}</p>}
                                         </div>
+
+                                        {/* Campo oculto temporalmente.
+                                        <div className="space-y-1.5 md:col-span-2">
+                                            <label className="text-sm font-semibold text-gray-700">Nombre del evento <span className="text-red-500">*</span></label>
+                                            <input
+                                                type="text"
+                                                name="nombreEvento"
+                                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white"
+                                                placeholder="Ej: Lanzamiento de producto"
+                                                value={formData.nombreEvento}
+                                                onChange={handleChange}
+                                            />
+                                            {errors.nombreEvento && <p className="text-red-500 text-[11px] font-semibold mt-1">{errors.nombreEvento}</p>}
+                                        </div>
+                                        */}
 
                                         <div className="space-y-1.5">
                                             <label className="text-sm font-semibold text-gray-700">Cantidad de asistentes (aforo) <span className="text-red-500">*</span></label>
