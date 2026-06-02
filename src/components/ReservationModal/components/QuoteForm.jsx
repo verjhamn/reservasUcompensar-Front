@@ -37,7 +37,11 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        const sanitizedValue = name === 'centroCostos'
+            ? value.replace(/[^A-Za-z0-9]/g, '')
+            : value;
+
+        setFormData(prev => ({ ...prev, [name]: sanitizedValue }));
         if (errors[name]) {
             setErrors(prev => ({ ...prev, [name]: null }));
         }
@@ -90,6 +94,7 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
             if (formData.esCompensar) {
                 if (!formData.compensarId) newErrors.compensarId = 'Requerido';
                 if (!formData.centroCostos) newErrors.centroCostos = 'Requerido';
+                else if (!/^[A-Za-z0-9]+$/.test(formData.centroCostos)) newErrors.centroCostos = 'Solo se permiten letras y nÃºmeros';
             }
 
             if (Object.keys(newErrors).length > 0) isValid = false;
@@ -447,7 +452,8 @@ const QuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                                                     className="w-full px-4 py-2.5 rounded-xl border border-purple-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-white"
                                                     value={formData.centroCostos}
                                                     onChange={handleChange}
-                                                    placeholder="Ej. CC-1234"
+                                                    pattern="[A-Za-z0-9]*"
+                                                    placeholder="Ej. CC1234"
                                                 />
                                                 {errors.centroCostos && <p className="text-red-500 text-[11px] font-semibold mt-1">{errors.centroCostos}</p>}
                                             </div>
