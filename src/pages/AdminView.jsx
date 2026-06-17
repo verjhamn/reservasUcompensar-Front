@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
-import { Calendar, Briefcase } from 'lucide-react';
+import { Calendar, Briefcase, MapPin } from 'lucide-react';
 import AdminReservationsView from '../components/AdminReservations/AdminReservationsView';
 import ExternalQuotesIndex from '../components/AdminReservations/ExternalQuotes';
+import SedesManager from '../components/SedesManager';
+import { isSuperAdmin } from '../utils/userHelper';
 
 const AdminView = () => {
     const [activeTab, setActiveTab] = useState('internas');
+    const superAdmin = isSuperAdmin();
 
     return (
         <div className="container mx-auto py-6">
@@ -30,15 +33,25 @@ const AdminView = () => {
                         <Briefcase className="w-4 h-4" />
                         Cotizaciones Externas
                     </button>
+                    {superAdmin && (
+                        <button
+                            onClick={() => setActiveTab('sedes')}
+                            className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ease-out ${activeTab === 'sedes'
+                                    ? 'bg-purple-600 text-white shadow-md transform scale-[1.02]'
+                                    : 'text-gray-500 hover:text-purple-600 hover:bg-purple-50'
+                                }`}
+                        >
+                            <MapPin className="w-4 h-4" />
+                            Sedes
+                        </button>
+                    )}
                 </div>
             </div>
 
             <div className="mt-2 animate-fade-in">
-                {activeTab === 'internas' ? (
-                    <AdminReservationsView />
-                ) : (
-                    <ExternalQuotesIndex />
-                )}
+                {activeTab === 'internas' && <AdminReservationsView />}
+                {activeTab === 'externas' && <ExternalQuotesIndex />}
+                {activeTab === 'sedes' && superAdmin && <SedesManager />}
             </div>
         </div>
     );

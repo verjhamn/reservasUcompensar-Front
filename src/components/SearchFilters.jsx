@@ -1,6 +1,12 @@
 import React, { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSyncAlt } from "@fortawesome/free-solid-svg-icons";
+import { useSedes } from "../context/SedesContext";
+
+const ALL_SEDES = [
+    { value: "1", label: "Campus Av. 68" },
+    { value: "2", label: "Campus Teusaquillo" },
+];
 
 const coworkingPeriods = [
   { id: 0, name: "Mañana", start: "07:00", end: "12:00" },
@@ -21,9 +27,11 @@ const generateTimeOptions = (start, end) => {
 const SearchFilters = ({ filters, setFilters, onFilterChange, isGuestMode, availableFloors = [] }) => {
   // En modo invitado, mostrar filtros expandidos por defecto
   const [showMoreFilters, setShowMoreFilters] = useState(isGuestMode);
+  const { isSedeActive } = useSedes();
+  const activeSedes = ALL_SEDES.filter(s => isSedeActive(s.value));
 
   const staticOptions = {
-    sedes: ["Campus Av. 68"],
+    sedes: activeSedes.map(s => s.label),
     espaciosFisicos: ["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"],
     tipo: ["Coworking", "Espacio multipropósito", "Laboratorio", "Espacio de eventos", "Sala de clases"],
     tiposRecurso: ["Personal", "Puesto en L"],
@@ -155,7 +163,9 @@ const SearchFilters = ({ filters, setFilters, onFilterChange, isGuestMode, avail
                 onChange={handleChange}
                 className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all duration-200 appearance-none text-gray-700 font-medium cursor-pointer hover:border-purple-300"
               >
-                <option value="1">Campus Av. 68</option>
+                {activeSedes.map(s => (
+                                    <option key={s.value} value={s.value}>{s.label}</option>
+                                ))}
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
                 <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
