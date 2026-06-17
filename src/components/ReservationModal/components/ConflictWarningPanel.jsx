@@ -72,7 +72,7 @@ const ConflictWarningPanel = ({ conflicts, isSingleDay, showActions = false, onC
                             onClick={onBack}
                             className="flex-1 py-2 px-4 bg-white hover:bg-amber-50 text-amber-800 text-sm font-semibold rounded-lg border border-amber-300 transition-colors"
                         >
-                            Modificar fechas u horarios
+                            Modificar horarios o fechas
                         </button>
                     </div>
                 </>
