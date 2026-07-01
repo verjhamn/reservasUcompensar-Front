@@ -641,27 +641,7 @@ const ExternalQuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                                             {errors.cantidadPersonas && <p className="text-red-500 text-[11px] font-semibold mt-1">{errors.cantidadPersonas}</p>}
                                         </div>
 
-                                        <div className="space-y-1.5">
-                                            <label className="text-sm font-semibold text-gray-700">Tiempo de montaje previo <span className="text-red-500">*</span></label>
-                                            <p className="text-[11px] text-purple-700 leading-tight bg-purple-50/50 p-2 rounded-lg border border-purple-100">
-                                                * Nota: El tiempo de montaje debe estar contemplado dentro del horario de la reserva. No es tiempo adicional extra.
-                                            </p>
-                                            <select
-                                                name="tiempoMontajeHoras"
-                                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white text-gray-700"
-                                                value={formData.tiempoMontajeHoras}
-                                                onChange={handleChange}
-                                            >
-                                                <option value="" disabled hidden>Seleccionar tiempo...</option>
-                                                <option value="0">Sin montaje previo (0 horas)</option>
-                                                <option value="1">1 Hora</option>
-                                                <option value="2">2 Horas</option>
-                                                <option value="3">3 Horas</option>
-                                                <option value="4">Medio día (4 Horas)</option>
-                                                <option value="8">Día completo (8 Horas)</option>
-                                            </select>
-                                            {errors.tiempoMontajeHoras && <p className="text-red-500 text-[11px] font-semibold mt-1">{errors.tiempoMontajeHoras}</p>}
-                                        </div>
+
                                     </div>
                                     <div className="space-y-1.5">
                                         <label className="text-sm font-semibold text-gray-700">Observaciones adicionales</label>
