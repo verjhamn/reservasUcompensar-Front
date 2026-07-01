@@ -2,6 +2,13 @@ import { Calendar as CalendarIcon, Clock, ChevronRight, FileSignature } from 'lu
 import { formatDateObj, getStatusBadge } from './utils';
 
 const QuotesGrid = ({ isLoading, quotes, pagination, filters, setFilters, openSlideOver }) => {
+    const isTruthyFlag = (value) => {
+        if (value === true || value === 1) return true;
+        if (typeof value !== 'string') return false;
+        const normalized = value.trim().toLowerCase();
+        return ['1', 'true', 'si'].includes(normalized) || normalized.startsWith('s');
+    };
+
     return (
         <div className="space-y-4 z-0 relative">
             {isLoading ? (
@@ -19,7 +26,17 @@ const QuotesGrid = ({ isLoading, quotes, pagination, filters, setFilters, openSl
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-5">
-                    {quotes.map(quote => (
+                    {quotes.map(quote => {
+                        const eventTitle = quote.evento_nombre || quote.evento_tipo || 'Evento Corporativo Externo';
+                        const endDate = quote.fecha_fin || quote.fecha_fin_reserva;
+                        const companyIsCompensar = [
+                            quote.empresa_compensar_interno,
+                            quote.compensar_interno,
+                            quote.empresa?.compensar_interno
+                        ].some(isTruthyFlag);
+                        const companyName = companyIsCompensar ? 'Compensar' : (quote.empresa_nombre || quote.solicitante_nombre);
+
+                        return (
                         <div key={quote.id} className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col group cursor-pointer" onClick={() => openSlideOver(quote)}>
                             {/* Info Status Header */}
                             <div className="px-5 pt-5 pb-3">
@@ -27,18 +44,22 @@ const QuotesGrid = ({ isLoading, quotes, pagination, filters, setFilters, openSl
                                     {getStatusBadge(quote.estado)}
                                     <span className="text-xs font-semibold text-gray-400 bg-gray-50 px-2 py-1 rounded">#{quote.id}</span>
                                 </div>
-                                <h3 className="text-[17px] font-bold text-gray-900 leading-tight line-clamp-2" title={quote.evento_tipo}>
-                                    {quote.evento_tipo || 'Evento Corporativo Externo'}
+                                <h3 className="text-[17px] font-bold text-gray-900 leading-tight line-clamp-2" title={eventTitle}>
+                                    {eventTitle}
                                 </h3>
                                 <p className="text-sm font-medium text-purple-700 mt-1 truncate">
-                                    {quote.empresa_nombre || quote.solicitante_nombre}
+                                    {companyName}
+                                </p>
+                                <p className="text-xs font-semibold text-gray-500 mt-1">
+                                    {companyIsCompensar ? 'Empresa Compensar' : 'Empresa externa'}
                                 </p>
                             </div>
 
                             {/* Resumen Fechas */}
                             <div className="px-5 pb-5 mt-auto border-b border-gray-100">
                                 <div className="flex items-center gap-2 text-sm text-gray-600 font-medium mb-1">
-                                    <CalendarIcon className="w-4 h-4 text-gray-400" /> {formatDateObj(quote.fecha_reserva)}
+                                    <CalendarIcon className="w-4 h-4 text-gray-400" />
+                                    {formatDateObj(quote.fecha_reserva)}{endDate ? ` - ${formatDateObj(endDate)}` : ''}
                                 </div>
                                 <div className="flex items-center gap-2 text-sm text-gray-600 font-medium">
                                     <Clock className="w-4 h-4 text-gray-400" /> {quote.hora_inicio} - {quote.hora_fin}
@@ -52,7 +73,8 @@ const QuotesGrid = ({ isLoading, quotes, pagination, filters, setFilters, openSl
                                 </span>
                             </div>
                         </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
 

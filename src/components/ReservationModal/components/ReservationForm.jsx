@@ -1,4 +1,4 @@
-import React from 'react';
+/* eslint-disable react/prop-types */
 
 const ReservationForm = ({
     isCoworking,
@@ -7,7 +7,9 @@ const ReservationForm = ({
     description,
     setDescription,
     onSubmit,
-    isGuestMode
+    isGuestMode,
+    requestFlowLabel = "Cotizacion",
+    submitDisabled = false
 }) => {
     return (
         <div className="flex flex-col flex-1 h-full max-h-min relative">
@@ -50,12 +52,13 @@ const ReservationForm = ({
             <div className="mt-4 flex justify-end shrink-0">
                 <button
                     onClick={onSubmit}
-                    className={`px-6 py-3 rounded-xl text-white font-medium transition shadow-sm hover:shadow-md ${isGuestMode
+                    disabled={submitDisabled}
+                    className={`px-6 py-3 rounded-xl text-white font-medium transition shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none ${isGuestMode
                         ? "bg-purple-600 hover:bg-purple-700"
                         : "bg-purple-600 hover:bg-purple-700"
                         }`}
                 >
-                    {isGuestMode ? "Continuar Cotización" : "Confirmar Reserva"}
+                    {isGuestMode ? `Continuar ${requestFlowLabel}` : "Confirmar Reserva"}
                 </button>
             </div>
         </div>

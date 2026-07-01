@@ -5,7 +5,6 @@ import { PublicClientApplication } from "@azure/msal-browser";
 import { msalConfig } from "./Services/SSOServices/authConfig";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
-import InfoModal from "./components/InfoModal";
 import { hasAdminAccess, canAccessReports } from './utils/userHelper';
 import { EVENTS } from './config/events';
 import roleSyncService from './Services/roleSyncService';
@@ -18,7 +17,6 @@ import { clearAuthFlowState } from "./Services/SSOServices/loginFlowService";
 const msalInstance = new PublicClientApplication(msalConfig);
 
 function App() {
-    const [showModal, setShowModal] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
     const [canViewReports, setCanViewReports] = useState(false);
@@ -42,15 +40,6 @@ function App() {
             roleSyncService.stopAutoSync();
         };
     }, [isLoggedIn]);
-
-    // Verificar si el modal ya se ha mostrado
-    useEffect(() => {
-        const modalShown = localStorage.getItem("modalShown");
-        if (!modalShown) {
-            setShowModal(true);
-            localStorage.setItem("modalShown", "true");
-        }
-    }, []);
 
     useEffect(() => {
         const checkUserPermissions = () => {
@@ -133,10 +122,6 @@ function App() {
         };
     }, []);
 
-    const handleCloseModal = () => {
-        setShowModal(false);
-    };
-
     const handleLogout = () => {
         setIsLoggedIn(false);
     };
@@ -145,7 +130,6 @@ function App() {
         <MsalProvider instance={msalInstance}>
             <BrowserRouter>
                 <div className="min-h-screen flex flex-col">
-                    {showModal && <InfoModal onClose={handleCloseModal} />}
                     <Header
                         onLogout={handleLogout}
                         isLoggedIn={isLoggedIn}

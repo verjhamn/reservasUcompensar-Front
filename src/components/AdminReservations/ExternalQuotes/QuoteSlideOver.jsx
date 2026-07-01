@@ -16,6 +16,24 @@ const QuoteSlideOver = ({
     isAddingComment,
     handleCommentSubmit
 }) => {
+    const isTruthyFlag = (value) => {
+        if (value === true || value === 1) return true;
+        if (typeof value !== 'string') return false;
+        const normalized = value.trim().toLowerCase();
+        return ['1', 'true', 'si'].includes(normalized) || normalized.startsWith('s');
+    };
+
+    const eventName = selectedQuote?.evento_nombre || selectedQuote?.evento?.nombre || selectedQuote?.evento_tipo;
+    const endDate = selectedQuote?.fecha_fin || selectedQuote?.fecha_fin_reserva;
+    const companyIsCompensar = [
+        selectedQuote?.empresa_compensar_interno,
+        selectedQuote?.compensar_interno,
+        selectedQuote?.empresa?.compensar_interno
+    ].some(isTruthyFlag);
+    const companyName = companyIsCompensar ? 'Compensar' : selectedQuote?.empresa_nombre;
+    const compensarId = selectedQuote?.empresa_compensar_id || selectedQuote?.compensar_id;
+    const compensarCostCenter = selectedQuote?.empresa_compensar_id_cc || selectedQuote?.compensar_id_cc || selectedQuote?.centro_costo;
+
     return (
         <>
             {/* Backdrop Negro Desenfoque */}
@@ -58,13 +76,22 @@ const QuoteSlideOver = ({
                                     <FileSignature className="w-4 h-4 text-purple-600" /> Concepto del Evento
                                 </h3>
 
-                                <p className="text-lg font-bold text-gray-800 mb-4">{selectedQuote.evento_tipo}</p>
+                                <p className="text-lg font-bold text-gray-800 mb-1">{eventName || 'Evento Corporativo Externo'}</p>
+                                {selectedQuote.evento_tipo && (
+                                    <p className="text-sm font-semibold text-purple-700 mb-4">{selectedQuote.evento_tipo}</p>
+                                )}
 
                                 <div className="grid grid-cols-2 gap-y-4">
                                     <div>
-                                        <p className="text-xs text-gray-500">Fecha de uso</p>
+                                        <p className="text-xs text-gray-500">Fecha de inicio</p>
                                         <p className="font-semibold text-gray-800 flex items-center gap-1.5"><CalendarIcon className="w-3.5 h-3.5" /> {formatDateObj(selectedQuote.fecha_reserva)}</p>
                                     </div>
+                                    {endDate && (
+                                        <div>
+                                            <p className="text-xs text-gray-500">Fecha de fin</p>
+                                            <p className="font-semibold text-gray-800 flex items-center gap-1.5"><CalendarIcon className="w-3.5 h-3.5" /> {formatDateObj(endDate)}</p>
+                                        </div>
+                                    )}
                                     <div>
                                         <p className="text-xs text-gray-500">Horario oficial</p>
                                         <p className="font-semibold text-gray-800 flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> {selectedQuote.hora_inicio} a {selectedQuote.hora_fin}</p>
@@ -99,9 +126,21 @@ const QuoteSlideOver = ({
 
                                 <div className="space-y-4">
                                     <div>
-                                        <p className="font-bold text-gray-800 text-base">{selectedQuote.empresa_nombre}</p>
-                                        <p className="text-sm text-gray-600">{selectedQuote.empresa_tipo_documento || 'ID'}: {selectedQuote.empresa_numero_documento}-{selectedQuote.empresa_digito_verificacion}</p>
-                                        <p className="text-sm text-gray-600 flex items-center gap-1.5 mt-1"><Phone className="w-3.5 h-3.5 text-gray-400" /> {selectedQuote.empresa_telefono} - {selectedQuote.empresa_direccion}</p>
+                                        <p className="font-bold text-gray-800 text-base">{companyName || selectedQuote.solicitante_nombre}</p>
+                                        <p className="text-xs font-bold text-purple-700 uppercase tracking-wide mt-1">
+                                            {companyIsCompensar ? 'Empresa asistente Compensar' : 'Empresa externa'}
+                                        </p>
+                                        {!companyIsCompensar && (
+                                            <>
+                                                <p className="text-sm text-gray-600">{selectedQuote.empresa_tipo_documento || 'ID'}: {selectedQuote.empresa_numero_documento}-{selectedQuote.empresa_digito_verificacion}</p>
+                                                <p className="text-sm text-gray-600 flex items-center gap-1.5 mt-1"><Phone className="w-3.5 h-3.5 text-gray-400" /> {selectedQuote.empresa_telefono} - {selectedQuote.empresa_direccion}</p>
+                                            </>
+                                        )}
+                                        {(compensarId || compensarCostCenter) && (
+                                            <p className="text-sm text-gray-600 mt-1">
+                                                ID Compensar: {compensarId || 'No definido'} {compensarCostCenter ? `- CC: ${compensarCostCenter}` : ''}
+                                            </p>
+                                        )}
                                     </div>
 
                                     <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
