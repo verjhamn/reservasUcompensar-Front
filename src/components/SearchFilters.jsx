@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+/* eslint-disable react/prop-types */
+import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSyncAlt } from "@fortawesome/free-solid-svg-icons";
-import { useSedes } from "../context/SedesContext";
 
 const ALL_SEDES = [
     { value: "1", label: "Campus Av. 68" },
@@ -27,11 +27,9 @@ const generateTimeOptions = (start, end) => {
 const SearchFilters = ({ filters, setFilters, onFilterChange, isGuestMode, availableFloors = [] }) => {
   // En modo invitado, mostrar filtros expandidos por defecto
   const [showMoreFilters, setShowMoreFilters] = useState(isGuestMode);
-  const { isSedeActive } = useSedes();
-  const activeSedes = ALL_SEDES.filter(s => isSedeActive(s.value));
 
   const staticOptions = {
-    sedes: activeSedes.map(s => s.label),
+    sedes: ALL_SEDES.map(s => s.label),
     espaciosFisicos: ["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"],
     tipo: ["Coworking", "Espacio multipropósito", "Laboratorio", "Espacio de eventos", "Sala de clases"],
     tiposRecurso: ["Personal", "Puesto en L"],
@@ -163,7 +161,7 @@ const SearchFilters = ({ filters, setFilters, onFilterChange, isGuestMode, avail
                 onChange={handleChange}
                 className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all duration-200 appearance-none text-gray-700 font-medium cursor-pointer hover:border-purple-300"
               >
-                {activeSedes.map(s => (
+                {ALL_SEDES.map(s => (
                                     <option key={s.value} value={s.value}>{s.label}</option>
                                 ))}
               </select>

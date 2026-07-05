@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+/* eslint-disable react/prop-types */
+import { useState } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation, Link } from 'react-router-dom';
 import LandingView from '../pages/LandingView';
 import CatalogoView from '../pages/CatalogoView';
@@ -89,6 +90,7 @@ const AppRoutes = ({ isLoggedIn, isAdmin, canViewReports }) => {
                     path="/catalogo"
                     element={
                         <CatalogoView
+                            isLoggedIn={isLoggedIn}
                             filters={filters}
                             setFilters={setFilters}
                             handleFilterChange={handleFilterChange}

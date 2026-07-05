@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+/* eslint-disable react/prop-types */
+import { useEffect, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import SearchFilters from '../components/SearchFilters';
@@ -7,10 +8,24 @@ import QRSimulator from '../components/QRSimulator';
 import CampusSelector from '../components/CampusSelector';
 import { isSuperAdmin } from '../utils/userHelper';
 
-const CatalogoView = ({ filters, setFilters, handleFilterChange, goToMyReservations }) => {
+const CatalogoView = ({ isLoggedIn, filters, setFilters, handleFilterChange, goToMyReservations }) => {
     const location = useLocation();
     const isGuestMode = location.state?.guestMode;
     const [availableFloors, setAvailableFloors] = useState([]);
+    const isInternalUser = Boolean(isLoggedIn);
+
+    useEffect(() => {
+        if (isInternalUser || filters.sede !== '2') {
+            return;
+        }
+
+        const guestSafeFilters = {
+            ...filters,
+            sede: '',
+        };
+        setFilters(guestSafeFilters);
+        handleFilterChange(guestSafeFilters);
+    }, [filters, handleFilterChange, isInternalUser, setFilters]);
 
     // Efecto para aplicar modo invitado (Solo Eventos)
     useEffect(() => {
@@ -26,7 +41,7 @@ const CatalogoView = ({ filters, setFilters, handleFilterChange, goToMyReservati
                 handleFilterChange(guestFilters);
             }
         }
-    }, [isGuestMode]);
+    }, [filters, handleFilterChange, isGuestMode, setFilters]);
 
     // Determine current step based on filters
     // Step 1: Select Campus (No campus selected)
@@ -39,6 +54,10 @@ const CatalogoView = ({ filters, setFilters, handleFilterChange, goToMyReservati
     const showResults = filters.sede;
 
     const handleCampusSelect = (campus) => {
+        if (!isInternalUser && campus === '2') {
+            return;
+        }
+
         const newFilters = { ...filters, sede: campus };
         setFilters(newFilters);
         handleFilterChange(newFilters);
@@ -65,7 +84,11 @@ const CatalogoView = ({ filters, setFilters, handleFilterChange, goToMyReservati
 
             {/* Paso 1: Selector de Campus */}
             {showCampusSelector && (
-                <CampusSelector onSelectCampus={handleCampusSelect} />
+                <CampusSelector
+                    selectedCampus={filters.sede}
+                    isInternalUser={isInternalUser}
+                    onSelectCampus={handleCampusSelect}
+                />
             )}
 
             {/* Paso 2: Resultados (Inmediatamente tras seleccionar sede) */}
