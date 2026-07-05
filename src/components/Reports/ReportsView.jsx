@@ -10,8 +10,6 @@ import {
 } from "@heroicons/react/24/outline";
 import { getGeneralReport } from "../../Services/reportsService";
 import { downloadReport } from "../../Services/DownloadReport";
-import { format, parse } from 'date-fns';
-import { es } from 'date-fns/locale';
 
 const ReportsView = () => {
   // Modificar la definición de columnas para incluir estado al inicio
@@ -32,8 +30,6 @@ const ReportsView = () => {
     { key: 'titulo_reserva', label: 'TÍTULO DE RESERVA' }
   ];
 
-  const [allData, setAllData] = useState([]); // Almacena todos los datos
-  const [filteredData, setFilteredData] = useState([]); // Datos filtrados
   const [displayData, setDisplayData] = useState([]); // Datos paginados
   const [loading, setLoading] = useState(false);
   const [downloading, setDownloading] = useState(false);
@@ -44,8 +40,6 @@ const ReportsView = () => {
     field: null,
     direction: 'asc'
   });
-  const [showDatePicker, setShowDatePicker] = useState({});
-  const [showTimePicker, setShowTimePicker] = useState({});
   const [totalRecords, setTotalRecords] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
 
@@ -101,47 +95,17 @@ const ReportsView = () => {
         t_pages = response.last_page || response.totalPages || Math.ceil(t_records / perPage);
       }
 
-      // Consola silenciosa de Debug para desarrolladores si se abre en Chrome
-      console.log("[Pagination Debug] Final Parsed -> Records:", t_records, "Pages:", t_pages, "Items:", items.length);
-
       // Seguridad total: Evitar mostrar menos de 1 página
       t_pages = Math.max(1, t_pages);
       t_records = Math.max(0, t_records);
 
-      setAllData(items); // Set allData with the fetched items
-      setFilteredData(items); // Initially, filteredData is the same as allData
-      setDisplayData(items);  // <-- Inyecta a la vista principal JSX 
+      setDisplayData(items);
       setTotalRecords(t_records);
       setTotalPages(t_pages);
     } catch (error) {
       console.error("Error al obtener datos:", error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  // Agregar función para normalizar fechas
-  const normalizeFecha = (fecha) => {
-    try {
-      if (!fecha) return '';
-
-      // Si la fecha está en formato "Viernes, 21 de febrero"
-      if (fecha.includes('de')) {
-        const parsedDate = parse(fecha, "EEEE, d 'de' MMMM", new Date(), { locale: es });
-        return format(parsedDate, 'dd/MM/yyyy');
-      }
-
-      // Si la fecha viene en formato yyyy-MM-dd (del input type="date")
-      if (fecha.includes('-')) {
-        const [year, month, day] = fecha.split('-');
-        return `${day}/${month}/${year}`;
-      }
-
-      // Si la fecha ya está en formato dd/MM/yyyy
-      return fecha;
-    } catch (error) {
-      console.error('Error normalizando fecha:', error);
-      return fecha;
     }
   };
 
@@ -172,7 +136,7 @@ const ReportsView = () => {
   const handleDownload = async () => {
     setDownloading(true);
     try {
-      await downloadReport();
+      await downloadReport(filters);
     } catch (error) {
       console.error("Error al descargar:", error);
     } finally {
@@ -197,6 +161,41 @@ const ReportsView = () => {
     }
   };
 
+  const renderDateRangeFilter = (key) => {
+    const desdeKey = `${key}_desde`;
+    const hastaKey = `${key}_hasta`;
+    const isActive = filters[desdeKey] || filters[hastaKey];
+
+    return (
+      <div className={`flex flex-col gap-1.5 rounded-md p-1 transition-all ${isActive ? 'bg-turquesa/5 ring-1 ring-turquesa/30' : ''}`}>
+        <div>
+          <span className="flex items-center gap-1 text-xs font-medium text-gray-400 mb-0.5">
+            <CalendarIcon className="w-3 h-3" />
+            Desde
+          </span>
+          <input
+            type="date"
+            className="w-full px-2 py-1 text-xs border rounded focus:ring-2 focus:ring-turquesa focus:border-transparent"
+            value={filters[desdeKey] || ''}
+            onChange={(e) => handleFilterChange(desdeKey, e.target.value)}
+          />
+        </div>
+        <div>
+          <span className="flex items-center gap-1 text-xs font-medium text-gray-400 mb-0.5">
+            <CalendarIcon className="w-3 h-3" />
+            Hasta
+          </span>
+          <input
+            type="date"
+            className="w-full px-2 py-1 text-xs border rounded focus:ring-2 focus:ring-turquesa focus:border-transparent"
+            value={filters[hastaKey] || ''}
+            onChange={(e) => handleFilterChange(hastaKey, e.target.value)}
+          />
+        </div>
+      </div>
+    );
+  };
+
   const renderFilterInput = (key, label, options) => {
     if (key === 'estado') {
       return (
@@ -217,17 +216,7 @@ const ReportsView = () => {
 
     switch (type) {
       case 'date':
-        return (
-          <div className="relative">
-            <input
-              type="date"
-              className="w-full px-2 py-1 text-sm border rounded pl-8 focus:ring-2 focus:ring-turquesa focus:border-transparent"
-              value={filters[key] || ''}
-              onChange={(e) => handleFilterChange(key, e.target.value)}
-            />
-            <CalendarIcon className="w-4 h-4 text-gray-400 absolute left-2 top-1/2 transform -translate-y-1/2" />
-          </div>
-        );
+        return renderDateRangeFilter(key);
 
       case 'time':
         return (

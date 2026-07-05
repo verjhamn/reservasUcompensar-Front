@@ -1,8 +1,15 @@
 import { axiosInstance } from "./authService";
 
-export const downloadReport = async () => {
+export const downloadReport = async (filters = {}) => {
     try {
-        const response = await axiosInstance.get("/reportes/general-excel");
+        const cleanFilters = {};
+        Object.entries(filters).forEach(([key, value]) => {
+            if (value && value.toString().trim() !== '') {
+                cleanFilters[key] = value.trim();
+            }
+        });
+
+        const response = await axiosInstance.post("/reportes/general-excel", cleanFilters);
         
         if (response.data.status === "success") {
             // Construir la URL completa

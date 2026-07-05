@@ -26,11 +26,8 @@ export const getGeneralReport = async (params = {}) => {
       bodyParams.direccion = params.sortDirection;
     }
 
-    console.log('Parámetros de la petición:', bodyParams);
-
     const response = await axiosInstance.post("/reportes/general", bodyParams);
 
-    console.log('Respuesta del servidor:', response.data);
     return response.data;
   } catch (error) {
     console.error("Error completo:", error);

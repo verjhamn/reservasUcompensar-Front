@@ -26,8 +26,8 @@
 - **POST** `/espacios/filtrar` - Filtrar espacios disponibles
 
 ### Reportes
-- **GET** `/reportes/general` - Obtener reportes generales
-- **GET** `/reportes/general-excel` - Descargar reportes en Excel
+- **POST** `/reportes/general` - Obtener reportes generales
+- **POST** `/reportes/general-excel` - Descargar reportes en Excel
 
 ## Estado de Consistencia
 
