@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import ReactPaginate from "react-paginate";
 import { ImageIcon } from "lucide-react";
 import ReservationModal from "./ReservationModal";
@@ -8,7 +8,6 @@ import { fetchFilteredReservations } from "../Services/reservasService";
 import { useMsal } from "@azure/msal-react";
 import { fetchAuthToken } from "../Services/authService";
 import { startMicrosoftLogin } from "../Services/SSOServices/loginFlowService";
-import { canReserveAnySpace } from "../utils/userHelper";
 
 const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode, onSpaceLoaded, setAvailableFloors }) => {
   const { instance } = useMsal();
@@ -19,6 +18,13 @@ const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode, onSpaceLo
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const onSpaceLoadedRef = useRef(onSpaceLoaded);
+  const setAvailableFloorsRef = useRef(setAvailableFloors);
+
+  useEffect(() => {
+    onSpaceLoadedRef.current = onSpaceLoaded;
+    setAvailableFloorsRef.current = setAvailableFloors;
+  }, [onSpaceLoaded, setAvailableFloors]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -66,7 +72,7 @@ const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode, onSpaceLo
 
         // Extraer pisos únicos SOLO SI no hay un filtro de piso activo
         // Esto evita que al elegir un piso, las demás opciones desaparezcan del select
-        if (typeof setAvailableFloors === 'function' && !filters.piso) {
+        if (typeof setAvailableFloorsRef.current === 'function' && !filters.piso) {
           const floors = processedSpaces.map(space => space.piso?.toString()).filter(Boolean);
           const uniqueFloors = [...new Set(floors)].sort((a, b) => {
             // Intenta ordenarlos numéricamente si es posible
@@ -75,12 +81,12 @@ const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode, onSpaceLo
             if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
             return a.localeCompare(b);
           });
-          setAvailableFloors(uniqueFloors);
+          setAvailableFloorsRef.current(uniqueFloors);
         }
 
         // Notificar al padre cuando los datos están listos (usado por EspacioQRView para apertura automática)
-        if (typeof onSpaceLoaded === 'function') {
-          onSpaceLoaded(processedSpaces);
+        if (typeof onSpaceLoadedRef.current === 'function') {
+          onSpaceLoadedRef.current(processedSpaces);
         }
       } catch (err) {
         console.error("Error al obtener datos en ResultsTable:", err);
@@ -123,7 +129,7 @@ const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode, onSpaceLo
 
   const renderInfoMessage = () => {
     // En modo invitado no mostramos alerta porque usan el formulario de cotizacion.
-    if (filters.tipo && filters.tipo !== "Coworking" && !isGuestMode && !canReserveAnySpace()) {
+    if (filters.tipo && filters.tipo !== "Coworking" && !isGuestMode) {
       return (
         <div className="bg-amber-50 border-l-4 border-amber-400 p-4 mb-4 rounded">
           <div className="flex">
@@ -154,7 +160,7 @@ const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode, onSpaceLo
       {renderInfoMessage()}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {data.slice(page * itemsPerPage, (page + 1) * itemsPerPage).map((item, index) => {
-          const usesInternalRequestFlow = !isGuestMode && item.coworking_contenedor !== "SI" && !canReserveAnySpace();
+          const usesInternalRequestFlow = !isGuestMode && item.coworking_contenedor !== "SI";
           const actionLabel = isGuestMode
             ? "Solicitar Cotizacion"
             : usesInternalRequestFlow

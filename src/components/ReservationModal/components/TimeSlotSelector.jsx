@@ -1,17 +1,18 @@
-import React from 'react';
+/* eslint-disable react/prop-types */
 
 const TimeSlotSelector = ({
     timeSlots,
     selectedHours,
     onTimeSelect,
     isAvailable,
-    isCoworking
+    isCoworking,
+    helperText = 'Selecciona la fecha y hora de tu interes.'
 }) => {
     return (
         <div className="bg-transparent mb-4">
             <div className="flex items-center gap-2 mb-2">
                 <h3 className="text-lg font-bold text-gray-800">
-                    {isCoworking ? "Seleccionar período" : "Seleccionar horario"}
+                    {isCoworking ? 'Seleccionar periodo' : 'Seleccionar horario'}
                 </h3>
                 <div className="group relative mt-1">
                     <button className="flex items-center justify-center w-6 h-6 rounded-full bg-purple-100 text-purple-600 hover:bg-purple-200 transition-colors">
@@ -20,7 +21,7 @@ const TimeSlotSelector = ({
                         </svg>
                     </button>
                     <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48 p-2 bg-gray-800 text-white text-xs rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10 pointer-events-none text-center">
-                        Selecciona la fecha y hora de tu interés. En el siguiente paso podrás ingresar tus datos de contacto para la cotización.
+                        {helperText}
                         <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-gray-800 transform rotate-45"></div>
                     </div>
                 </div>
@@ -29,7 +30,9 @@ const TimeSlotSelector = ({
                 <div className="flex flex-wrap gap-4">
                     <div className="flex items-center gap-2">
                         <div className="w-4 h-4 bg-purple-600 rounded flex items-center justify-center">
-                            <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                            <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
                         </div>
                         <span className="font-semibold text-gray-700">Hora Seleccionada</span>
                     </div>

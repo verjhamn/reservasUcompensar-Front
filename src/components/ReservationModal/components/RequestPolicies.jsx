@@ -15,7 +15,7 @@ const RequestPolicies = ({
                 <li>No se permite consumir alimentos ni bebidas dentro de los auditorios, salvo autorizacion expresa.</li>
                 <li>Se manejan bloques de 4 horas.</li>
                 <li>No se permite el ingreso de alimentos de proveedores no inscritos en la CCF Compensar, Consorcio o UCompensar.</li>
-                <li>Se debe incluir dentro de las cotizaciones el valor de las horas de montaje cuando se requieran.</li>
+                <li>Se debe incluir dentro de las solicitudes el valor de las horas de montaje cuando se requieran.</li>
                 <li>En horarios fuera de la operacion de la universidad, se debera incluir el personal necesario para la ejecucion del evento.</li>
                 <li>Los proveedores deberan cumplir con la normativa sanitaria vigente, usar utensilios biodegradables o reutilizables y cumplir con los requerimientos de SST.</li>
                 <li>Esta prohibido cocinar, calentar o preparar alimentos dentro de los auditorios.</li>

@@ -7,7 +7,6 @@ import LoadingSpinner from '../UtilComponents/LoadingSpinner';
 import { useAvailability } from "./hooks/useAvailability";
 import { useReservation } from "./hooks/useReservation";
 import { getDisponibilidad, processOccupiedHours } from "../../Services/getDisponibilidadService";
-import { canReserveAnySpace } from "../../utils/userHelper";
 
 import SpaceInformation from "./components/SpaceInformation";
 import AvailabilityCalendar from "./components/AvailabilityCalendar";
@@ -28,10 +27,9 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
     const [conflictWarning, setConflictWarning] = useState(null);
 
     const isCoworking = spaceData?.coworking_contenedor === "SI";
-    const isInternalRequestMode = !isGuestMode && !isCoworking && !canReserveAnySpace();
-    const usesRequestFlow = isGuestMode || isInternalRequestMode;
-    const requestFlowLabel = isInternalRequestMode ? "Solicitud" : "Cotizacion";
-    const requestMode = isInternalRequestMode ? "internal" : "external";
+    const usesRequestFlow = isGuestMode || !isCoworking;
+    const requestFlowLabel = isGuestMode ? "Cotizacion" : "Solicitud";
+    const requestMode = isGuestMode ? "external" : "internal";
 
     const {
         selectedDate,
@@ -75,21 +73,29 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
         }
 
         if (usesRequestFlow) {
-            setSelectedDate(selectedStart);
             setConflictWarning(null);
             setSelectedHours([]);
 
             if (dateSelectionMode === 'single') {
+                setSelectedDate(selectedStart);
                 setGuestRange({ startDate: selectedStart, endDate: selectedStart });
                 return;
             }
 
-            setGuestRange(prev => {
-                if (!prev.startDate || prev.endDate || isBefore(selectedStart, prev.startDate)) {
-                    return { startDate: selectedStart, endDate: null };
-                }
-                return { ...prev, endDate: selectedStart };
-            });
+            if (!guestRange.startDate || guestRange.endDate) {
+                setSelectedDate(selectedStart);
+                setGuestRange({ startDate: selectedStart, endDate: null });
+                return;
+            }
+
+            if (isBefore(selectedStart, guestRange.startDate) || isSameCalendarDay(selectedStart, guestRange.startDate)) {
+                setSelectedDate(selectedStart);
+                setGuestRange({ startDate: selectedStart, endDate: null });
+                return;
+            }
+
+            setSelectedDate(selectedStart);
+            setGuestRange(prev => ({ ...prev, endDate: selectedStart }));
             return;
         }
 
@@ -245,7 +251,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
             };
         }
 
-        if (format(date, "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd")) {
+        if (!usesRequestFlow && format(date, "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd")) {
             return {
                 style: {
                     backgroundColor: "#722070",
@@ -394,7 +400,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
         };
 
         fetchGuestAvailability();
-    }, [usesRequestFlow, spaceData?.id, guestRange.startDate, guestRange.endDate]);
+    }, [usesRequestFlow, spaceData?.id, guestRange.startDate, guestRange.endDate, guestAvailabilityByDate]);
 
     // Clear conflict warning whenever the selection changes
     useEffect(() => {
@@ -466,6 +472,18 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
         if (!guestRange.endDate) return 'Ahora haz clic en el día de fin del evento.';
         return 'Puedes hacer clic para reiniciar la selección del rango.';
     })();
+
+    const calendarInstructionDisplay = dateSelectionMode === 'range'
+        ? (!guestRange.startDate
+            ? 'Haz clic en el dia de inicio del evento.'
+            : !guestRange.endDate
+                ? 'Ahora haz clic en un dia posterior para definir el fin del evento.'
+                : 'Puedes hacer clic en otro dia para reiniciar la seleccion del rango.')
+        : calendarInstruction;
+
+    const timeSlotHelperText = usesRequestFlow
+        ? `Selecciona la fecha y hora de tu interes. En el siguiente paso podras ingresar tus datos de contacto para la ${requestFlowLabel.toLowerCase()}.`
+        : 'Selecciona la fecha y hora de tu interes. Luego podras completar los datos de la reserva.';
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -596,7 +614,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
                                     <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                     </svg>
-                                    {calendarInstruction}
+                                    {calendarInstructionDisplay}
                                 </p>
                             </div>
                         )}
@@ -645,6 +663,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
                                     onTimeSelect={handleTimeSelect}
                                     isAvailable={usesRequestFlow ? isRequestTimeSlotAvailable : isTimeSlotAvailable}
                                     isCoworking={isCoworking}
+                                    helperText={timeSlotHelperText}
                                 />
 
                                 {/* Availability status (request flow only) */}
