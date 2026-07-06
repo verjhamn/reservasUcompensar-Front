@@ -7,6 +7,7 @@ import LoadingSpinner from '../UtilComponents/LoadingSpinner';
 import { useAvailability } from "./hooks/useAvailability";
 import { useReservation } from "./hooks/useReservation";
 import { getDisponibilidad, processOccupiedHours } from "../../Services/getDisponibilidadService";
+import { canReserveAnySpace } from "../../utils/userHelper";
 
 import SpaceInformation from "./components/SpaceInformation";
 import AvailabilityCalendar from "./components/AvailabilityCalendar";
@@ -27,9 +28,10 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
     const [conflictWarning, setConflictWarning] = useState(null);
 
     const isCoworking = spaceData?.coworking_contenedor === "SI";
-    const usesRequestFlow = isGuestMode || !isCoworking;
-    const requestFlowLabel = isGuestMode ? "Cotizacion" : "Solicitud";
-    const requestMode = isGuestMode ? "external" : "internal";
+    const isInternalRequestMode = !isGuestMode && !isCoworking && !canReserveAnySpace();
+    const usesRequestFlow = isGuestMode || isInternalRequestMode;
+    const requestFlowLabel = isInternalRequestMode ? "Solicitud" : "Cotizacion";
+    const requestMode = isInternalRequestMode ? "internal" : "external";
 
     const {
         selectedDate,

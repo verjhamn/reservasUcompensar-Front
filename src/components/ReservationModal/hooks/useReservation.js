@@ -122,7 +122,7 @@ export const useReservation = ({
                     }
                 );
             }
-        } catch (error) {
+        } catch {
             toast.error('Error al confirmar la reserva', {
                 duration: 4000,
                 position: 'top-right',

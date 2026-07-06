@@ -8,6 +8,7 @@ import { fetchFilteredReservations } from "../Services/reservasService";
 import { useMsal } from "@azure/msal-react";
 import { fetchAuthToken } from "../Services/authService";
 import { startMicrosoftLogin } from "../Services/SSOServices/loginFlowService";
+import { canReserveAnySpace } from "../utils/userHelper";
 
 const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode, onSpaceLoaded, setAvailableFloors }) => {
   const { instance } = useMsal();
@@ -129,7 +130,7 @@ const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode, onSpaceLo
 
   const renderInfoMessage = () => {
     // En modo invitado no mostramos alerta porque usan el formulario de cotizacion.
-    if (filters.tipo && filters.tipo !== "Coworking" && !isGuestMode) {
+    if (filters.tipo && filters.tipo !== "Coworking" && !isGuestMode && !canReserveAnySpace()) {
       return (
         <div className="bg-amber-50 border-l-4 border-amber-400 p-4 mb-4 rounded">
           <div className="flex">
@@ -160,7 +161,7 @@ const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode, onSpaceLo
       {renderInfoMessage()}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {data.slice(page * itemsPerPage, (page + 1) * itemsPerPage).map((item, index) => {
-          const usesInternalRequestFlow = !isGuestMode && item.coworking_contenedor !== "SI";
+          const usesInternalRequestFlow = !isGuestMode && item.coworking_contenedor !== "SI" && !canReserveAnySpace();
           const actionLabel = isGuestMode
             ? "Solicitar Cotizacion"
             : usesInternalRequestFlow
