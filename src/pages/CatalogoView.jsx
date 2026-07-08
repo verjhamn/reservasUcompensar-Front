@@ -6,6 +6,7 @@ import SearchFilters from '../components/SearchFilters';
 import ResultsTable from '../components/ResultsTable';
 import QRSimulator from '../components/QRSimulator';
 import CampusSelector from '../components/CampusSelector';
+import CampusSupportPanel from '../components/CampusSupportPanel';
 import { isSuperAdmin } from '../utils/userHelper';
 
 const CatalogoView = ({ isLoggedIn, filters, setFilters, handleFilterChange, goToMyReservations }) => {
@@ -105,6 +106,11 @@ const CatalogoView = ({ isLoggedIn, filters, setFilters, handleFilterChange, goT
                             </button>
                         </div>
                     </div>
+
+                    <CampusSupportPanel
+                        selectedCampus={filters.sede}
+                        selectedSpaceType={filters.tipo}
+                    />
 
                     <div className="flex flex-col lg:flex-row gap-6">
                         <div className="w-full lg:w-1/4">
