@@ -2,6 +2,12 @@ import { axiosInstance } from "./authService";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+const getRequestBaseEndpoint = (origin = "") => (
+    origin === 'interna'
+        ? `${API_URL}/solicitudes`
+        : `${API_URL}/solicitudes/externas`
+);
+
 export const getAllReservations = async (filters = {}) => {
     try {
         const response = await axiosInstance.post(`${API_URL}/reservas/filtrar`, {
@@ -27,8 +33,9 @@ export const getAllReservations = async (filters = {}) => {
 
 export const getExternalQuotes = async (filters = {}) => {
     try {
-        const response = await axiosInstance.post(`${API_URL}/solicitudes/externas/show`, {
+        const response = await axiosInstance.post(`${API_URL}/solicitudes/show`, {
             id: filters.id || "",
+            usuario_id: filters.usuario_id || "",
             id_usuario: filters.id_usuario || "",
             espacio_id: filters.espacio_id || "",
             palabra: filters.palabra || "",
@@ -39,6 +46,7 @@ export const getExternalQuotes = async (filters = {}) => {
             tipo: filters.tipo || "",
             piso: filters.piso || "",
             estado: filters.estado || "",
+            origen: filters.origen || "",
             fecha_creacion: filters.fecha_creacion || "",
             page: filters.page || 1,
             per_page: filters.per_page || 10,
@@ -48,16 +56,16 @@ export const getExternalQuotes = async (filters = {}) => {
         if (response.data.success) {
             return response.data;
         }
-        throw new Error("Error al obtener las solicitudes externas");
+        throw new Error("Error al obtener las solicitudes");
     } catch (error) {
         console.error("Error en getExternalQuotes:", error);
         throw error;
     }
 };
 
-export const updateExternalQuoteState = async (id, payload) => {
+export const updateExternalQuoteState = async (id, payload, origin = "") => {
     try {
-        const response = await axiosInstance.post(`${API_URL}/solicitudes/externas/${id}/estado`, payload);
+        const response = await axiosInstance.post(`${getRequestBaseEndpoint(origin)}/${id}/estado`, payload);
         if (response.data.success || response.status === 200 || response.status === 201) {
             // Algunas APIs no devuelven success: true pero si un 200.
             return response.data;
@@ -69,9 +77,9 @@ export const updateExternalQuoteState = async (id, payload) => {
     }
 };
 
-export const addExternalQuoteComment = async (id, commentPayload) => {
+export const addExternalQuoteComment = async (id, commentPayload, origin = "") => {
     try {
-        const response = await axiosInstance.post(`${API_URL}/solicitudes/externas/${id}/comentarios`, commentPayload);
+        const response = await axiosInstance.post(`${getRequestBaseEndpoint(origin)}/${id}/comentarios`, commentPayload);
         if (response.data.success || response.status === 200 || response.status === 201) {
             return response.data;
         }

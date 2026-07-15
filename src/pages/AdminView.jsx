@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Calendar, Briefcase, MapPin } from 'lucide-react';
 import AdminReservationsView from '../components/AdminReservations/AdminReservationsView';
 import ExternalQuotesIndex from '../components/AdminReservations/ExternalQuotes';
@@ -24,14 +24,14 @@ const AdminView = () => {
                         Operación Interna
                     </button>
                     <button
-                        onClick={() => setActiveTab('externas')}
-                        className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ease-out ${activeTab === 'externas'
+                        onClick={() => setActiveTab('solicitudes')}
+                        className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ease-out ${activeTab === 'solicitudes'
                                 ? 'bg-purple-600 text-white shadow-md transform scale-[1.02]'
                                 : 'text-gray-500 hover:text-purple-600 hover:bg-purple-50'
                             }`}
                     >
                         <Briefcase className="w-4 h-4" />
-                        Cotizaciones Externas
+                        Solicitudes
                     </button>
                     {superAdmin && (
                         <button
@@ -50,7 +50,7 @@ const AdminView = () => {
 
             <div className="mt-2 animate-fade-in">
                 {activeTab === 'internas' && <AdminReservationsView />}
-                {activeTab === 'externas' && <ExternalQuotesIndex />}
+                {activeTab === 'solicitudes' && <ExternalQuotesIndex />}
                 {activeTab === 'sedes' && superAdmin && <SedesManager />}
             </div>
         </div>
