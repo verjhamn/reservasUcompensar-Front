@@ -47,6 +47,7 @@ export const getExternalQuotes = async (filters = {}) => {
             piso: filters.piso || "",
             estado: filters.estado || "",
             origen: filters.origen || "",
+            sede: filters.sede || "",
             fecha_creacion: filters.fecha_creacion || "",
             page: filters.page || 1,
             per_page: filters.per_page || 10,

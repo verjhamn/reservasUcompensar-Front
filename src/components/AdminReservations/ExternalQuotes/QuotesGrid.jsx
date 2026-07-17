@@ -3,7 +3,8 @@ import {
     Calendar as CalendarIcon,
     Clock,
     ChevronRight,
-    FileSignature
+    FileSignature,
+    MapPin
 } from 'lucide-react';
 import {
     formatDateObj,
@@ -57,6 +58,7 @@ const QuotesGrid = ({
                         const companyName = companyIsCompensar
                             ? 'Compensar'
                             : (quote.empresa_nombre || quote.solicitante_nombre);
+                        const sedeNombre = quote.sede_nombre || quote.espacio?.sede_nombre;
 
                         return (
                             <div
@@ -96,6 +98,12 @@ const QuotesGrid = ({
                                 </div>
 
                                 <div className="px-5 pb-5 mt-auto border-b border-gray-100">
+                                    {sedeNombre && (
+                                        <div className="flex items-center gap-2 text-sm text-gray-600 font-medium mb-1">
+                                            <MapPin className="w-4 h-4 text-gray-400" />
+                                            {sedeNombre}
+                                        </div>
+                                    )}
                                     <div className="flex items-center gap-2 text-sm text-gray-600 font-medium mb-1">
                                         <CalendarIcon className="w-4 h-4 text-gray-400" />
                                         {formatDateObj(quote.fecha_reserva)}

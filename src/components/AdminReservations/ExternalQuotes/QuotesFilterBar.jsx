@@ -5,7 +5,8 @@ import {
     Mail,
     Calendar as CalendarIcon,
     Briefcase,
-    Layers3
+    Layers3,
+    MapPin
 } from 'lucide-react';
 
 const QuotesFilterBar = ({ filters, handleFilterChange }) => {
@@ -23,7 +24,7 @@ const QuotesFilterBar = ({ filters, handleFilterChange }) => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-4">
                 <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <Search className="h-4 w-4 text-gray-400" />
@@ -84,6 +85,22 @@ const QuotesFilterBar = ({ filters, handleFilterChange }) => {
                         <option value="">Todos los origenes</option>
                         <option value="interna">Internas</option>
                         <option value="externa">Externas</option>
+                    </select>
+                </div>
+
+                <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <MapPin className="h-4 w-4 text-gray-400" />
+                    </div>
+                    <select
+                        name="sede"
+                        value={filters.sede}
+                        onChange={handleFilterChange}
+                        className="w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-sm transition-all bg-gray-50 hover:bg-white appearance-none"
+                    >
+                        <option value="">Todas las sedes</option>
+                        <option value="1">Campus Av. 68</option>
+                        <option value="2">Campus Teusaquillo</option>
                     </select>
                 </div>
 

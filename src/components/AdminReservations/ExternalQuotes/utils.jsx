@@ -27,6 +27,16 @@ export const normalizeOrigin = (origin) => {
     return normalized || '';
 };
 
+export const SEDES = {
+    '1': 'Campus Av. 68',
+    '2': 'Campus Teusaquillo'
+};
+
+export const getSedeLabel = (sede) => {
+    if (sede === null || sede === undefined || sede === '') return '';
+    return SEDES[sede.toString().trim()] || sede.toString();
+};
+
 export const formatSetupTime = (setupTime) => {
     const numericValue = Number(setupTime);
 
@@ -75,9 +85,22 @@ export const normalizeRequest = (request = {}) => {
         ? 'Compensar'
         : pickFirstDefined(request.empresa_nombre, empresa.nombre);
 
+    const sede = pickFirstDefined(
+        request.sede,
+        request.sede_id,
+        solicitud.sede,
+        solicitud.sede_id,
+        reserva.sede,
+        reserva.sede_id,
+        espacio.sede,
+        espacio.sede_id
+    );
+
     return {
         ...request,
         origen,
+        sede,
+        sede_nombre: getSedeLabel(sede),
         evento_nombre: pickFirstDefined(
             request.evento_nombre,
             request.evento?.nombre,
@@ -204,7 +227,9 @@ export const normalizeRequest = (request = {}) => {
                 espacio.tipo,
                 request.tipo
             ),
-            piso: pickFirstDefined(espacio.piso, request.piso)
+            piso: pickFirstDefined(espacio.piso, request.piso),
+            sede,
+            sede_nombre: getSedeLabel(sede)
         },
         linea_tiempo: Array.isArray(request.linea_tiempo)
             ? request.linea_tiempo

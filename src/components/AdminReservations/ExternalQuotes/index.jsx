@@ -31,6 +31,7 @@ const ExternalQuotesIndex = () => {
         piso: "",
         estado: "",
         origen: "",
+        sede: "",
         fecha_creacion: "",
         page: 1,
         per_page: 10

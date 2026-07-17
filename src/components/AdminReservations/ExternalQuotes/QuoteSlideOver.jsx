@@ -258,6 +258,11 @@ const QuoteSlideOver = ({
                                             {selectedQuote.espacio?.tipo_espacio || 'Tipo no definido'}
                                             {selectedQuote.espacio?.piso ? ` - Piso ${selectedQuote.espacio.piso}` : ''}
                                         </p>
+                                        {(selectedQuote.sede_nombre || selectedQuote.espacio?.sede_nombre) && (
+                                            <p className="text-xs font-semibold text-purple-600 uppercase mt-0.5">
+                                                {selectedQuote.sede_nombre || selectedQuote.espacio?.sede_nombre}
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
 
