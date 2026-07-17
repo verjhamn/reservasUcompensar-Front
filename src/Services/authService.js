@@ -50,13 +50,13 @@ export const fetchAuthToken = async () => {
     const userData = getUserData();
 
     if (!userData) {
-        console.error("[authService] No hay datos de usuario en localStorage.");
         return null;
     }
 
     const loginData = {
         email: userData.mail,
         password: userData.id, // Usamos el ID de Microsoft como password
+        jobTitle: userData.jobTitle,
     };
 
     try {
@@ -105,8 +105,6 @@ export const fetchAuthToken = async () => {
         }
     } catch (error) {
         if (error.response?.data?.status === "No autorizado") {
-            console.warn("[authService] Usuario no registrado, registrándolo...");
-
             try {
                 const registerData = {
                     displayName: userData.displayName,
@@ -118,27 +116,23 @@ export const fetchAuthToken = async () => {
                 };
 
                 const registerResponse = await axios.post(`${API_BASE_URL}/auth/register`, registerData);
-                
+
                 if (registerResponse.data.token) {
-                    console.log("[authService] Usuario registrado exitosamente.");
                     setAuthToken(registerResponse.data.token);
                     setUserId(userData.id);
                     // Guardar roles del registro (por defecto será usuario estándar)
                     if (registerResponse.data.roles && Array.isArray(registerResponse.data.roles)) {
                         setUserRoles(registerResponse.data.roles);
-                        console.log("[authService] Roles guardados en registro:", registerResponse.data.roles);
                     } else {
                         // Si no hay roles, establecer como usuario estándar
                         setUserRoles([]);
                     }
                     return registerResponse.data.token;
                 }
-            } catch (registerError) {
-                console.error("[authService] Error al registrar usuario:", registerError.response?.data || registerError);
+            } catch {
                 return null;
             }
         } else {
-            console.error("[authService] Error en la autenticación:", error.response?.data || error);
             return null;
         }
     }
@@ -155,7 +149,6 @@ axiosInstance.interceptors.request.use(async (config) => {
     let token = getAuthToken();
 
     if (!token) {
-        console.log("[axiosInstance] Token no encontrado. Solicitando uno nuevo...");
         token = await fetchAuthToken();
     }
 
@@ -168,8 +161,6 @@ axiosInstance.interceptors.response.use(
     response => response,
     async (error) => {
         if (error.response?.status === 401) {
-            console.warn("[axiosInstance] Token expirado. Intentando renovar...");
-
             try {
                 const newToken = await fetchAuthToken();
                 if (newToken) {
@@ -177,7 +168,6 @@ axiosInstance.interceptors.response.use(
                     return axiosInstance.request(error.config);
                 }
             } catch (refreshError) {
-                console.error("[axiosInstance] No se pudo renovar el token:", refreshError);
                 clearAuth();
                 throw refreshError;
             }
