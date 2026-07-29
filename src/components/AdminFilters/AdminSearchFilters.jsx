@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSyncAlt } from "@fortawesome/free-solid-svg-icons";
 import { FunnelIcon, ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
 import FilterField from "./FilterField";
+import { getSedeLabel } from "../../utils/constants";
 
 const coworkingPeriods = [
   { id: 0, name: "Mañana", start: "07:00", end: "12:00" },
@@ -26,7 +27,11 @@ const AdminSearchFilters = ({ filters, setFilters }) => {
   const staticOptions = {
     tipos: ["Coworking", "Espacio multipropósito", "Laboratorio", "Espacio de eventos", "Sala de clases"],
     estados: ["Creada", "Confirmada", "Completada", "Cancelada"],
-    pisos: ["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]
+    pisos: ["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"],
+    sedes: [
+      { value: "1", label: "Campus Av. 68" },
+      { value: "2", label: "Campus Teusaquillo" }
+    ]
   };
 
   // Contar filtros activos
@@ -75,6 +80,7 @@ const AdminSearchFilters = ({ filters, setFilters }) => {
       tipo: "",
       estado: "",
       piso: "",
+      sede_id: "",
       horaInicio: "",
       horaFin: ""
     });
@@ -155,6 +161,11 @@ const AdminSearchFilters = ({ filters, setFilters }) => {
                 🏗️ Piso {filters.piso}
               </span>
             )}
+            {filters.sede_id && (
+              <span className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded-full">
+                📍 {getSedeLabel(filters.sede_id)}
+              </span>
+            )}
             {filters.horaInicio && (
               <span className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded-full">
                 🕐 {filters.horaInicio}-{filters.horaFin}
@@ -212,6 +223,16 @@ const AdminSearchFilters = ({ filters, setFilters }) => {
               type="select"
               placeholder="Seleccionar piso..."
               options={staticOptions.pisos}
+            />
+
+            <FilterField
+              label="Sede"
+              name="sede_id"
+              value={filters.sede_id || ""}
+              onChange={handleChange}
+              type="select"
+              placeholder="Seleccionar sede..."
+              options={staticOptions.sedes}
             />
 
             {filters.tipo === "Coworking" ? (

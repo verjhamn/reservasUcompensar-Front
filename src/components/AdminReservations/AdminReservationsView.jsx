@@ -10,6 +10,7 @@ import { showConfirmation, showSuccessToast, showErrorToast } from '../UtilCompo
 import ReservationList from '../Calendar/ReservationList';
 import { format } from 'date-fns';
 import es from 'date-fns/locale/es';
+import { getSedeLabel } from '../../utils/constants';
 
 const AdminReservationsView = () => {
     const [filters, setFilters] = useState({
@@ -17,7 +18,8 @@ const AdminReservationsView = () => {
         email: "",
         tipo: "",
         estado: "",
-        piso: ""
+        piso: "",
+        sede_id: ""
     });
     const [reservations, setReservations] = useState([]);
     const [selectedDate, setSelectedDate] = useState(new Date());
@@ -42,11 +44,13 @@ const AdminReservationsView = () => {
                 let espacioType = reservation.espacio?.tipo_espacio;
                 
                 // Para espacios de coworking, usar el tipo específico o 'Coworking' como fallback
-                if (reservation.espacio_type === "App\\\\Models\\\\basics\\\\EspacioCoworking" || 
+                if (reservation.espacio_type === "App\\\\Models\\\\basics\\\\EspacioCoworking" ||
                     reservation.espacio?.tipo?.toLowerCase().includes("coworking") ||
                     reservation.espacio?.tipo?.toLowerCase().includes("puesto")) {
                     espacioKey = 'Coworking';
                 }
+
+                const sedeId = reservation.sede_id ?? reservation.espacio?.sede_id;
 
                 return {
                     id: reservation.id,
@@ -58,11 +62,15 @@ const AdminReservationsView = () => {
                     type: espacioKey || 'Coworking',
                     idEspacio: reservation.espacio?.codigo,
                     espacio_type: reservation.espacio_type, // ✅ Incluir espacio_type en el objeto transformado
+                    sede_id: sedeId,
+                    sede_nombre: getSedeLabel(sedeId),
                     espacio: {
                         codigo: reservation.espacio?.codigo,
                         key: espacioKey,
                         tipo: espacioType || reservation.espacio?.tipo,
-                        nombre: reservation.espacio?.nombre
+                        nombre: reservation.espacio?.nombre,
+                        sede_id: sedeId,
+                        sede_nombre: getSedeLabel(sedeId)
                     },
                     start: startDate,
                     end: endDate,
@@ -147,8 +155,14 @@ const AdminReservationsView = () => {
         }
 
         if (filters.piso) {
-            baseReservations = baseReservations.filter(reservation => 
+            baseReservations = baseReservations.filter(reservation =>
                 reservation.espacio?.piso?.toString() === filters.piso
+            );
+        }
+
+        if (filters.sede_id) {
+            baseReservations = baseReservations.filter(reservation =>
+                (reservation.sede_id ?? reservation.espacio?.sede_id)?.toString() === filters.sede_id
             );
         }
 

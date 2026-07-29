@@ -123,6 +123,11 @@ const ReservationList = ({ selectedDate, events, onCancelReservation, onCheckIn,
                                                     <span className="text-gray-600">🏢 {espacio.key}</span>
                                                     <span className="text-gray-500">#{event.id}</span>
                                                 </div>
+                                                {event.sede_nombre && (
+                                                    <div className="flex items-center justify-between text-sm">
+                                                        <span className="text-gray-600">📍 {event.sede_nombre}</span>
+                                                    </div>
+                                                )}
                                                 {event.titulo && (
                                                     <div className="text-sm text-gray-600">
                                                         <span className="font-medium">📝</span> 
@@ -208,6 +213,11 @@ const ReservationList = ({ selectedDate, events, onCancelReservation, onCheckIn,
                                                             <p className="text-sm text-gray-600">
                                                                 <span className="font-medium">Tipo:</span> {espacio.key}
                                                             </p>
+                                                            {event.sede_nombre && (
+                                                                <p className="text-sm text-gray-600">
+                                                                    <span className="font-medium">Sede:</span> {event.sede_nombre}
+                                                                </p>
+                                                            )}
                                                             <p className="text-sm text-gray-600">
                                                                 <span className="font-medium">Horario:</span> {format(new Date(event.hora_inicio), "HH:mm")} - {format(new Date(event.hora_fin), "HH:mm")}
                                                             </p>

@@ -18,7 +18,8 @@ export const getAllReservations = async (filters = {}) => {
             tipo: filters.tipo || "",
             piso: filters.piso || "",
             email: filters.email || "",
-            estado: filters.estado || ""
+            estado: filters.estado || "",
+            sede_id: filters.sede_id || ""
         });
 
         if (response.data.success) {
@@ -47,7 +48,7 @@ export const getExternalQuotes = async (filters = {}) => {
             piso: filters.piso || "",
             estado: filters.estado || "",
             origen: filters.origen || "",
-            sede: filters.sede || "",
+            sede_id: filters.sede_id || "",
             fecha_creacion: filters.fecha_creacion || "",
             page: filters.page || 1,
             per_page: filters.per_page || 10,

@@ -1,6 +1,7 @@
 import { format, parseISO } from 'date-fns';
 import es from 'date-fns/locale/es';
 import { Clock, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
+import { getSedeLabel } from '../../../utils/constants';
 
 const pickFirstDefined = (...values) =>
     values.find((value) => {
@@ -25,16 +26,6 @@ export const normalizeOrigin = (origin) => {
     if (normalized?.startsWith('ext')) return 'externa';
 
     return normalized || '';
-};
-
-export const SEDES = {
-    '1': 'Campus Av. 68',
-    '2': 'Campus Teusaquillo'
-};
-
-export const getSedeLabel = (sede) => {
-    if (sede === null || sede === undefined || sede === '') return '';
-    return SEDES[sede.toString().trim()] || sede.toString();
 };
 
 export const formatSetupTime = (setupTime) => {
@@ -86,14 +77,14 @@ export const normalizeRequest = (request = {}) => {
         : pickFirstDefined(request.empresa_nombre, empresa.nombre);
 
     const sede = pickFirstDefined(
-        request.sede,
         request.sede_id,
-        solicitud.sede,
         solicitud.sede_id,
-        reserva.sede,
         reserva.sede_id,
-        espacio.sede,
-        espacio.sede_id
+        espacio.sede_id,
+        request.sede,
+        solicitud.sede,
+        reserva.sede,
+        espacio.sede
     );
 
     return {

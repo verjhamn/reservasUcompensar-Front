@@ -93,8 +93,8 @@ const QuotesFilterBar = ({ filters, handleFilterChange }) => {
                         <MapPin className="h-4 w-4 text-gray-400" />
                     </div>
                     <select
-                        name="sede"
-                        value={filters.sede}
+                        name="sede_id"
+                        value={filters.sede_id}
                         onChange={handleFilterChange}
                         className="w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-sm transition-all bg-gray-50 hover:bg-white appearance-none"
                     >
