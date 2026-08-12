@@ -59,11 +59,36 @@ export const normalizeRequest = (request = {}) => {
     const solicitud = request.solicitud || {};
     const reserva = request.reserva || {};
     const empresa = request.empresa || {};
+    const contexto = request.contexto || {};
     const solicitante = request.solicitante || request.usuario || {};
     const espacio = request.espacio || reserva.espacio || {};
     const origen = normalizeOrigin(
-        pickFirstDefined(request.origen, request.tipo_origen, request.source)
+        pickFirstDefined(request.origen, request.origen_label, request.tipo_origen, request.source)
     );
+
+    const fechaReservaOriginal = pickFirstDefined(
+        request.fecha_reserva,
+        request.fecha,
+        reserva.fecha,
+        request.fecha_inicio
+    );
+    const fechaFinOriginal = pickFirstDefined(
+        request.fecha_fin,
+        request.fecha_fin_reserva,
+        reserva.fecha_fin,
+        request.fecha_final
+    );
+    const horaInicioOriginal = pickFirstDefined(
+        request.hora_inicio,
+        request.horaInicio,
+        reserva.hora_inicio
+    );
+    const horaFinOriginal = pickFirstDefined(
+        request.hora_fin,
+        request.horaFin,
+        reserva.hora_fin
+    );
+    const tieneReubicacion = isTruthyFlag(request.tiene_reubicacion);
 
     const empresaCompensarInterno = [
         request.empresa_compensar_interno,
@@ -95,42 +120,34 @@ export const normalizeRequest = (request = {}) => {
         evento_nombre: pickFirstDefined(
             request.evento_nombre,
             request.evento?.nombre,
+            request.solicitud_nombre,
             solicitud.nombre,
+            contexto.nombre,
             request.nombre
         ),
         evento_tipo: pickFirstDefined(
             request.evento_tipo,
             request.evento?.tipo,
             solicitud.tipo,
+            contexto.tipo,
             request.tipo
         ),
         evento_detalles: pickFirstDefined(
             request.evento_detalles,
             solicitud.detalles,
+            contexto.detalles,
             request.detalles
         ),
-        fecha_reserva: pickFirstDefined(
-            request.fecha_reserva,
-            request.fecha,
-            reserva.fecha,
-            request.fecha_inicio
-        ),
-        fecha_fin: pickFirstDefined(
-            request.fecha_fin,
-            request.fecha_fin_reserva,
-            reserva.fecha_fin,
-            request.fecha_final
-        ),
-        hora_inicio: pickFirstDefined(
-            request.hora_inicio,
-            request.horaInicio,
-            reserva.hora_inicio
-        ),
-        hora_fin: pickFirstDefined(
-            request.hora_fin,
-            request.horaFin,
-            reserva.hora_fin
-        ),
+        contexto_categoria: pickFirstDefined(request.contexto_categoria, contexto.categoria),
+        tiene_reubicacion: tieneReubicacion,
+        fecha_reserva_original: fechaReservaOriginal,
+        fecha_fin_original: fechaFinOriginal,
+        hora_inicio_original: horaInicioOriginal,
+        hora_fin_original: horaFinOriginal,
+        fecha_reserva: pickFirstDefined(request.fecha_reserva_efectiva, fechaReservaOriginal),
+        fecha_fin: pickFirstDefined(request.fecha_fin_efectiva, fechaFinOriginal),
+        hora_inicio: pickFirstDefined(request.hora_inicio_efectiva, horaInicioOriginal),
+        hora_fin: pickFirstDefined(request.hora_fin_efectiva, horaFinOriginal),
         created_at: pickFirstDefined(
             request.created_at,
             request.fecha_creacion,
@@ -210,25 +227,39 @@ export const normalizeRequest = (request = {}) => {
             request.solicitante_correo_alternativo,
             solicitante.correo_alternativo
         ),
+        solicitante_cargo: pickFirstDefined(
+            request.solicitante_cargo,
+            solicitante.cargo,
+            solicitante.jobTitle
+        ),
+        reserva_id: pickFirstDefined(request.reserva_id, reserva.id),
+        reserva_estado: pickFirstDefined(reserva.estado, request.reserva_estado),
         espacio: {
             ...espacio,
             nombre: pickFirstDefined(espacio.nombre, request.espacio_nombre),
+            codigo: pickFirstDefined(espacio.codigo, request.espacio_codigo),
             tipo_espacio: pickFirstDefined(
                 espacio.tipo_espacio,
                 espacio.tipo,
                 request.tipo
             ),
             piso: pickFirstDefined(espacio.piso, request.piso),
+            cantidad_equipos: pickFirstDefined(espacio.cantidad_equipos, request.espacio_cantidad_equipos),
+            tipo_equipos: pickFirstDefined(espacio.tipo_equipos, request.espacio_tipo_equipos),
+            observaciones: pickFirstDefined(espacio.observaciones, request.espacio_observaciones),
+            reservable: pickFirstDefined(espacio.reservable, request.espacio_reservable),
             sede,
             sede_nombre: getSedeLabel(sede)
         },
         linea_tiempo: Array.isArray(request.linea_tiempo)
             ? request.linea_tiempo
-            : Array.isArray(request.timeline)
-                ? request.timeline
-                : Array.isArray(request.seguimiento)
-                    ? request.seguimiento
-                    : []
+            : Array.isArray(request.lineaTiempo)
+                ? request.lineaTiempo
+                : Array.isArray(request.timeline)
+                    ? request.timeline
+                    : Array.isArray(request.seguimiento)
+                        ? request.seguimiento
+                        : []
     };
 };
 
@@ -240,6 +271,37 @@ export const formatDateTime = (dateString) => {
 export const formatDateObj = (dateString) => {
     if (!dateString) return 'No definida';
     try { return format(parseISO(dateString), "dd MMM yyyy", { locale: es }); } catch { return dateString; }
+};
+
+export const toDateInputValue = (value) => {
+    if (!value) return '';
+    const isoMatch = /^(\d{4}-\d{2}-\d{2})/.exec(value);
+    if (isoMatch) return isoMatch[1];
+    try {
+        const parsed = new Date(value);
+        if (Number.isNaN(parsed.getTime())) return '';
+        return parsed.toISOString().slice(0, 10);
+    } catch {
+        return '';
+    }
+};
+
+export const formatPayloadDate = (value) => {
+    if (!value) return '';
+    const isoMatch = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+    if (isoMatch) {
+        const [, year, month, day] = isoMatch;
+        return `${day}/${month}/${year}`;
+    }
+    try {
+        const parsed = new Date(value);
+        if (Number.isNaN(parsed.getTime())) return '';
+        const dia = String(parsed.getDate()).padStart(2, '0');
+        const mes = String(parsed.getMonth() + 1).padStart(2, '0');
+        return `${dia}/${mes}/${parsed.getFullYear()}`;
+    } catch {
+        return '';
+    }
 };
 
 export const getStatusBadge = (estado) => {

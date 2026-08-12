@@ -14,7 +14,7 @@ import {
 import QuotesFilterBar from './QuotesFilterBar';
 import QuotesGrid from './QuotesGrid';
 import QuoteSlideOver from './QuoteSlideOver';
-import { normalizeRequest } from './utils';
+import { normalizeRequest, formatPayloadDate, toDateInputValue } from './utils';
 
 const ExternalQuotesIndex = () => {
     const [filters, setFilters] = useState({
@@ -50,7 +50,14 @@ const ExternalQuotesIndex = () => {
     const [actionData, setActionData] = useState({
         estado: 'nueva',
         observacion: '',
-        notificar: false
+        notificar: false,
+        reubicar: false,
+        reubicacion: {
+            fecha_reserva: '',
+            fecha_fin: '',
+            hora_inicio: '',
+            hora_fin: ''
+        }
     });
     const [isSaving, setIsSaving] = useState(false);
 
@@ -113,7 +120,14 @@ const ExternalQuotesIndex = () => {
         setActionData({
             estado: quote.estado?.toLowerCase() || 'nueva',
             observacion: '',
-            notificar: false
+            notificar: false,
+            reubicar: !!quote.tiene_reubicacion,
+            reubicacion: {
+                fecha_reserva: toDateInputValue(quote.fecha_reserva),
+                fecha_fin: toDateInputValue(quote.fecha_fin || quote.fecha_reserva),
+                hora_inicio: quote.hora_inicio || '',
+                hora_fin: quote.hora_fin || ''
+            }
         });
         setIsSlideOverOpen(true);
         document.body.style.overflow = 'hidden';
@@ -138,14 +152,33 @@ const ExternalQuotesIndex = () => {
             if (!confirmed) return;
         }
 
+        if (actionData.reubicar) {
+            const { fecha_reserva, hora_inicio, hora_fin } = actionData.reubicacion;
+            if (!fecha_reserva || !hora_inicio || !hora_fin) {
+                showErrorToast("Completa fecha y horario de la reubicacion, o desactiva la opcion.");
+                return;
+            }
+        }
+
         setIsSaving(true);
 
         try {
-            await updateExternalQuoteState(selectedQuote.id, {
+            const payload = {
                 estado: actionData.estado,
                 observacion: actionData.observacion,
                 notificar: actionData.notificar
-            }, selectedQuote.origen);
+            };
+
+            if (actionData.reubicar) {
+                payload.reubicacion = {
+                    fecha_reserva: formatPayloadDate(actionData.reubicacion.fecha_reserva),
+                    fecha_fin: formatPayloadDate(actionData.reubicacion.fecha_fin || actionData.reubicacion.fecha_reserva),
+                    hora_inicio: actionData.reubicacion.hora_inicio,
+                    hora_fin: actionData.reubicacion.hora_fin
+                };
+            }
+
+            await updateExternalQuoteState(selectedQuote.id, payload, selectedQuote.origen);
             showSuccessToast('Solicitud actualizada correctamente');
             closeSlideOver();
             fetchQuotes();

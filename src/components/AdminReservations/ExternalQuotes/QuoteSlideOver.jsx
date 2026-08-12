@@ -7,7 +7,10 @@ import {
     Briefcase,
     Phone,
     X,
-    FileSignature
+    FileSignature,
+    AlertCircle,
+    AlertTriangle,
+    RefreshCw
 } from 'lucide-react';
 import {
     formatDateObj,
@@ -90,6 +93,17 @@ const QuoteSlideOver = ({
                                 <p className="text-sm text-gray-500">
                                     Radicada el {formatDateTime(selectedQuote.created_at)}
                                 </p>
+                                {selectedQuote.updated_at && selectedQuote.updated_at !== selectedQuote.created_at && (
+                                    <p className="text-xs text-gray-400">
+                                        Última actualización: {formatDateTime(selectedQuote.updated_at)}
+                                    </p>
+                                )}
+                                {selectedQuote.reserva_id && (
+                                    <p className="text-xs font-semibold text-emerald-700 mt-1">
+                                        Reserva generada #{selectedQuote.reserva_id}
+                                        {selectedQuote.reserva_estado ? ` · ${selectedQuote.reserva_estado}` : ''}
+                                    </p>
+                                )}
                             </div>
                             <button
                                 onClick={closeSlideOver}
@@ -100,6 +114,19 @@ const QuoteSlideOver = ({
                         </div>
 
                         <div className="flex-grow overflow-y-auto p-6 space-y-6">
+                            {selectedQuote.observacion_estado && (
+                                <div className={`rounded-xl p-4 border text-sm font-medium flex items-start gap-2 ${
+                                    selectedQuote.estado?.toLowerCase() === 'no aprobada'
+                                        ? 'bg-red-50 border-red-200 text-red-800'
+                                        : selectedQuote.estado?.toLowerCase() === 'en espera'
+                                            ? 'bg-yellow-50 border-yellow-200 text-yellow-800'
+                                            : 'bg-gray-50 border-gray-200 text-gray-700'
+                                }`}>
+                                    <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                                    <span><strong>Observación del estado actual:</strong> {selectedQuote.observacion_estado}</span>
+                                </div>
+                            )}
+
                             <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
                                 <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
                                     <FileSignature className="w-4 h-4 text-purple-600" />
@@ -110,8 +137,13 @@ const QuoteSlideOver = ({
                                     {eventName}
                                 </p>
                                 {selectedQuote.evento_tipo && (
-                                    <p className="text-sm font-semibold text-purple-700 mb-4">
+                                    <p className="text-sm font-semibold text-purple-700 mb-1">
                                         {selectedQuote.evento_tipo}
+                                    </p>
+                                )}
+                                {selectedQuote.contexto_categoria && (
+                                    <p className="text-xs text-gray-400 mb-4">
+                                        Categoría: {selectedQuote.contexto_categoria}
                                     </p>
                                 )}
 
@@ -167,6 +199,43 @@ const QuoteSlideOver = ({
                                 )}
                             </div>
 
+                            {selectedQuote.tiene_reubicacion && (
+                                <div className="bg-amber-50 rounded-xl p-5 border border-amber-200 shadow-sm">
+                                    <h3 className="text-sm font-bold text-amber-700 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                        <RefreshCw className="w-4 h-4" />
+                                        Solicitud Reubicada
+                                    </h3>
+                                    <div className="grid grid-cols-2 gap-4 text-sm">
+                                        <div>
+                                            <p className="text-xs text-amber-700 font-semibold mb-1">Solicitado originalmente</p>
+                                            <p className="text-gray-800 font-medium flex items-center gap-1.5">
+                                                <CalendarIcon className="w-3.5 h-3.5" />
+                                                {formatDateObj(selectedQuote.fecha_reserva_original)}
+                                                {selectedQuote.fecha_fin_original && selectedQuote.fecha_fin_original !== selectedQuote.fecha_reserva_original
+                                                    ? ` - ${formatDateObj(selectedQuote.fecha_fin_original)}`
+                                                    : ''}
+                                            </p>
+                                            <p className="text-gray-600 flex items-center gap-1.5 mt-1">
+                                                <Clock className="w-3.5 h-3.5" />
+                                                {selectedQuote.hora_inicio_original || '—'} a {selectedQuote.hora_fin_original || '—'}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-amber-700 font-semibold mb-1">Agenda definitiva</p>
+                                            <p className="text-gray-900 font-bold flex items-center gap-1.5">
+                                                <CalendarIcon className="w-3.5 h-3.5" />
+                                                {formatDateObj(selectedQuote.fecha_reserva)}
+                                                {endDate ? ` - ${formatDateObj(endDate)}` : ''}
+                                            </p>
+                                            <p className="text-gray-800 font-semibold flex items-center gap-1.5 mt-1">
+                                                <Clock className="w-3.5 h-3.5" />
+                                                {selectedQuote.hora_inicio || '—'} a {selectedQuote.hora_fin || '—'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
                                 <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
                                     <Building className="w-4 h-4 text-purple-600" />
@@ -216,6 +285,7 @@ const QuoteSlideOver = ({
                                         <div className="mt-2 text-sm text-gray-700 space-y-1.5">
                                             <p>
                                                 <strong>{selectedQuote.solicitante_nombre || 'Sin nombre registrado'}</strong>
+                                                {selectedQuote.solicitante_cargo ? ` — ${selectedQuote.solicitante_cargo}` : ''}
                                                 {requesterDocument ? ` (${requesterDocument})` : ''}
                                             </p>
                                             {selectedQuote.solicitante_telefono && (
@@ -253,6 +323,9 @@ const QuoteSlideOver = ({
                                     <div>
                                         <p className="font-bold text-gray-900 text-[15px]">
                                             {selectedQuote.espacio?.nombre || 'General'}
+                                            {selectedQuote.espacio?.codigo && selectedQuote.espacio.codigo !== selectedQuote.espacio?.nombre
+                                                ? ` (${selectedQuote.espacio.codigo})`
+                                                : ''}
                                         </p>
                                         <p className="text-xs font-semibold text-gray-500 uppercase">
                                             {selectedQuote.espacio?.tipo_espacio || 'Tipo no definido'}
@@ -266,12 +339,32 @@ const QuoteSlideOver = ({
                                     </div>
                                 </div>
 
+                                {selectedQuote.espacio?.reservable && !isTruthyFlag(selectedQuote.espacio.reservable) && (
+                                    <div className="mb-3 flex items-center gap-2 text-xs font-bold text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                                        <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                                        Este espacio está marcado como no reservable actualmente.
+                                    </div>
+                                )}
+
+                                {Number(selectedQuote.espacio?.cantidad_equipos) > 0 && (
+                                    <p className="text-xs text-gray-600 mb-3">
+                                        <strong>{selectedQuote.espacio.cantidad_equipos}</strong> equipo(s)
+                                        {selectedQuote.espacio.tipo_equipos ? `: ${selectedQuote.espacio.tipo_equipos}` : ''}
+                                    </p>
+                                )}
+
                                 {selectedQuote.espacio?.descripcion && (
                                     <div className="bg-gray-50/50 rounded-lg p-3 border border-gray-200/60">
                                         <div
                                             className="text-[13px] text-gray-700 prose prose-sm max-w-none prose-p:my-1 prose-ul:my-1 prose-ul:pl-4 prose-li:list-disc prose-strong:text-purple-900"
                                             dangerouslySetInnerHTML={{ __html: selectedQuote.espacio.descripcion }}
                                         />
+                                    </div>
+                                )}
+
+                                {selectedQuote.espacio?.observaciones && (
+                                    <div className="mt-3 bg-purple-50/50 rounded-lg p-3 border border-purple-100 text-[13px] text-purple-800">
+                                        <strong>Nota del espacio:</strong> {selectedQuote.espacio.observaciones}
                                     </div>
                                 )}
                             </div>
@@ -322,6 +415,95 @@ const QuoteSlideOver = ({
                                                 Aprobada
                                             </option>
                                         </select>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-800 mb-1.5">
+                                            Observación {actionData.estado === 'no aprobada' ? '(motivo del rechazo)' : '(opcional)'}
+                                        </label>
+                                        <textarea
+                                            value={actionData.observacion}
+                                            onChange={(event) => setActionData({
+                                                ...actionData,
+                                                observacion: event.target.value
+                                            })}
+                                            placeholder="Ej. Se ajusta la agenda por disponibilidad del espacio."
+                                            rows="2"
+                                            className="w-full border-2 border-purple-100 rounded-xl px-4 py-2.5 focus:ring-4 focus:ring-purple-50 focus:border-purple-400 outline-none transition-all text-gray-800 text-sm bg-gray-50/50 hover:bg-white resize-none"
+                                        />
+                                    </div>
+
+                                    <div className="bg-amber-50/60 border border-amber-200 rounded-xl p-4">
+                                        <div className="flex items-center justify-between gap-3">
+                                            <div>
+                                                <p className="text-sm font-bold text-amber-900">Reubicar fecha / hora</p>
+                                                <p className="text-xs text-amber-700 mt-0.5">
+                                                    Actívalo si no es posible atender la solicitud en la fecha u hora pedida.
+                                                </p>
+                                            </div>
+                                            <div
+                                                onClick={() => setActionData({
+                                                    ...actionData,
+                                                    reubicar: !actionData.reubicar
+                                                })}
+                                                className={`relative inline-flex h-6 w-[42px] items-center rounded-full cursor-pointer transition-colors border-2 border-transparent focus:outline-none shrink-0 ${actionData.reubicar ? 'bg-amber-500' : 'bg-gray-300'}`}
+                                            >
+                                                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${actionData.reubicar ? 'translate-x-[18px]' : 'translate-x-0.5'}`} />
+                                            </div>
+                                        </div>
+
+                                        {actionData.reubicar && (
+                                            <div className="grid grid-cols-2 gap-3 mt-4 animate-fade-in">
+                                                <div>
+                                                    <label className="block text-xs font-semibold text-amber-800 mb-1">Fecha inicio</label>
+                                                    <input
+                                                        type="date"
+                                                        value={actionData.reubicacion.fecha_reserva}
+                                                        onChange={(event) => setActionData({
+                                                            ...actionData,
+                                                            reubicacion: { ...actionData.reubicacion, fecha_reserva: event.target.value }
+                                                        })}
+                                                        className="w-full border border-amber-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-400 bg-white"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-semibold text-amber-800 mb-1">Fecha fin</label>
+                                                    <input
+                                                        type="date"
+                                                        value={actionData.reubicacion.fecha_fin}
+                                                        onChange={(event) => setActionData({
+                                                            ...actionData,
+                                                            reubicacion: { ...actionData.reubicacion, fecha_fin: event.target.value }
+                                                        })}
+                                                        className="w-full border border-amber-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-400 bg-white"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-semibold text-amber-800 mb-1">Hora inicio</label>
+                                                    <input
+                                                        type="time"
+                                                        value={actionData.reubicacion.hora_inicio}
+                                                        onChange={(event) => setActionData({
+                                                            ...actionData,
+                                                            reubicacion: { ...actionData.reubicacion, hora_inicio: event.target.value }
+                                                        })}
+                                                        className="w-full border border-amber-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-400 bg-white"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-semibold text-amber-800 mb-1">Hora fin</label>
+                                                    <input
+                                                        type="time"
+                                                        value={actionData.reubicacion.hora_fin}
+                                                        onChange={(event) => setActionData({
+                                                            ...actionData,
+                                                            reubicacion: { ...actionData.reubicacion, hora_fin: event.target.value }
+                                                        })}
+                                                        className="w-full border border-amber-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-400 bg-white"
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="flex items-center justify-between pt-2">

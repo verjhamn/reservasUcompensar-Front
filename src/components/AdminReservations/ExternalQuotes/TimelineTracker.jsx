@@ -1,6 +1,15 @@
-import React from 'react';
-import { Info, FileText } from 'lucide-react';
+/* eslint-disable react/prop-types */
+import { Info, FileText, Mail, MessageSquare, RefreshCw, CalendarClock } from 'lucide-react';
 import { formatDateTime } from './utils';
+
+const getTimelineIcon = (tipo = '') => {
+    const normalized = tipo.toLowerCase();
+    if (normalized.includes('correo')) return Mail;
+    if (normalized.includes('comentario')) return MessageSquare;
+    if (normalized.includes('reubic')) return CalendarClock;
+    if (normalized.includes('estado')) return RefreshCw;
+    return FileText;
+};
 
 const TimelineTracker = ({
     selectedQuote,
@@ -46,25 +55,33 @@ const TimelineTracker = ({
                 {selectedQuote.linea_tiempo && selectedQuote.linea_tiempo.length > 0 ? (
                     [...selectedQuote.linea_tiempo]
                         .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) // Orden descendente (más recientes primero)
-                        .map((item, index) => (
-                            <div key={item.id || index} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
-                                {/* Marcador en la línea */}
-                                <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-purple-100 text-purple-600 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
-                                    <FileText className="w-4 h-4" />
-                                </div>
-
-                                {/* Tarjeta del comentario */}
-                                <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border border-gray-100 bg-white shadow-sm hover:shadow-md transition-shadow">
-                                    <div className="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-1.5 mb-2">
-                                        <div className="font-bold text-gray-800 text-sm leading-tight break-words">{item.actor_nombre || item.actor?.displayName || 'Sistema'}</div>
-                                        <div className="text-[10px] font-semibold text-gray-400 bg-gray-50 px-2 py-1 rounded-full whitespace-nowrap shrink-0 self-start">
-                                            {formatDateTime(item.created_at)}
-                                        </div>
+                        .map((item, index) => {
+                            const ItemIcon = getTimelineIcon(item.tipo);
+                            return (
+                                <div key={item.id || index} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
+                                    {/* Marcador en la línea */}
+                                    <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-purple-100 text-purple-600 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
+                                        <ItemIcon className="w-4 h-4" />
                                     </div>
-                                    <p className="text-sm text-gray-600 leading-relaxed mt-2 whitespace-pre-wrap">{item.descripcion}</p>
+
+                                    {/* Tarjeta del comentario */}
+                                    <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border border-gray-100 bg-white shadow-sm hover:shadow-md transition-shadow">
+                                        <div className="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-1.5 mb-2">
+                                            <div className="font-bold text-gray-800 text-sm leading-tight break-words">
+                                                {item.actor_nombre || item.actor?.displayName || 'Sistema'}
+                                                {item.titulo && (
+                                                    <span className="block text-[11px] font-medium text-gray-400 mt-0.5">{item.titulo}</span>
+                                                )}
+                                            </div>
+                                            <div className="text-[10px] font-semibold text-gray-400 bg-gray-50 px-2 py-1 rounded-full whitespace-nowrap shrink-0 self-start">
+                                                {formatDateTime(item.created_at)}
+                                            </div>
+                                        </div>
+                                        <p className="text-sm text-gray-600 leading-relaxed mt-2 whitespace-pre-wrap">{item.descripcion}</p>
+                                    </div>
                                 </div>
-                            </div>
-                        ))
+                            );
+                        })
                 ) : (
                     <div className="text-center py-6 text-sm text-gray-500 relative z-10 bg-white pr-4">
                         No hay comentarios ni historial de seguimiento aún.

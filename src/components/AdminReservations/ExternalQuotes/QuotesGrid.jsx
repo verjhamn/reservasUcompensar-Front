@@ -4,7 +4,11 @@ import {
     Clock,
     ChevronRight,
     FileSignature,
-    MapPin
+    MapPin,
+    Users,
+    User,
+    RefreshCw,
+    MessageSquare
 } from 'lucide-react';
 import {
     formatDateObj,
@@ -59,6 +63,7 @@ const QuotesGrid = ({
                             ? 'Compensar'
                             : (quote.empresa_nombre || quote.solicitante_nombre);
                         const sedeNombre = quote.sede_nombre || quote.espacio?.sede_nombre;
+                        const timelineCount = Array.isArray(quote.linea_tiempo) ? quote.linea_tiempo.length : 0;
 
                         return (
                             <div
@@ -71,10 +76,22 @@ const QuotesGrid = ({
                                         <div className="flex flex-wrap items-center gap-2">
                                             {getStatusBadge(quote.estado)}
                                             {getOriginBadge(quote.origen)}
+                                            {quote.tiene_reubicacion && (
+                                                <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-700 border border-amber-200 uppercase tracking-wide flex items-center gap-1">
+                                                    <RefreshCw className="w-3 h-3" /> Reubicada
+                                                </span>
+                                            )}
                                         </div>
-                                        <span className="text-xs font-semibold text-gray-400 bg-gray-50 px-2 py-1 rounded">
-                                            #{quote.id}
-                                        </span>
+                                        <div className="flex flex-col items-end gap-1 shrink-0">
+                                            <span className="text-xs font-semibold text-gray-400 bg-gray-50 px-2 py-1 rounded">
+                                                #{quote.id}
+                                            </span>
+                                            {timelineCount > 0 && (
+                                                <span className="text-[10px] font-semibold text-gray-400 flex items-center gap-1">
+                                                    <MessageSquare className="w-3 h-3" /> {timelineCount}
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
 
                                     <h3
@@ -87,6 +104,14 @@ const QuotesGrid = ({
                                     <p className="text-sm font-medium text-purple-700 mt-1 truncate">
                                         {companyName}
                                     </p>
+
+                                    {quote.solicitante_nombre && (
+                                        <p className="text-xs font-medium text-gray-500 mt-0.5 truncate flex items-center gap-1">
+                                            <User className="w-3 h-3 shrink-0" />
+                                            {quote.solicitante_nombre}
+                                            {quote.solicitante_cargo ? ` · ${quote.solicitante_cargo}` : ''}
+                                        </p>
+                                    )}
 
                                     <p className="text-xs font-semibold text-gray-500 mt-1">
                                         {quote.origen === 'interna'
@@ -109,10 +134,16 @@ const QuotesGrid = ({
                                         {formatDateObj(quote.fecha_reserva)}
                                         {endDate ? ` - ${formatDateObj(endDate)}` : ''}
                                     </div>
-                                    <div className="flex items-center gap-2 text-sm text-gray-600 font-medium">
+                                    <div className="flex items-center gap-2 text-sm text-gray-600 font-medium mb-1">
                                         <Clock className="w-4 h-4 text-gray-400" />
                                         {quote.hora_inicio || 'Sin hora de inicio'} - {quote.hora_fin || 'Sin hora de fin'}
                                     </div>
+                                    {quote.cantidad_personas ? (
+                                        <div className="flex items-center gap-2 text-sm text-gray-600 font-medium">
+                                            <Users className="w-4 h-4 text-gray-400" />
+                                            {quote.cantidad_personas} personas
+                                        </div>
+                                    ) : null}
                                 </div>
 
                                 <div className="bg-gray-50/50 p-3 flex justify-between items-center group-hover:bg-purple-50 transition-colors">
