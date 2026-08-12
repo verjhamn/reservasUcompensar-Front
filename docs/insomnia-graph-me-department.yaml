@@ -1,0 +1,259 @@
+_type: export
+__export_format: 4
+__export_date: 2026-08-12T20:35:29.000Z
+__export_source: reservas-ucompensar
+resources:
+  - _id: wrk_graph_me_department
+    parentId: null
+    modified: 1786566929000
+    created: 1786566929000
+    name: Microsoft Graph - Me Department
+    description: Pruebas para validar el campo department en la respuesta de Microsoft Graph /me.
+    scope: collection
+    _type: workspace
+
+  - _id: env_graph_me_department_base
+    parentId: wrk_graph_me_department
+    modified: 1786566929000
+    created: 1786566929000
+    name: Base Environment
+    data:
+      tenant_id: "4bf38ea2-832d-4552-b508-421570da43ff"
+      client_id: "405a78d3-4e5f-4b1d-87cd-36997d273b08"
+      client_secret: ""
+      client_secret_note: "Pegar aqui el VALOR del secreto de Azure, no el ID del secreto. En .env.development corresponde al valor de VALOR, no ID-SECRETO."
+      redirect_uri: "https://pruebas.reserva.ucompensar.edu.co/"
+      login_base_url: "https://login.microsoftonline.com"
+      graph_base_url: "https://graph.microsoft.com"
+      graph_scope: "openid profile email offline_access https://graph.microsoft.com/User.Read"
+      device_code: ""
+      access_token: ""
+      expected_department: ""
+    dataPropertyOrder:
+      "&":
+        - tenant_id
+        - client_id
+        - client_secret
+        - client_secret_note
+        - redirect_uri
+        - login_base_url
+        - graph_base_url
+        - graph_scope
+        - device_code
+        - access_token
+        - expected_department
+    color: null
+    isPrivate: false
+    metaSortKey: 1786566929000
+    _type: environment
+
+  - _id: fld_graph_me_department
+    parentId: wrk_graph_me_department
+    modified: 1786566929000
+    created: 1786566929000
+    name: Microsoft Graph
+    description: Requests para probar autenticacion Microsoft Entra ID y respuesta /me.
+    environment: {}
+    environmentPropertyOrder: null
+    metaSortKey: 1786566929000
+    _type: request_group
+
+  - _id: req_graph_me_select_department
+    parentId: fld_graph_me_department
+    modified: 1786566929000
+    created: 1786566929000
+    url: "{{ _.graph_base_url }}/v1.0/me"
+    name: "GET /me - validar department"
+    description: "Obtiene el perfil autenticado desde Microsoft Graph incluyendo el nuevo campo department. Antes de Fetch Tokens, configurar client_secret con el VALOR del secreto de Azure, no con el ID. Si aparece AADSTS50146 antes de recibir token, revisar claims customizados o signing key en la aplicacion de Entra ID."
+    method: GET
+    body: {}
+    parameters:
+      - id: pair_select_me_department
+        name: "$select"
+        value: "businessPhones,displayName,givenName,jobTitle,mail,mobilePhone,officeLocation,preferredLanguage,surname,userPrincipalName,id,department"
+        description: "Campos esperados en la respuesta de /me."
+        disabled: false
+    headers:
+      - id: pair_accept_json
+        name: Accept
+        value: application/json
+        description: ""
+        disabled: false
+    authentication:
+      type: oauth2
+      grantType: authorization_code
+      authorizationUrl: "{{ _.login_base_url }}/{{ _.tenant_id }}/oauth2/v2.0/authorize"
+      accessTokenUrl: "{{ _.login_base_url }}/{{ _.tenant_id }}/oauth2/v2.0/token"
+      clientId: "{{ _.client_id }}"
+      clientSecret: "{{ _.client_secret }}"
+      scope: "{{ _.graph_scope }}"
+      redirectUrl: "{{ _.redirect_uri }}"
+      credentialsInBody: true
+      usePkce: true
+      disabled: false
+    metaSortKey: -1786566929000
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+
+  - _id: req_graph_me_select_department_manual_token
+    parentId: fld_graph_me_department
+    modified: 1786566929000
+    created: 1786566929000
+    url: "{{ _.graph_base_url }}/v1.0/me"
+    name: "GET /me - SOLO con access_token manual"
+    description: "Usar esta variante si Insomnia no inyecta el token del tab OAuth2. Pegar en access_token un access_token delegado para Microsoft Graph con scope User.Read."
+    method: GET
+    body: {}
+    parameters:
+      - id: pair_select_me_department_manual
+        name: "$select"
+        value: "businessPhones,displayName,givenName,jobTitle,mail,mobilePhone,officeLocation,preferredLanguage,surname,userPrincipalName,id,department"
+        description: "Campos esperados en la respuesta de /me."
+        disabled: false
+    headers:
+      - id: pair_accept_json_manual
+        name: Accept
+        value: application/json
+        description: ""
+        disabled: false
+      - id: pair_authorization_manual
+        name: Authorization
+        value: "Bearer {{ _.access_token }}"
+        description: "Token delegado. Debe iniciar por eyJ y no estar vacio."
+        disabled: false
+    authentication: {}
+    metaSortKey: -1786566919000
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+
+  - _id: req_graph_device_code_start
+    parentId: fld_graph_me_department
+    modified: 1786566929000
+    created: 1786566929000
+    url: "{{ _.login_base_url }}/{{ _.tenant_id }}/oauth2/v2.0/devicecode"
+    name: "POST device code - iniciar login manual"
+    description: "Alternativa para obtener token delegado. Ejecutar, abrir verification_uri, ingresar user_code y luego copiar device_code al environment."
+    method: POST
+    body:
+      mimeType: application/x-www-form-urlencoded
+      params:
+        - id: pair_device_client_id
+          name: client_id
+          value: "{{ _.client_id }}"
+          description: ""
+          disabled: false
+        - id: pair_device_scope
+          name: scope
+          value: "{{ _.graph_scope }}"
+          description: ""
+          disabled: false
+    parameters: []
+    headers:
+      - id: pair_device_content_type
+        name: Content-Type
+        value: application/x-www-form-urlencoded
+        description: ""
+        disabled: false
+      - id: pair_device_accept
+        name: Accept
+        value: application/json
+        description: ""
+        disabled: false
+    authentication: {}
+    metaSortKey: -1786566918000
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+
+  - _id: req_graph_device_code_token
+    parentId: fld_graph_me_department
+    modified: 1786566929000
+    created: 1786566929000
+    url: "{{ _.login_base_url }}/{{ _.tenant_id }}/oauth2/v2.0/token"
+    name: "POST device code - obtener access_token"
+    description: "Despues de completar el login con user_code, pegar device_code en el environment y ejecutar este request. Copiar access_token de la respuesta al environment access_token."
+    method: POST
+    body:
+      mimeType: application/x-www-form-urlencoded
+      params:
+        - id: pair_device_token_grant_type
+          name: grant_type
+          value: "urn:ietf:params:oauth:grant-type:device_code"
+          description: ""
+          disabled: false
+        - id: pair_device_token_client_id
+          name: client_id
+          value: "{{ _.client_id }}"
+          description: ""
+          disabled: false
+        - id: pair_device_token_device_code
+          name: device_code
+          value: "{{ _.device_code }}"
+          description: ""
+          disabled: false
+    parameters: []
+    headers:
+      - id: pair_device_token_content_type
+        name: Content-Type
+        value: application/x-www-form-urlencoded
+        description: ""
+        disabled: false
+      - id: pair_device_token_accept
+        name: Accept
+        value: application/json
+        description: ""
+        disabled: false
+    authentication: {}
+    metaSortKey: -1786566917000
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+
+  - _id: req_graph_openid_configuration
+    parentId: fld_graph_me_department
+    modified: 1786566929000
+    created: 1786566929000
+    url: "{{ _.login_base_url }}/{{ _.tenant_id }}/v2.0/.well-known/openid-configuration"
+    name: "GET OpenID configuration - diagnostico tenant"
+    description: "Valida que el tenant resuelva correctamente los endpoints OAuth2 v2.0 antes de hacer login."
+    method: GET
+    body: {}
+    parameters: []
+    headers:
+      - id: pair_accept_openid_json
+        name: Accept
+        value: application/json
+        description: ""
+        disabled: false
+    authentication: {}
+    metaSortKey: -1786566928000
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
