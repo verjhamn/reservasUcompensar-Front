@@ -34,3 +34,15 @@ export const getGeneralReport = async (params = {}) => {
     throw error;
   }
 };
+
+// El dashboard consume el consolidado completo. Se omite el segundo argumento
+// de post para que la solicitud se envíe realmente sin body.
+export const getGeneralDashboardReport = async () => {
+  try {
+    const response = await axiosInstance.post("/reportes/general");
+    return response.data;
+  } catch (error) {
+    console.error("Error al obtener el consolidado del dashboard:", error);
+    throw error;
+  }
+};

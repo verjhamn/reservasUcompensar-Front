@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowDownTrayIcon,
   ArrowPathIcon,
@@ -12,7 +12,7 @@ import {
   TableCellsIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
-import { getGeneralReport } from "../../Services/reportsService";
+import { getGeneralDashboardReport, getGeneralReport } from "../../Services/reportsService";
 import { downloadReport } from "../../Services/DownloadReport";
 import ReportsDashboard from "./ReportsDashboard";
 
@@ -78,67 +78,184 @@ const normalizeReportResponse = (response, perPage) => {
   };
 };
 
+const normalizeDashboardResponse = (response) => {
+  if (!response) return { items: [], totalRecords: 0 };
+
+  const payload = response.data
+    && !Array.isArray(response.data)
+    && (Array.isArray(response.data.data) || response.data["reservas actuales"] !== undefined)
+    ? response.data
+    : response;
+  const items = Array.isArray(payload)
+    ? payload
+    : Array.isArray(payload.data)
+      ? payload.data
+      : Array.isArray(payload.items)
+        ? payload.items
+        : [];
+  const totalRecords = Number(payload["reservas actuales"] ?? payload.total ?? items.length);
+
+  return {
+    items,
+    totalRecords: Math.max(0, Number.isFinite(totalRecords) ? totalRecords : items.length),
+  };
+};
+
+const normalizeSearchText = (value) => String(value || "")
+  .normalize("NFD")
+  .replace(/[\u0300-\u036f]/g, "")
+  .trim()
+  .toLowerCase();
+
+const SPANISH_MONTHS = {
+  enero: 1,
+  febrero: 2,
+  marzo: 3,
+  abril: 4,
+  mayo: 5,
+  junio: 6,
+  julio: 7,
+  agosto: 8,
+  septiembre: 9,
+  octubre: 10,
+  noviembre: 11,
+  diciembre: 12,
+};
+
+const toDateNumber = (value) => {
+  const normalized = normalizeSearchText(value);
+  const isoDate = normalized.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoDate) return Number(`${isoDate[1]}${isoDate[2]}${isoDate[3]}`);
+
+  const writtenDate = normalized.match(/(\d{1,2})\s+de\s+([a-z]+)\s+de\s+(\d{4})/);
+  if (!writtenDate || !SPANISH_MONTHS[writtenDate[2]]) return null;
+
+  return Number(`${writtenDate[3]}${String(SPANISH_MONTHS[writtenDate[2]]).padStart(2, "0")}${writtenDate[1].padStart(2, "0")}`);
+};
+
+const filterDashboardData = (data, filters) => {
+  const status = normalizeSearchText(filters.estado);
+  const campus = normalizeSearchText(filters.sede);
+  const spaceType = normalizeSearchText(filters.tipo_espacio);
+  const fromDate = toDateNumber(filters.fecha_reserva_desde);
+  const toDate = toDateNumber(filters.fecha_reserva_hasta);
+
+  return data.filter((row) => {
+    if (status && normalizeSearchText(row.estado) !== status) return false;
+    if (campus && !normalizeSearchText(row.sede).includes(campus)) return false;
+    if (spaceType && !normalizeSearchText(row.tipo_espacio).includes(spaceType)) return false;
+
+    if (fromDate || toDate) {
+      const reservationDate = toDateNumber(row.fecha_reserva);
+      if (!reservationDate) return false;
+      if (fromDate && reservationDate < fromDate) return false;
+      if (toDate && reservationDate > toDate) return false;
+    }
+
+    return true;
+  });
+};
+
 const formatNumber = (value) => new Intl.NumberFormat("es-CO").format(value || 0);
 
 const ReportsView = () => {
   const [activeSection, setActiveSection] = useState("dashboard");
-  const [displayData, setDisplayData] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [dashboardData, setDashboardData] = useState([]);
+  const [dashboardTotalRecords, setDashboardTotalRecords] = useState(0);
+  const [dashboardFilters, setDashboardFilters] = useState({});
+  const [dashboardLoading, setDashboardLoading] = useState(false);
+  const [dashboardError, setDashboardError] = useState("");
+  const [dashboardLastUpdated, setDashboardLastUpdated] = useState(null);
+  const [tableData, setTableData] = useState([]);
+  const [tableLoading, setTableLoading] = useState(false);
+  const [tableError, setTableError] = useState("");
+  const [tableLastUpdated, setTableLastUpdated] = useState(null);
   const [downloading, setDownloading] = useState(false);
-  const [error, setError] = useState("");
   const [downloadError, setDownloadError] = useState("");
-  const [lastUpdated, setLastUpdated] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
-  const [filters, setFilters] = useState({});
+  const [tableFilters, setTableFilters] = useState({});
   const [sortConfig, setSortConfig] = useState({ field: null, direction: "asc" });
-  const [totalRecords, setTotalRecords] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
-  const requestId = useRef(0);
+  const [tableTotalRecords, setTableTotalRecords] = useState(0);
+  const [tableTotalPages, setTableTotalPages] = useState(1);
+  const tableRequestId = useRef(0);
+  const dashboardRequestId = useRef(0);
 
-  const fetchData = useCallback(async () => {
-    const currentRequest = ++requestId.current;
-    setLoading(true);
-    setError("");
+  const fetchTableData = useCallback(async () => {
+    const currentRequest = ++tableRequestId.current;
+    setTableLoading(true);
+    setTableError("");
 
     try {
       const response = await getGeneralReport({
         page: currentPage,
         perPage,
-        columnFilters: filters,
+        columnFilters: tableFilters,
         sortField: sortConfig.field,
         sortDirection: sortConfig.direction,
       });
       const report = normalizeReportResponse(response, perPage);
 
-      if (currentRequest !== requestId.current) return;
-      setDisplayData(report.items);
-      setTotalRecords(report.totalRecords);
-      setTotalPages(report.totalPages);
-      setLastUpdated(new Date());
+      if (currentRequest !== tableRequestId.current) return;
+      setTableData(report.items);
+      setTableTotalRecords(report.totalRecords);
+      setTableTotalPages(report.totalPages);
+      setTableLastUpdated(new Date());
     } catch (fetchError) {
-      if (currentRequest !== requestId.current) return;
-      console.error("Error al obtener datos:", fetchError);
-      setError("No fue posible cargar el reporte. Revisa tu conexión e inténtalo de nuevo.");
+      if (currentRequest !== tableRequestId.current) return;
+      console.error("Error al obtener el detalle del reporte:", fetchError);
+      setTableError("No fue posible cargar el reporte. Revisa tu conexión e inténtalo de nuevo.");
     } finally {
-      if (currentRequest === requestId.current) setLoading(false);
+      if (currentRequest === tableRequestId.current) setTableLoading(false);
     }
-  }, [currentPage, filters, perPage, sortConfig]);
+  }, [currentPage, perPage, sortConfig, tableFilters]);
+
+  const fetchDashboardData = useCallback(async () => {
+    const currentRequest = ++dashboardRequestId.current;
+    setDashboardLoading(true);
+    setDashboardError("");
+
+    try {
+      const response = await getGeneralDashboardReport();
+      const report = normalizeDashboardResponse(response);
+
+      if (currentRequest !== dashboardRequestId.current) return;
+      setDashboardData(report.items);
+      setDashboardTotalRecords(report.totalRecords);
+      setDashboardLastUpdated(new Date());
+    } catch (fetchError) {
+      if (currentRequest !== dashboardRequestId.current) return;
+      console.error("Error al obtener el consolidado del dashboard:", fetchError);
+      setDashboardError("No fue posible cargar el consolidado del dashboard. Revisa tu conexión e inténtalo de nuevo.");
+    } finally {
+      if (currentRequest === dashboardRequestId.current) setDashboardLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const timer = setTimeout(fetchData, 500);
+    const timer = setTimeout(fetchTableData, 500);
     return () => clearTimeout(timer);
-  }, [fetchData]);
+  }, [fetchTableData]);
 
-  const handleFilterChange = (key, value) => {
-    setFilters((previous) => ({ ...previous, [key]: value }));
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
+
+  const handleTableFilterChange = (key, value) => {
+    setTableFilters((previous) => ({ ...previous, [key]: value }));
     setCurrentPage(1);
   };
 
-  const clearFilters = () => {
-    setFilters({});
+  const clearTableFilters = () => {
+    setTableFilters({});
     setCurrentPage(1);
   };
+
+  const handleDashboardFilterChange = (key, value) => {
+    setDashboardFilters((previous) => ({ ...previous, [key]: value }));
+  };
+
+  const clearDashboardFilters = () => setDashboardFilters({});
 
   const handleSort = (field) => {
     setSortConfig((previous) => ({
@@ -152,7 +269,7 @@ const ReportsView = () => {
     setDownloading(true);
     setDownloadError("");
     try {
-      await downloadReport(filters);
+      await downloadReport(tableFilters);
     } catch (downloadReportError) {
       console.error("Error al descargar:", downloadReportError);
       setDownloadError("No se pudo generar el archivo. Intenta nuevamente.");
@@ -164,7 +281,7 @@ const ReportsView = () => {
   const renderDateRangeFilter = (key) => {
     const fromKey = `${key}_desde`;
     const toKey = `${key}_hasta`;
-    const isActive = filters[fromKey] || filters[toKey];
+    const isActive = tableFilters[fromKey] || tableFilters[toKey];
 
     return (
       <div className={`flex flex-col gap-1.5 rounded-md p-1 transition-all ${isActive ? "bg-turquoise-50 ring-1 ring-turquoise-200" : ""}`}>
@@ -175,8 +292,8 @@ const ReportsView = () => {
           <input
             type="date"
             className="w-full rounded border px-2 py-1 text-xs focus:border-transparent focus:ring-2 focus:ring-turquoise-500"
-            value={filters[fromKey] || ""}
-            onChange={(event) => handleFilterChange(fromKey, event.target.value)}
+            value={tableFilters[fromKey] || ""}
+            onChange={(event) => handleTableFilterChange(fromKey, event.target.value)}
           />
         </label>
         <label>
@@ -186,8 +303,8 @@ const ReportsView = () => {
           <input
             type="date"
             className="w-full rounded border px-2 py-1 text-xs focus:border-transparent focus:ring-2 focus:ring-turquoise-500"
-            value={filters[toKey] || ""}
-            onChange={(event) => handleFilterChange(toKey, event.target.value)}
+            value={tableFilters[toKey] || ""}
+            onChange={(event) => handleTableFilterChange(toKey, event.target.value)}
           />
         </label>
       </div>
@@ -199,8 +316,8 @@ const ReportsView = () => {
       return (
         <select
           className="w-full rounded border px-2 py-1 text-sm focus:border-transparent focus:ring-2 focus:ring-turquoise-500"
-          value={filters[key] || ""}
-          onChange={(event) => handleFilterChange(key, event.target.value)}
+          value={tableFilters[key] || ""}
+          onChange={(event) => handleTableFilterChange(key, event.target.value)}
           aria-label={`Filtrar por ${label.toLowerCase()}`}
         >
           <option value="">Todos</option>
@@ -218,8 +335,8 @@ const ReportsView = () => {
           <input
             type="time"
             className="w-full rounded border py-1 pl-8 pr-2 text-sm focus:border-transparent focus:ring-2 focus:ring-turquoise-500"
-            value={filters[key] || ""}
-            onChange={(event) => handleFilterChange(key, event.target.value)}
+            value={tableFilters[key] || ""}
+            onChange={(event) => handleTableFilterChange(key, event.target.value)}
             aria-label={`Filtrar por ${label.toLowerCase()}`}
           />
         </div>
@@ -231,8 +348,8 @@ const ReportsView = () => {
         type="text"
         className="w-full rounded border px-2 py-1 text-sm focus:border-transparent focus:ring-2 focus:ring-turquoise-500"
         placeholder={`Filtrar ${label.toLowerCase()}`}
-        value={filters[key] || ""}
-        onChange={(event) => handleFilterChange(key, event.target.value)}
+        value={tableFilters[key] || ""}
+        onChange={(event) => handleTableFilterChange(key, event.target.value)}
       />
     );
   };
@@ -246,9 +363,21 @@ const ReportsView = () => {
     }
   };
 
-  const activeFilterCount = Object.values(filters).filter((value) => String(value || "").trim()).length;
-  const firstVisibleRecord = totalRecords > 0 ? Math.min((currentPage - 1) * perPage + 1, totalRecords) : 0;
-  const lastVisibleRecord = Math.min(currentPage * perPage, totalRecords);
+  const filteredDashboardData = useMemo(
+    () => filterDashboardData(dashboardData, dashboardFilters),
+    [dashboardData, dashboardFilters],
+  );
+  const dashboardFilterCount = Object.values(dashboardFilters).filter((value) => String(value || "").trim()).length;
+  const tableFilterCount = Object.values(tableFilters).filter((value) => String(value || "").trim()).length;
+  const filteredDashboardTotal = dashboardFilterCount > 0 ? filteredDashboardData.length : dashboardTotalRecords;
+  const firstVisibleRecord = tableTotalRecords > 0
+    ? Math.min((currentPage - 1) * perPage + 1, tableTotalRecords)
+    : 0;
+  const lastVisibleRecord = Math.min(currentPage * perPage, tableTotalRecords);
+  const activeLoading = activeSection === "dashboard" ? dashboardLoading : tableLoading;
+  const activeError = activeSection === "dashboard" ? dashboardError : tableError;
+  const activeLastUpdated = activeSection === "dashboard" ? dashboardLastUpdated : tableLastUpdated;
+  const refreshActiveSection = activeSection === "dashboard" ? fetchDashboardData : fetchTableData;
 
   return (
     <div className="px-4 py-6 sm:px-6 lg:px-8">
@@ -257,22 +386,22 @@ const ReportsView = () => {
           <p className="text-sm font-semibold uppercase tracking-wider text-primary-600">Analítica de ocupación</p>
           <h1 className="mt-1 text-2xl font-bold tracking-tight text-blue-dark-500 sm:text-3xl">Reportes de reservas</h1>
           <p className="mt-2 max-w-2xl text-sm text-gray-600">
-            Consulta el comportamiento de las reservas, explora el detalle y exporta la información con los mismos filtros.
+            Analiza el consolidado general y consulta o exporta el detalle con filtros independientes.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          {lastUpdated && (
+          {activeLastUpdated && (
             <span className="text-xs text-gray-500">
-              Actualizado a las {lastUpdated.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}
+              Actualizado a las {activeLastUpdated.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}
             </span>
           )}
           <button
             type="button"
-            onClick={fetchData}
-            disabled={loading}
+            onClick={refreshActiveSection}
+            disabled={activeLoading}
             className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-turquoise-400 hover:text-turquoise-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <ArrowPathIcon className={`h-5 w-5 ${loading ? "animate-spin" : ""}`} />
+            <ArrowPathIcon className={`h-5 w-5 ${activeLoading ? "animate-spin" : ""}`} />
             Actualizar
           </button>
         </div>
@@ -299,10 +428,10 @@ const ReportsView = () => {
         ))}
       </nav>
 
-      {error && (
+      {activeError && (
         <div className="mb-6 flex flex-col gap-3 rounded-xl border border-magenta-200 bg-magenta-50 px-4 py-3 text-sm text-magenta-800 sm:flex-row sm:items-center sm:justify-between" role="alert">
-          <span>{error}</span>
-          <button type="button" onClick={fetchData} className="font-semibold underline underline-offset-2">Reintentar</button>
+          <span>{activeError}</span>
+          <button type="button" onClick={refreshActiveSection} className="font-semibold underline underline-offset-2">Reintentar</button>
         </div>
       )}
 
@@ -313,20 +442,23 @@ const ReportsView = () => {
               <div className="flex items-center gap-2">
                 <FunnelIcon className="h-5 w-5 text-turquoise-600" />
                 <h2 className="font-semibold text-blue-dark-500">Filtros del análisis</h2>
-                {activeFilterCount > 0 && <span className="rounded-full bg-turquoise-50 px-2 py-0.5 text-xs font-bold text-turquoise-700">{activeFilterCount}</span>}
+                {dashboardFilterCount > 0 && <span className="rounded-full bg-turquoise-50 px-2 py-0.5 text-xs font-bold text-turquoise-700">{dashboardFilterCount}</span>}
               </div>
-              {activeFilterCount > 0 && (
-                <button type="button" onClick={clearFilters} className="inline-flex items-center gap-1 text-sm font-semibold text-gray-500 hover:text-magenta-600">
+              {dashboardFilterCount > 0 && (
+                <button type="button" onClick={clearDashboardFilters} className="inline-flex items-center gap-1 text-sm font-semibold text-gray-500 hover:text-magenta-600">
                   <XMarkIcon className="h-4 w-4" /> Limpiar
                 </button>
               )}
             </div>
+            <p className="mb-4 text-xs text-gray-500">
+              Estos filtros solo modifican los indicadores del dashboard; no afectan la tabla ni el archivo exportado.
+            </p>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
               <label className="text-sm font-medium text-gray-600">
                 Estado
                 <select
-                  value={filters.estado || ""}
-                  onChange={(event) => handleFilterChange("estado", event.target.value)}
+                  value={dashboardFilters.estado || ""}
+                  onChange={(event) => handleDashboardFilterChange("estado", event.target.value)}
                   className="mt-1.5 w-full rounded-lg border-gray-300 text-sm focus:border-turquoise-500 focus:ring-turquoise-500"
                 >
                   <option value="">Todos los estados</option>
@@ -339,8 +471,8 @@ const ReportsView = () => {
                 Sede
                 <input
                   type="text"
-                  value={filters.sede || ""}
-                  onChange={(event) => handleFilterChange("sede", event.target.value)}
+                  value={dashboardFilters.sede || ""}
+                  onChange={(event) => handleDashboardFilterChange("sede", event.target.value)}
                   placeholder="Ej. Campus Av. 68"
                   className="mt-1.5 w-full rounded-lg border-gray-300 text-sm focus:border-turquoise-500 focus:ring-turquoise-500"
                 />
@@ -349,8 +481,8 @@ const ReportsView = () => {
                 Tipo de espacio
                 <input
                   type="text"
-                  value={filters.tipo_espacio || ""}
-                  onChange={(event) => handleFilterChange("tipo_espacio", event.target.value)}
+                  value={dashboardFilters.tipo_espacio || ""}
+                  onChange={(event) => handleDashboardFilterChange("tipo_espacio", event.target.value)}
                   placeholder="Ej. Laboratorio"
                   className="mt-1.5 w-full rounded-lg border-gray-300 text-sm focus:border-turquoise-500 focus:ring-turquoise-500"
                 />
@@ -359,8 +491,8 @@ const ReportsView = () => {
                 Reserva desde
                 <input
                   type="date"
-                  value={filters.fecha_reserva_desde || ""}
-                  onChange={(event) => handleFilterChange("fecha_reserva_desde", event.target.value)}
+                  value={dashboardFilters.fecha_reserva_desde || ""}
+                  onChange={(event) => handleDashboardFilterChange("fecha_reserva_desde", event.target.value)}
                   className="mt-1.5 w-full rounded-lg border-gray-300 text-sm focus:border-turquoise-500 focus:ring-turquoise-500"
                 />
               </label>
@@ -368,8 +500,8 @@ const ReportsView = () => {
                 Reserva hasta
                 <input
                   type="date"
-                  value={filters.fecha_reserva_hasta || ""}
-                  onChange={(event) => handleFilterChange("fecha_reserva_hasta", event.target.value)}
+                  value={dashboardFilters.fecha_reserva_hasta || ""}
+                  onChange={(event) => handleDashboardFilterChange("fecha_reserva_hasta", event.target.value)}
                   className="mt-1.5 w-full rounded-lg border-gray-300 text-sm focus:border-turquoise-500 focus:ring-turquoise-500"
                 />
               </label>
@@ -377,11 +509,11 @@ const ReportsView = () => {
           </section>
 
           <ReportsDashboard
-            data={displayData}
-            totalRecords={totalRecords}
-            currentPage={currentPage}
-            loading={loading}
-            error={error}
+            data={filteredDashboardData}
+            totalRecords={filteredDashboardTotal}
+            loading={dashboardLoading}
+            error={dashboardError}
+            isFiltered={dashboardFilterCount > 0}
           />
         </>
       ) : (
@@ -390,9 +522,9 @@ const ReportsView = () => {
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="text-lg font-bold text-blue-dark-500">Reporte general de reservas</h2>
-                {activeFilterCount > 0 && (
-                  <button type="button" onClick={clearFilters} className="inline-flex items-center gap-1 rounded-full bg-turquoise-50 px-2.5 py-1 text-xs font-semibold text-turquoise-700 hover:bg-turquoise-100">
-                    {activeFilterCount} filtros <XMarkIcon className="h-3.5 w-3.5" />
+                {tableFilterCount > 0 && (
+                  <button type="button" onClick={clearTableFilters} className="inline-flex items-center gap-1 rounded-full bg-turquoise-50 px-2.5 py-1 text-xs font-semibold text-turquoise-700 hover:bg-turquoise-100">
+                    {tableFilterCount} filtros <XMarkIcon className="h-3.5 w-3.5" />
                   </button>
                 )}
               </div>
@@ -445,19 +577,19 @@ const ReportsView = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 bg-white">
-                {loading && !displayData.length ? (
+                {tableLoading && !tableData.length ? (
                   <tr>
                     <td colSpan={COLUMNS.length} className="px-6 py-14 text-center">
                       <span className="inline-flex items-center gap-2 text-sm text-gray-500"><ArrowPathIcon className="h-6 w-6 animate-spin text-turquoise-500" /> Cargando reporte...</span>
                     </td>
                   </tr>
-                ) : !displayData.length ? (
+                ) : !tableData.length ? (
                   <tr>
                     <td colSpan={COLUMNS.length} className="px-6 py-14 text-center text-sm text-gray-500">No se encontraron resultados con los filtros seleccionados.</td>
                   </tr>
                 ) : (
-                  displayData.map((row, index) => (
-                    <tr key={row.numero ?? `${row.correo}-${index}`} className={`transition hover:bg-turquoise-50/40 ${loading ? "opacity-60" : ""}`}>
+                  tableData.map((row, index) => (
+                    <tr key={row.numero ?? `${row.correo}-${index}`} className={`transition hover:bg-turquoise-50/40 ${tableLoading ? "opacity-60" : ""}`}>
                       {COLUMNS.map(({ key }) => (
                         <td key={key} className="max-w-xs whitespace-nowrap px-5 py-4 text-sm text-gray-700">
                           {key === "estado" ? (
@@ -476,23 +608,23 @@ const ReportsView = () => {
 
           <div className="flex flex-col gap-3 border-t border-gray-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-gray-600">
-              Mostrando <span className="font-semibold">{formatNumber(firstVisibleRecord)}–{formatNumber(lastVisibleRecord)}</span> de <span className="font-semibold">{formatNumber(totalRecords)}</span> resultados
+              Mostrando <span className="font-semibold">{formatNumber(firstVisibleRecord)}–{formatNumber(lastVisibleRecord)}</span> de <span className="font-semibold">{formatNumber(tableTotalRecords)}</span> resultados
             </p>
             <div className="flex items-center justify-between gap-2 sm:justify-end">
               <button
                 type="button"
                 onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
-                disabled={currentPage <= 1 || loading}
+                disabled={currentPage <= 1 || tableLoading}
                 className="rounded-lg border border-gray-300 p-2 text-gray-600 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-300"
                 aria-label="Página anterior"
               >
                 <ChevronLeftIcon className="h-5 w-5" />
               </button>
-              <span className="min-w-32 text-center text-sm font-medium text-gray-700">Página {formatNumber(currentPage)} de {formatNumber(totalPages)}</span>
+              <span className="min-w-32 text-center text-sm font-medium text-gray-700">Página {formatNumber(currentPage)} de {formatNumber(tableTotalPages)}</span>
               <button
                 type="button"
-                onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
-                disabled={currentPage >= totalPages || loading}
+                onClick={() => setCurrentPage((page) => Math.min(tableTotalPages, page + 1))}
+                disabled={currentPage >= tableTotalPages || tableLoading}
                 className="rounded-lg border border-gray-300 p-2 text-gray-600 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-300"
                 aria-label="Página siguiente"
               >

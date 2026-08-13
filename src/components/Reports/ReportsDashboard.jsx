@@ -87,7 +87,7 @@ const HorizontalBars = ({ data, color = "bg-turquoise-500", emptyMessage }) => {
   );
 };
 
-const ReportsDashboard = ({ data, totalRecords, currentPage, loading, error }) => {
+const ReportsDashboard = ({ data, totalRecords, loading, error, isFiltered }) => {
   const analytics = useMemo(() => {
     const statuses = countBy(data, "estado");
     const spaceTypes = countBy(data, "tipo_espacio").slice(0, 5);
@@ -123,7 +123,9 @@ const ReportsDashboard = ({ data, totalRecords, currentPage, loading, error }) =
     }).join(", ");
   }, [analytics.statuses, data.length]);
 
-  const loadedLabel = `${formatNumber(data.length)} registros en la página ${formatNumber(currentPage)}`;
+  const loadedLabel = isFiltered
+    ? `${formatNumber(data.length)} registros coinciden con los filtros del dashboard`
+    : `${formatNumber(data.length)} registros del consolidado general`;
 
   return (
     <div className="space-y-6" aria-busy={loading}>
@@ -131,7 +133,7 @@ const ReportsDashboard = ({ data, totalRecords, currentPage, loading, error }) =
         <div className="flex items-start gap-3">
           <CalendarDaysIcon className="mt-0.5 h-5 w-5 shrink-0 text-blue-light-600" aria-hidden="true" />
           <p>
-            <span className="font-semibold">Alcance de los indicadores:</span> el total corresponde al resultado completo del servidor; distribuciones, horas y porcentajes usan {loadedLabel}.
+            <span className="font-semibold">Alcance de los indicadores:</span> distribuciones, horas y porcentajes usan {loadedLabel}.
           </p>
         </div>
         {error && (
@@ -145,7 +147,7 @@ const ReportsDashboard = ({ data, totalRecords, currentPage, loading, error }) =
         <KpiCard
           title="Reservas encontradas"
           value={formatNumber(totalRecords)}
-          helper="Total según los filtros aplicados"
+          helper={isFiltered ? "Total según los filtros del dashboard" : "Total del consolidado general"}
           icon={CalendarDaysIcon}
           accent="bg-primary-50 text-primary-600"
           loading={loading && !data.length}
@@ -153,7 +155,7 @@ const ReportsDashboard = ({ data, totalRecords, currentPage, loading, error }) =
         <KpiCard
           title="Horas reservadas"
           value={`${formatNumber(analytics.hours, 1)} h`}
-          helper="Suma de los registros cargados"
+          helper="Suma del consolidado analizado"
           icon={ClockIcon}
           accent="bg-turquoise-50 text-turquoise-600"
           loading={loading && !data.length}
@@ -169,7 +171,7 @@ const ReportsDashboard = ({ data, totalRecords, currentPage, loading, error }) =
         <KpiCard
           title="Usuarios únicos"
           value={formatNumber(analytics.users.length)}
-          helper="Usuarios distintos en los datos cargados"
+          helper="Usuarios distintos en el consolidado"
           icon={UserGroupIcon}
           accent="bg-purple-50 text-purple-600"
           loading={loading && !data.length}
@@ -191,7 +193,7 @@ const ReportsDashboard = ({ data, totalRecords, currentPage, loading, error }) =
             >
               <div className="absolute inset-5 flex flex-col items-center justify-center rounded-full bg-white">
                 <span className="text-3xl font-bold text-blue-dark-500">{formatNumber(data.length)}</span>
-                <span className="text-xs text-gray-500">cargadas</span>
+                <span className="text-xs text-gray-500">analizadas</span>
               </div>
             </div>
             <div className="w-full min-w-0 space-y-3">
@@ -241,7 +243,7 @@ const ReportsDashboard = ({ data, totalRecords, currentPage, loading, error }) =
             <ArrowTrendingUpIcon className="h-5 w-5" aria-hidden="true" />
             <p className="text-xs font-semibold uppercase tracking-wider">Lectura rápida</p>
           </div>
-          <h2 className="mt-2 text-xl font-bold">Hallazgos de la página actual</h2>
+          <h2 className="mt-2 text-xl font-bold">Hallazgos del consolidado</h2>
           <dl className="mt-6 grid gap-5 sm:grid-cols-2">
             <div className="rounded-xl bg-white/10 p-4">
               <dt className="text-xs text-blue-light-100">Tipo más solicitado</dt>
@@ -261,7 +263,7 @@ const ReportsDashboard = ({ data, totalRecords, currentPage, loading, error }) =
             <div className="rounded-xl bg-white/10 p-4">
               <dt className="text-xs text-blue-light-100">Tasa de cancelación</dt>
               <dd className="mt-1 text-2xl font-bold">{formatNumber(analytics.cancellationRate, 1)}%</dd>
-              <p className="mt-1 text-xs text-blue-light-200">Sobre registros cargados</p>
+              <p className="mt-1 text-xs text-blue-light-200">Sobre registros analizados</p>
             </div>
           </dl>
           <div className="mt-5 flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-blue-light-100">
