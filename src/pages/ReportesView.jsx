@@ -1,9 +1,8 @@
-import React from 'react';
 import ReportsView from '../components/Reports/ReportsView';
 
 const ReportesView = () => {
     return (
-        <div className="container mx-auto py-6">
+        <div className="mx-auto w-full max-w-[1600px]">
             <ReportsView />
         </div>
     );
