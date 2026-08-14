@@ -121,7 +121,6 @@ const ExternalQuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
             if (!formData.nombreEvento) newErrors.nombreEvento = 'Requerido';
             if (!formData.tipoEvento) newErrors.tipoEvento = 'Requerido';
             if (!formData.cantidadPersonas || formData.cantidadPersonas < 1) newErrors.cantidadPersonas = 'Mínimo 1 persona';
-            if (!formData.tiempoMontajeHoras) newErrors.tiempoMontajeHoras = 'Requerido';
 
             if (Object.keys(newErrors).length > 0) isValid = false;
         }
@@ -391,7 +390,7 @@ const ExternalQuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                                         </div>
                                         <div className={`space-y-1.5 focus:ring-2 ${errors.tipoEvento ? 'border-red-500 focus:ring-red-200 focus:border-red-500' : 'border-gray-200 focus:ring-purple-500 focus:border-purple-500'}`}>
                                             <label className={`text-sm font-semibold text-gray-700 focus:ring-2 ${errors.cantidadPersonas ? 'border-red-500 focus:ring-red-200 focus:border-red-500' : 'border-gray-200 focus:ring-purple-500 focus:border-purple-500'}`}>
-                                                Correo electrónico <span className={`text-red-500 focus:ring-2 ${errors.tiempoMontajeHoras ? 'border-red-500 focus:ring-red-200 focus:border-red-500' : 'border-gray-200 focus:ring-purple-500 focus:border-purple-500'}`}>*</span>
+                                                Correo electrónico <span className="text-red-500">*</span>
                                             </label>
                                             <input
                                                 type="email"
