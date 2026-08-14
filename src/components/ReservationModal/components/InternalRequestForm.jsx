@@ -70,9 +70,9 @@ const InternalRequestForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                 newErrors.cantidadPersonas = 'Minimo 1 persona';
             }
 
-            if (formData.tiempoMontajeHoras === '') {
+/*             if (formData.tiempoMontajeHoras === '') {
                 newErrors.tiempoMontajeHoras = 'El tiempo de montaje es requerido';
-            }
+            } */
         }
 
         if (step === 3 && (!policiesAccepted || !dataTreatmentAccepted)) {
@@ -269,7 +269,7 @@ const InternalRequestForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                                     {errors.cantidadPersonas && <p className="text-red-500 text-[11px] font-semibold mt-1">{errors.cantidadPersonas}</p>}
                                 </div>
 
-                                <div className="space-y-1.5">
+{/*                                 <div className="space-y-1.5">
                                     <label className="text-sm font-semibold text-gray-700">
                                         Tiempo de montaje previo <span className="text-red-500">*</span>
                                     </label>
@@ -288,7 +288,7 @@ const InternalRequestForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                                         <option value="8">Dia completo (8 Horas)</option>
                                     </select>
                                     {errors.tiempoMontajeHoras && <p className="text-red-500 text-[11px] font-semibold mt-1">{errors.tiempoMontajeHoras}</p>}
-                                </div>
+                                </div> */}
                             </div>
 
                             <div className="space-y-1.5">

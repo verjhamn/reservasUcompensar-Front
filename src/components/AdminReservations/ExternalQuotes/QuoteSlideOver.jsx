@@ -173,12 +173,7 @@ const QuoteSlideOver = ({
                                             </p>
                                         </div>
                                     )}
-                                    {setupTime && (
-                                        <div>
-                                            <p className="text-xs text-gray-500">Tiempo de montaje</p>
-                                            <p className="font-medium text-gray-800">{setupTime}</p>
-                                        </div>
-                                    )}
+
                                     {selectedQuote.cantidad_personas && (
                                         <div>
                                             <p className="text-xs text-gray-500">Aforo esperado</p>
