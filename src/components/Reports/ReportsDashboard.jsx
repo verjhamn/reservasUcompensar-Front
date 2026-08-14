@@ -1,22 +1,26 @@
 /* eslint-disable react/prop-types */
 import { useMemo } from "react";
 import {
-  ArrowTrendingUpIcon,
+  BoltIcon,
   BuildingOffice2Icon,
   CalendarDaysIcon,
-  CheckCircleIcon,
-  ClockIcon,
   ExclamationTriangleIcon,
+  MapPinIcon,
+  PresentationChartBarIcon,
+  SparklesIcon,
+  TicketIcon,
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
+import {
+  addDays,
+  isEventReservation,
+  isTerminalReservation,
+  normalizeSearchText,
+  parseReportDate,
+  startOfLocalDay,
+} from "./reportDateUtils";
 
-const STATUS_COLORS = {
-  creada: "#00aab7",
-  completada: "#00a554",
-  cancelada: "#e60064",
-};
-
-const FALLBACK_COLORS = ["#722070", "#ff6600", "#5890c6", "#f7a400", "#95c11f"];
+const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
 const normalizeText = (value) => String(value || "Sin información").trim();
 
@@ -41,13 +45,32 @@ const formatNumber = (value, maximumFractionDigits = 0) => new Intl.NumberFormat
   maximumFractionDigits,
 }).format(value || 0);
 
+const formatMonth = (date) => new Intl.DateTimeFormat("es-CO", {
+  month: "short",
+  year: "numeric",
+}).format(date).replace(" de ", " ");
+
+const formatAgendaMonth = (date) => new Intl.DateTimeFormat("es-CO", { month: "short" })
+  .format(date)
+  .replace(".", "")
+  .toUpperCase();
+
+const getDaysUntil = (date, today) => Math.round((date - today) / DAY_IN_MS);
+
+const getProximityLabel = (date, today) => {
+  const days = getDaysUntil(date, today);
+  if (days === 0) return "Hoy";
+  if (days === 1) return "Mañana";
+  return `En ${formatNumber(days)} días`;
+};
+
 const KpiCard = ({ title, value, helper, icon: Icon, accent, loading }) => (
   <article className="relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
     <div className="flex items-start justify-between gap-4">
       <div className="min-w-0">
         <p className="text-sm font-medium text-gray-500">{title}</p>
         {loading ? (
-          <div className="mt-3 h-9 w-28 animate-pulse rounded-lg bg-gray-100" />
+          <div className="mt-3 h-9 w-24 animate-pulse rounded-lg bg-gray-100" />
         ) : (
           <p className="mt-2 truncate text-3xl font-bold tracking-tight text-blue-dark-500">{value}</p>
         )}
@@ -64,7 +87,7 @@ const HorizontalBars = ({ data, color = "bg-turquoise-500", emptyMessage }) => {
   const maxValue = Math.max(...data.map((item) => item.value), 1);
 
   if (!data.length) {
-    return <p className="py-12 text-center text-sm text-gray-500">{emptyMessage}</p>;
+    return <p className="py-10 text-center text-sm text-gray-500">{emptyMessage}</p>;
   }
 
   return (
@@ -87,45 +110,159 @@ const HorizontalBars = ({ data, color = "bg-turquoise-500", emptyMessage }) => {
   );
 };
 
-const ReportsDashboard = ({ data, totalRecords, loading, error, isFiltered }) => {
-  const analytics = useMemo(() => {
-    const statuses = countBy(data, "estado");
-    const spaceTypes = countBy(data, "tipo_espacio").slice(0, 5);
-    const campuses = countBy(data, "sede").slice(0, 5);
-    const users = countBy(data, "usuario");
-    const spaces = countBy(data, "codigo_espacio");
-    const hours = sumHours(data);
-    const completed = statuses.find((item) => item.name.toLowerCase() === "completada")?.value || 0;
-    const cancelled = statuses.find((item) => item.name.toLowerCase() === "cancelada")?.value || 0;
-    const resolved = completed + cancelled;
+const MonthlyForecast = ({ months }) => {
+  const maxValue = Math.max(...months.map((month) => month.total), 1);
+
+  return (
+    <div className="mt-6 space-y-5">
+      {months.map((month) => (
+        <div key={month.key} className="grid grid-cols-[5.5rem_1fr_auto] items-center gap-3">
+          <span className="text-xs font-semibold capitalize text-gray-600">{month.label}</span>
+          <div className="h-3 overflow-hidden rounded-full bg-gray-100" title={`${month.events} eventos de ${month.total} reservas`}>
+            <div
+              className="h-full overflow-hidden rounded-full bg-turquoise-500 transition-all duration-500"
+              style={{ width: `${month.total ? Math.max((month.total / maxValue) * 100, 4) : 0}%` }}
+            >
+              <div
+                className="h-full bg-magenta-500"
+                style={{ width: `${month.total ? (month.events / month.total) * 100 : 0}%` }}
+              />
+            </div>
+          </div>
+          <span className="min-w-10 text-right text-sm font-semibold tabular-nums text-blue-dark-500">{formatNumber(month.total)}</span>
+        </div>
+      ))}
+      <div className="flex flex-wrap gap-x-5 gap-y-2 border-t border-gray-100 pt-4 text-xs text-gray-500">
+        <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-turquoise-500" /> Reservas activas</span>
+        <span className="inline-flex items-center gap-1.5 font-medium text-magenta-600"><span className="h-2 w-2 rounded-full bg-magenta-500" /> {formatNumber(months.reduce((total, month) => total + month.events, 0))} corresponden a eventos</span>
+      </div>
+    </div>
+  );
+};
+
+const EventAgenda = ({ events, today }) => {
+  if (!events.length) {
+    return (
+      <div className="flex min-h-64 flex-col items-center justify-center rounded-xl bg-gray-50 px-6 text-center">
+        <TicketIcon className="h-10 w-10 text-gray-300" aria-hidden="true" />
+        <p className="mt-3 text-sm font-semibold text-gray-600">No hay eventos próximos en este alcance</p>
+        <p className="mt-1 text-xs text-gray-500">Amplía las fechas o limpia los filtros para consultar la agenda.</p>
+      </div>
+    );
+  }
+
+  return (
+    <ol className="mt-5 divide-y divide-gray-100">
+      {events.map(({ row, date }, index) => (
+        <li key={row.numero ?? `${row.codigo_espacio}-${date.getTime()}-${index}`} className="flex gap-4 py-4 first:pt-0 last:pb-0">
+          <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-xl bg-magenta-50 text-magenta-700">
+            <span className="text-lg font-bold leading-none">{date.getDate()}</span>
+            <span className="mt-1 text-[10px] font-bold tracking-wider">{formatAgendaMonth(date)}</span>
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <p className="truncate text-sm font-semibold text-blue-dark-500" title={row.titulo_reserva}>{row.titulo_reserva || "Evento sin título"}</p>
+              <span className="shrink-0 rounded-full bg-turquoise-50 px-2 py-0.5 text-[11px] font-semibold text-turquoise-700">{getProximityLabel(date, today)}</span>
+            </div>
+            <p className="mt-1 truncate text-xs text-gray-500" title={`${row.sede || ""} · ${row.codigo_espacio || ""}`}>
+              {row.sede || "Sede sin información"} · Espacio {row.codigo_espacio || "sin código"}
+            </p>
+            <p className="mt-1 text-xs font-medium text-gray-600">{row.hora_inicio_reserva || "Hora pendiente"} – {row.hora_fin_reserva || "Hora pendiente"}</p>
+          </div>
+        </li>
+      ))}
+    </ol>
+  );
+};
+
+const ReportsDashboard = ({
+  data,
+  allData,
+  consolidatedTotalRecords,
+  loading,
+  error,
+  scope,
+  isFiltered,
+}) => {
+  const historicalAnalytics = useMemo(() => {
+    const cancelled = allData.filter((row) => normalizeSearchText(row.estado).startsWith("cancelad")).length;
+    const completed = allData.filter((row) => normalizeSearchText(row.estado).startsWith("completad")).length;
+    const uniqueUsers = new Set(allData.map((row) => normalizeText(row.correo || row.usuario))).size;
 
     return {
-      statuses,
-      spaceTypes,
+      cancelled,
+      completed,
+      uniqueUsers,
+      cancellationRate: allData.length ? (cancelled / allData.length) * 100 : 0,
+    };
+  }, [allData]);
+
+  const analytics = useMemo(() => {
+    const today = startOfLocalDay();
+    const next7Limit = addDays(today, 7);
+    const next30Limit = addDays(today, 30);
+    const futureItems = data.reduce((items, row) => {
+      const date = parseReportDate(row.fecha_reserva);
+      if (date && date >= today && !isTerminalReservation(row)) items.push({ row, date });
+      return items;
+    }, []);
+    const futureRecords = futureItems.map((item) => item.row);
+    const futureEventItems = futureItems.filter((item) => isEventReservation(item.row));
+    const futureEvents = futureEventItems.map((item) => item.row);
+    const next7 = futureItems.filter((item) => item.date < next7Limit);
+    const next30 = futureItems.filter((item) => item.date < next30Limit);
+    const eventAgenda = futureEventItems
+      .sort((a, b) => a.date - b.date)
+      .slice(0, 6);
+
+    const months = Array.from({ length: 6 }, (_, index) => {
+      const start = new Date(today.getFullYear(), today.getMonth() + index, 1);
+      const end = new Date(today.getFullYear(), today.getMonth() + index + 1, 1);
+      const records = futureItems.filter((item) => item.date >= start && item.date < end);
+
+      return {
+        key: `${start.getFullYear()}-${start.getMonth()}`,
+        label: formatMonth(start),
+        total: records.length,
+        events: records.filter((item) => isEventReservation(item.row)).length,
+      };
+    });
+
+    const campuses = countBy(futureRecords, "sede").slice(0, 5);
+    const spaceTypes = countBy(futureRecords, "tipo_espacio").slice(0, 5);
+    const eventSpaces = countBy(futureEvents, "codigo_espacio").slice(0, 5);
+    const uniqueSpaces = new Set(futureRecords.map((row) => normalizeText(row.codigo_espacio))).size;
+    const uniqueEventSpaces = new Set(futureEvents.map((row) => normalizeText(row.codigo_espacio))).size;
+    const peakMonth = [...months].sort((a, b) => b.total - a.total)[0];
+
+    return {
+      today,
+      futureRecords,
+      futureEvents,
+      next7,
+      next30,
+      eventAgenda,
+      months,
       campuses,
-      users,
-      spaces,
-      hours,
-      completionRate: resolved ? (completed / resolved) * 100 : 0,
-      cancellationRate: data.length ? (cancelled / data.length) * 100 : 0,
+      spaceTypes,
+      eventSpaces,
+      uniqueSpaces,
+      uniqueEventSpaces,
+      plannedHours: sumHours(futureRecords),
+      peakMonth,
     };
   }, [data]);
 
-  const donutSegments = useMemo(() => {
-    if (!analytics.statuses.length) return "#e5e7eb 0deg 360deg";
-
-    let currentDegree = 0;
-    return analytics.statuses.map((status, index) => {
-      const start = currentDegree;
-      currentDegree += (status.value / data.length) * 360;
-      const color = STATUS_COLORS[status.name.toLowerCase()] || FALLBACK_COLORS[index % FALLBACK_COLORS.length];
-      return `${color} ${start}deg ${currentDegree}deg`;
-    }).join(", ");
-  }, [analytics.statuses, data.length]);
-
-  const loadedLabel = isFiltered
-    ? `${formatNumber(data.length)} registros coinciden con los filtros del dashboard`
-    : `${formatNumber(data.length)} registros del consolidado general`;
+  const scopeLabels = {
+    upcoming: "reservas próximas activas",
+    events: "próximos eventos",
+    all: "todo el histórico",
+  };
+  const scopeLabel = scopeLabels[scope] || scopeLabels.upcoming;
+  const loadingCards = loading && !allData.length;
+  const eventShare = analytics.futureRecords.length
+    ? (analytics.futureEvents.length / analytics.futureRecords.length) * 100
+    : 0;
 
   return (
     <div className="space-y-6" aria-busy={loading}>
@@ -133,7 +270,7 @@ const ReportsDashboard = ({ data, totalRecords, loading, error, isFiltered }) =>
         <div className="flex items-start gap-3">
           <CalendarDaysIcon className="mt-0.5 h-5 w-5 shrink-0 text-blue-light-600" aria-hidden="true" />
           <p>
-            <span className="font-semibold">Alcance de los indicadores:</span> distribuciones, horas y porcentajes usan {loadedLabel}.
+            <span className="font-semibold">Enfoque actual:</span> {scopeLabel}. Los indicadores se calculan sobre {formatNumber(data.length)} registros{isFiltered ? " después de aplicar filtros adicionales" : ""}.
           </p>
         </div>
         {error && (
@@ -143,134 +280,141 @@ const ReportsDashboard = ({ data, totalRecords, loading, error, isFiltered }) =>
         )}
       </div>
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Indicadores principales">
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Indicadores de reservas futuras">
         <KpiCard
-          title="Reservas encontradas"
-          value={formatNumber(totalRecords)}
-          helper={isFiltered ? "Total según los filtros del dashboard" : "Total del consolidado general"}
+          title="Reservas en el alcance"
+          value={formatNumber(data.length)}
+          helper={`Vista: ${scopeLabel}`}
           icon={CalendarDaysIcon}
           accent="bg-primary-50 text-primary-600"
-          loading={loading && !data.length}
+          loading={loadingCards}
         />
         <KpiCard
-          title="Horas reservadas"
-          value={`${formatNumber(analytics.hours, 1)} h`}
-          helper="Suma del consolidado analizado"
-          icon={ClockIcon}
+          title="Próximos 7 días"
+          value={formatNumber(analytics.next7.length)}
+          helper="Reservas activas que requieren atención inmediata"
+          icon={BoltIcon}
+          accent="bg-orange-50 text-orange-600"
+          loading={loadingCards}
+        />
+        <KpiCard
+          title="Próximos 30 días"
+          value={formatNumber(analytics.next30.length)}
+          helper="Carga operativa prevista para el siguiente mes"
+          icon={PresentationChartBarIcon}
           accent="bg-turquoise-50 text-turquoise-600"
-          loading={loading && !data.length}
+          loading={loadingCards}
         />
         <KpiCard
-          title="Tasa de finalización"
-          value={`${formatNumber(analytics.completionRate, 1)}%`}
-          helper="Completadas sobre reservas resueltas"
-          icon={CheckCircleIcon}
-          accent="bg-green-50 text-green-600"
-          loading={loading && !data.length}
-        />
-        <KpiCard
-          title="Usuarios únicos"
-          value={formatNumber(analytics.users.length)}
-          helper="Usuarios distintos en el consolidado"
-          icon={UserGroupIcon}
-          accent="bg-purple-50 text-purple-600"
-          loading={loading && !data.length}
+          title={scope === "events" ? "Espacios para eventos" : "Eventos próximos"}
+          value={formatNumber(scope === "events" ? analytics.uniqueEventSpaces : analytics.futureEvents.length)}
+          helper={scope === "events"
+            ? "Espacios distintos comprometidos por eventos próximos"
+            : `${formatNumber(eventShare, 1)}% de las reservas futuras del alcance`}
+          icon={TicketIcon}
+          accent="bg-magenta-50 text-magenta-600"
+          loading={loadingCards}
         />
       </section>
 
       <section className="grid gap-6 xl:grid-cols-5">
-        <article className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm xl:col-span-2">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-turquoise-600">Composición</p>
-            <h2 className="mt-1 text-lg font-bold text-blue-dark-500">Reservas por estado</h2>
-          </div>
-          <div className="mt-6 flex flex-col items-center gap-7 sm:flex-row sm:justify-center">
-            <div
-              className="relative h-40 w-40 shrink-0 rounded-full"
-              style={{ background: `conic-gradient(${donutSegments})` }}
-              role="img"
-              aria-label="Gráfico de distribución de reservas por estado"
-            >
-              <div className="absolute inset-5 flex flex-col items-center justify-center rounded-full bg-white">
-                <span className="text-3xl font-bold text-blue-dark-500">{formatNumber(data.length)}</span>
-                <span className="text-xs text-gray-500">analizadas</span>
-              </div>
-            </div>
-            <div className="w-full min-w-0 space-y-3">
-              {analytics.statuses.map((status, index) => {
-                const color = STATUS_COLORS[status.name.toLowerCase()] || FALLBACK_COLORS[index % FALLBACK_COLORS.length];
-                return (
-                  <div key={status.name} className="flex items-center justify-between gap-4 text-sm">
-                    <span className="flex min-w-0 items-center gap-2 text-gray-600">
-                      <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: color }} />
-                      <span className="truncate">{status.name}</span>
-                    </span>
-                    <span className="shrink-0 font-semibold tabular-nums text-gray-800">
-                      {status.value} <span className="font-normal text-gray-400">· {formatNumber((status.value / data.length) * 100, 1)}%</span>
-                    </span>
-                  </div>
-                );
-              })}
-              {!analytics.statuses.length && <p className="text-center text-sm text-gray-500">Sin datos para visualizar</p>}
-            </div>
-          </div>
+        <article className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm xl:col-span-3">
+          <p className="text-xs font-semibold uppercase tracking-wider text-turquoise-600">Planeación semestral</p>
+          <h2 className="mt-1 text-lg font-bold text-blue-dark-500">Carga futura por mes</h2>
+          <p className="mt-1 text-sm text-gray-500">Reservas activas programadas durante los próximos seis meses.</p>
+          <MonthlyForecast months={analytics.months} />
         </article>
 
-        <article className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm xl:col-span-3">
-          <p className="text-xs font-semibold uppercase tracking-wider text-purple-600">Preferencias</p>
-          <h2 className="mt-1 text-lg font-bold text-blue-dark-500">Tipos de espacio más reservados</h2>
-          <HorizontalBars
-            data={analytics.spaceTypes}
-            color="bg-purple-500"
-            emptyMessage="No hay tipos de espacio para mostrar"
-          />
+        <article className="rounded-2xl bg-blue-dark-500 p-6 text-white shadow-sm xl:col-span-2">
+          <div className="flex items-center gap-2 text-blue-light-200">
+            <SparklesIcon className="h-5 w-5" aria-hidden="true" />
+            <p className="text-xs font-semibold uppercase tracking-wider">Señales para planeación</p>
+          </div>
+          <dl className="mt-6 space-y-5">
+            <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-4">
+              <dt className="text-sm text-blue-light-100">Horas aún por ejecutar</dt>
+              <dd className="text-lg font-bold tabular-nums">{formatNumber(analytics.plannedHours, 1)} h</dd>
+            </div>
+            <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-4">
+              <dt className="text-sm text-blue-light-100">Espacios comprometidos</dt>
+              <dd className="text-lg font-bold tabular-nums">{formatNumber(analytics.uniqueSpaces)}</dd>
+            </div>
+            <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-4">
+              <dt className="text-sm text-blue-light-100">Mes con mayor carga</dt>
+              <dd className="text-right font-semibold capitalize">{analytics.peakMonth?.total ? `${analytics.peakMonth.label} · ${formatNumber(analytics.peakMonth.total)}` : "Sin datos"}</dd>
+            </div>
+            <div className="flex items-start justify-between gap-4">
+              <dt className="text-sm text-blue-light-100">Sede con mayor demanda</dt>
+              <dd className="max-w-44 text-right font-semibold">{analytics.campuses[0]?.name || "Sin datos"}</dd>
+            </div>
+          </dl>
         </article>
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-2">
-        <article className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-wider text-primary-600">Ubicación</p>
-          <h2 className="mt-1 text-lg font-bold text-blue-dark-500">Distribución por sede</h2>
-          <HorizontalBars
-            data={analytics.campuses}
-            color="bg-primary-500"
-            emptyMessage="No hay sedes para mostrar"
-          />
+      <section className="grid gap-6 xl:grid-cols-5">
+        <article className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm xl:col-span-3">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-magenta-600">Agenda prioritaria</p>
+              <h2 className="mt-1 text-lg font-bold text-blue-dark-500">Próximos eventos</h2>
+              <p className="mt-1 text-sm text-gray-500">Los seis eventos más cercanos que aún no se han realizado.</p>
+            </div>
+            <TicketIcon className="h-7 w-7 shrink-0 text-magenta-500" aria-hidden="true" />
+          </div>
+          <EventAgenda events={analytics.eventAgenda} today={analytics.today} />
         </article>
 
-        <article className="rounded-2xl bg-blue-dark-500 p-6 text-white shadow-sm">
-          <div className="flex items-center gap-2 text-blue-light-200">
-            <ArrowTrendingUpIcon className="h-5 w-5" aria-hidden="true" />
-            <p className="text-xs font-semibold uppercase tracking-wider">Lectura rápida</p>
+        <div className="grid gap-6 xl:col-span-2">
+          <article className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+            <div className="flex items-center gap-2">
+              <MapPinIcon className="h-5 w-5 text-primary-600" aria-hidden="true" />
+              <h2 className="text-base font-bold text-blue-dark-500">Sedes con mayor carga futura</h2>
+            </div>
+            <HorizontalBars data={analytics.campuses} color="bg-primary-500" emptyMessage="No hay carga futura por sede" />
+          </article>
+          <article className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+            <div className="flex items-center gap-2">
+              <PresentationChartBarIcon className="h-5 w-5 text-purple-600" aria-hidden="true" />
+              <h2 className="text-base font-bold text-blue-dark-500">Tipos de espacio con demanda futura</h2>
+            </div>
+            <HorizontalBars data={analytics.spaceTypes} color="bg-purple-500" emptyMessage="No hay demanda futura por tipo de espacio" />
+          </article>
+          <article className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+            <div className="flex items-center gap-2">
+              <BuildingOffice2Icon className="h-5 w-5 text-magenta-600" aria-hidden="true" />
+              <h2 className="text-base font-bold text-blue-dark-500">Espacios para eventos más solicitados</h2>
+            </div>
+            <HorizontalBars data={analytics.eventSpaces} color="bg-magenta-500" emptyMessage="No hay espacios de eventos en este alcance" />
+          </article>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm" aria-label="Contexto del consolidado general">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Contexto general</p>
+            <h2 className="mt-1 text-lg font-bold text-blue-dark-500">Salud del consolidado histórico</h2>
           </div>
-          <h2 className="mt-2 text-xl font-bold">Hallazgos del consolidado</h2>
-          <dl className="mt-6 grid gap-5 sm:grid-cols-2">
-            <div className="rounded-xl bg-white/10 p-4">
-              <dt className="text-xs text-blue-light-100">Tipo más solicitado</dt>
-              <dd className="mt-1 truncate font-semibold" title={analytics.spaceTypes[0]?.name}>{analytics.spaceTypes[0]?.name || "Sin datos"}</dd>
-              <p className="mt-1 text-xs text-blue-light-200">{formatNumber(analytics.spaceTypes[0]?.value)} reservas</p>
-            </div>
-            <div className="rounded-xl bg-white/10 p-4">
-              <dt className="text-xs text-blue-light-100">Espacio con más reservas</dt>
-              <dd className="mt-1 truncate font-semibold" title={analytics.spaces[0]?.name}>{analytics.spaces[0]?.name || "Sin datos"}</dd>
-              <p className="mt-1 text-xs text-blue-light-200">{formatNumber(analytics.spaces[0]?.value)} reservas</p>
-            </div>
-            <div className="rounded-xl bg-white/10 p-4">
-              <dt className="text-xs text-blue-light-100">Usuario más activo</dt>
-              <dd className="mt-1 truncate font-semibold" title={analytics.users[0]?.name}>{analytics.users[0]?.name || "Sin datos"}</dd>
-              <p className="mt-1 text-xs text-blue-light-200">{formatNumber(analytics.users[0]?.value)} reservas</p>
-            </div>
-            <div className="rounded-xl bg-white/10 p-4">
-              <dt className="text-xs text-blue-light-100">Tasa de cancelación</dt>
-              <dd className="mt-1 text-2xl font-bold">{formatNumber(analytics.cancellationRate, 1)}%</dd>
-              <p className="mt-1 text-xs text-blue-light-200">Sobre registros analizados</p>
-            </div>
-          </dl>
-          <div className="mt-5 flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-blue-light-100">
-            <BuildingOffice2Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-            Use “Detalle y exportación” para consultar cada reserva y descargar el reporte filtrado.
+          <p className="text-xs text-gray-500">Referencia global; no cambia con los filtros del dashboard.</p>
+        </div>
+        <dl className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-xl bg-gray-50 p-4">
+            <dt className="flex items-center gap-2 text-xs font-medium text-gray-500"><CalendarDaysIcon className="h-4 w-4" /> Total consolidado</dt>
+            <dd className="mt-2 text-2xl font-bold text-blue-dark-500">{formatNumber(consolidatedTotalRecords || allData.length)}</dd>
           </div>
-        </article>
+          <div className="rounded-xl bg-green-50 p-4">
+            <dt className="flex items-center gap-2 text-xs font-medium text-green-700"><PresentationChartBarIcon className="h-4 w-4" /> Completadas</dt>
+            <dd className="mt-2 text-2xl font-bold text-green-700">{formatNumber(historicalAnalytics.completed)}</dd>
+          </div>
+          <div className="rounded-xl bg-magenta-50 p-4">
+            <dt className="flex items-center gap-2 text-xs font-medium text-magenta-700"><ExclamationTriangleIcon className="h-4 w-4" /> Cancelación histórica</dt>
+            <dd className="mt-2 text-2xl font-bold text-magenta-700">{formatNumber(historicalAnalytics.cancellationRate, 1)}%</dd>
+          </div>
+          <div className="rounded-xl bg-purple-50 p-4">
+            <dt className="flex items-center gap-2 text-xs font-medium text-purple-700"><UserGroupIcon className="h-4 w-4" /> Usuarios históricos</dt>
+            <dd className="mt-2 text-2xl font-bold text-purple-700">{formatNumber(historicalAnalytics.uniqueUsers)}</dd>
+          </div>
+        </dl>
       </section>
     </div>
   );

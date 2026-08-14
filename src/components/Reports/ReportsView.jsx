@@ -15,6 +15,13 @@ import {
 import { getGeneralDashboardReport, getGeneralReport } from "../../Services/reportsService";
 import { downloadReport } from "../../Services/DownloadReport";
 import ReportsDashboard from "./ReportsDashboard";
+import {
+  isEventReservation,
+  isFutureActiveReservation,
+  normalizeSearchText,
+  parseReportDate,
+  startOfLocalDay,
+} from "./reportDateUtils";
 
 const COLUMNS = [
   { key: "estado", label: "ESTADO", options: ["Creada", "Completada", "Cancelada"] },
@@ -101,52 +108,25 @@ const normalizeDashboardResponse = (response) => {
   };
 };
 
-const normalizeSearchText = (value) => String(value || "")
-  .normalize("NFD")
-  .replace(/[\u0300-\u036f]/g, "")
-  .trim()
-  .toLowerCase();
-
-const SPANISH_MONTHS = {
-  enero: 1,
-  febrero: 2,
-  marzo: 3,
-  abril: 4,
-  mayo: 5,
-  junio: 6,
-  julio: 7,
-  agosto: 8,
-  septiembre: 9,
-  octubre: 10,
-  noviembre: 11,
-  diciembre: 12,
-};
-
-const toDateNumber = (value) => {
-  const normalized = normalizeSearchText(value);
-  const isoDate = normalized.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (isoDate) return Number(`${isoDate[1]}${isoDate[2]}${isoDate[3]}`);
-
-  const writtenDate = normalized.match(/(\d{1,2})\s+de\s+([a-z]+)\s+de\s+(\d{4})/);
-  if (!writtenDate || !SPANISH_MONTHS[writtenDate[2]]) return null;
-
-  return Number(`${writtenDate[3]}${String(SPANISH_MONTHS[writtenDate[2]]).padStart(2, "0")}${writtenDate[1].padStart(2, "0")}`);
-};
-
 const filterDashboardData = (data, filters) => {
+  const scope = filters.scope || "upcoming";
   const status = normalizeSearchText(filters.estado);
   const campus = normalizeSearchText(filters.sede);
   const spaceType = normalizeSearchText(filters.tipo_espacio);
-  const fromDate = toDateNumber(filters.fecha_reserva_desde);
-  const toDate = toDateNumber(filters.fecha_reserva_hasta);
+  const fromDate = parseReportDate(filters.fecha_reserva_desde);
+  const toDate = parseReportDate(filters.fecha_reserva_hasta);
+  const today = startOfLocalDay();
 
   return data.filter((row) => {
+    const isUpcoming = isFutureActiveReservation(row, today);
+    if (scope === "upcoming" && !isUpcoming) return false;
+    if (scope === "events" && (!isUpcoming || !isEventReservation(row))) return false;
     if (status && normalizeSearchText(row.estado) !== status) return false;
     if (campus && !normalizeSearchText(row.sede).includes(campus)) return false;
     if (spaceType && !normalizeSearchText(row.tipo_espacio).includes(spaceType)) return false;
 
     if (fromDate || toDate) {
-      const reservationDate = toDateNumber(row.fecha_reserva);
+      const reservationDate = parseReportDate(row.fecha_reserva);
       if (!reservationDate) return false;
       if (fromDate && reservationDate < fromDate) return false;
       if (toDate && reservationDate > toDate) return false;
@@ -162,7 +142,7 @@ const ReportsView = () => {
   const [activeSection, setActiveSection] = useState("dashboard");
   const [dashboardData, setDashboardData] = useState([]);
   const [dashboardTotalRecords, setDashboardTotalRecords] = useState(0);
-  const [dashboardFilters, setDashboardFilters] = useState({});
+  const [dashboardFilters, setDashboardFilters] = useState({ scope: "upcoming" });
   const [dashboardLoading, setDashboardLoading] = useState(false);
   const [dashboardError, setDashboardError] = useState("");
   const [dashboardLastUpdated, setDashboardLastUpdated] = useState(null);
@@ -255,7 +235,7 @@ const ReportsView = () => {
     setDashboardFilters((previous) => ({ ...previous, [key]: value }));
   };
 
-  const clearDashboardFilters = () => setDashboardFilters({});
+  const clearDashboardFilters = () => setDashboardFilters({ scope: "upcoming" });
 
   const handleSort = (field) => {
     setSortConfig((previous) => ({
@@ -367,9 +347,10 @@ const ReportsView = () => {
     () => filterDashboardData(dashboardData, dashboardFilters),
     [dashboardData, dashboardFilters],
   );
-  const dashboardFilterCount = Object.values(dashboardFilters).filter((value) => String(value || "").trim()).length;
+  const dashboardFilterCount = Object.entries(dashboardFilters).filter(([key, value]) => (
+    String(value || "").trim() && (key !== "scope" || value !== "upcoming")
+  )).length;
   const tableFilterCount = Object.values(tableFilters).filter((value) => String(value || "").trim()).length;
-  const filteredDashboardTotal = dashboardFilterCount > 0 ? filteredDashboardData.length : dashboardTotalRecords;
   const firstVisibleRecord = tableTotalRecords > 0
     ? Math.min((currentPage - 1) * perPage + 1, tableTotalRecords)
     : 0;
@@ -453,6 +434,27 @@ const ReportsView = () => {
             <p className="mb-4 text-xs text-gray-500">
               Estos filtros solo modifican los indicadores del dashboard; no afectan la tabla ni el archivo exportado.
             </p>
+            <div className="mb-5 flex flex-wrap gap-2" role="group" aria-label="Enfoque temporal del dashboard">
+              {[
+                { value: "upcoming", label: "Próximas activas" },
+                { value: "events", label: "Próximos eventos" },
+                { value: "all", label: "Todo el histórico" },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => handleDashboardFilterChange("scope", option.value)}
+                  className={`rounded-full px-3.5 py-2 text-sm font-semibold transition ${
+                    (dashboardFilters.scope || "upcoming") === option.value
+                      ? "bg-blue-dark-500 text-white shadow-sm"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-blue-dark-500"
+                  }`}
+                  aria-pressed={(dashboardFilters.scope || "upcoming") === option.value}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
               <label className="text-sm font-medium text-gray-600">
                 Estado
@@ -510,9 +512,11 @@ const ReportsView = () => {
 
           <ReportsDashboard
             data={filteredDashboardData}
-            totalRecords={filteredDashboardTotal}
+            allData={dashboardData}
+            consolidatedTotalRecords={dashboardTotalRecords}
             loading={dashboardLoading}
             error={dashboardError}
+            scope={dashboardFilters.scope || "upcoming"}
             isFiltered={dashboardFilterCount > 0}
           />
         </>
