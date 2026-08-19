@@ -140,27 +140,52 @@ const CampusSupportPanel = ({ selectedCampus, selectedSpaceType }) => {
                             </button>
                         </div>
 
-                        <div className="border-b border-neutral-200 bg-neutral-50 px-4 py-3 sm:px-6">
-                            <div className="flex flex-wrap gap-2">
-                                {TEUSAQUILLO_COWORKING_MAPS.map((map, index) => {
-                                    const isActive = activeMapIndex === index;
+                        <div className="border-b border-neutral-200 bg-neutral-50 px-4 py-2 sm:px-6">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                <div className="min-w-0">
+                                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-neutral-500">
+                                        Plano {activeMapIndex + 1} de {TEUSAQUILLO_COWORKING_MAPS.length}
+                                    </p>
+                                    <p className="mt-0.5 truncate text-sm font-semibold text-neutral-900">
+                                        {activeMap.shortLabel}
+                                    </p>
+                                </div>
 
-                                    return (
-                                        <button
-                                            key={map.id}
-                                            type="button"
-                                            onClick={() => setActiveMapIndex(index)}
-                                            className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
-                                                isActive
-                                                    ? 'bg-neutral-900 text-white'
-                                                    : 'bg-white text-neutral-700 hover:bg-neutral-200'
-                                            }`}
-                                            aria-pressed={isActive}
-                                        >
-                                            {map.shortLabel}
-                                        </button>
-                                    );
-                                })}
+                                <div className="flex items-center gap-2 sm:min-w-[360px]">
+                                    <button
+                                        type="button"
+                                        onClick={handlePrevMap}
+                                        className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-lg border border-neutral-200 bg-white text-neutral-700 shadow-sm transition-colors hover:border-teal-200 hover:bg-teal-50 hover:text-teal-700"
+                                        aria-label="Ver plano anterior"
+                                    >
+                                        <ChevronLeft className="h-4 w-4" />
+                                    </button>
+
+                                    <label htmlFor="campus-map-selector" className="sr-only">
+                                        Seleccionar bloque y piso
+                                    </label>
+                                    <select
+                                        id="campus-map-selector"
+                                        value={activeMapIndex}
+                                        onChange={(event) => setActiveMapIndex(Number(event.target.value))}
+                                        className="h-9 min-w-0 flex-1 rounded-lg border border-neutral-200 bg-white px-3 text-sm font-medium text-neutral-800 shadow-sm outline-none transition-colors hover:border-teal-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+                                    >
+                                        {TEUSAQUILLO_COWORKING_MAPS.map((map, index) => (
+                                            <option key={map.id} value={index}>
+                                                {map.shortLabel}
+                                            </option>
+                                        ))}
+                                    </select>
+
+                                    <button
+                                        type="button"
+                                        onClick={handleNextMap}
+                                        className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-lg border border-neutral-200 bg-white text-neutral-700 shadow-sm transition-colors hover:border-teal-200 hover:bg-teal-50 hover:text-teal-700"
+                                        aria-label="Ver siguiente plano"
+                                    >
+                                        <ChevronRight className="h-4 w-4" />
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -171,6 +196,11 @@ const CampusSupportPanel = ({ selectedCampus, selectedSpaceType }) => {
                                     alt={activeMap.alt}
                                     loading="lazy"
                                     decoding="async"
+                                    onError={(event) => {
+                                        if (activeMap.fallbackImageUrl && event.currentTarget.src !== activeMap.fallbackImageUrl) {
+                                            event.currentTarget.src = activeMap.fallbackImageUrl;
+                                        }
+                                    }}
                                     className="max-h-full w-full rounded-2xl object-contain shadow-2xl"
                                 />
 
@@ -207,28 +237,34 @@ const CampusSupportPanel = ({ selectedCampus, selectedSpaceType }) => {
 
                                 <div className="flex-1 overflow-y-auto px-5 py-4">
                                     <h6 className="text-sm font-semibold text-neutral-800">Referencias del plano</h6>
-                                    <ul className="mt-3 space-y-3">
-                                        {activeMap.details.map((detail) => (
-                                            <li
-                                                key={`${activeMap.id}-${detail.label}`}
-                                                className="rounded-xl border border-neutral-200 bg-neutral-50 p-3"
-                                            >
-                                                <div className="flex items-start gap-3">
-                                                    <span
-                                                        className="mt-1 h-3.5 w-3.5 flex-shrink-0 rounded-full"
-                                                        style={{ backgroundColor: detail.color }}
-                                                        aria-hidden="true"
-                                                    />
-                                                    <div>
-                                                        <p className="text-sm font-semibold text-neutral-900">{detail.label}</p>
-                                                        {detail.meta && (
-                                                            <p className="mt-1 text-sm text-neutral-600">{detail.meta}</p>
-                                                        )}
+                                    {activeMap.details.length > 0 ? (
+                                        <ul className="mt-3 space-y-3">
+                                            {activeMap.details.map((detail) => (
+                                                <li
+                                                    key={`${activeMap.id}-${detail.label}`}
+                                                    className="rounded-xl border border-neutral-200 bg-neutral-50 p-3"
+                                                >
+                                                    <div className="flex items-start gap-3">
+                                                        <span
+                                                            className="mt-1 h-3.5 w-3.5 flex-shrink-0 rounded-full"
+                                                            style={{ backgroundColor: detail.color }}
+                                                            aria-hidden="true"
+                                                        />
+                                                        <div>
+                                                            <p className="text-sm font-semibold text-neutral-900">{detail.label}</p>
+                                                            {detail.meta && (
+                                                                <p className="mt-1 text-sm text-neutral-600">{detail.meta}</p>
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </li>
-                                        ))}
-                                    </ul>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    ) : (
+                                        <p className="mt-3 rounded-xl border border-neutral-200 bg-neutral-50 p-3 text-sm text-neutral-600">
+                                            Consulta las referencias directamente en la imagen del plano.
+                                        </p>
+                                    )}
                                 </div>
 
                                 <div className="border-t border-neutral-200 px-5 py-4">
