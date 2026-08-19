@@ -70,9 +70,6 @@ const InternalRequestForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                 newErrors.cantidadPersonas = 'Minimo 1 persona';
             }
 
-/*             if (formData.tiempoMontajeHoras === '') {
-                newErrors.tiempoMontajeHoras = 'El tiempo de montaje es requerido';
-            } */
         }
 
         if (step === 3 && (!policiesAccepted || !dataTreatmentAccepted)) {
@@ -269,26 +266,6 @@ const InternalRequestForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                                     {errors.cantidadPersonas && <p className="text-red-500 text-[11px] font-semibold mt-1">{errors.cantidadPersonas}</p>}
                                 </div>
 
-{/*                                 <div className="space-y-1.5">
-                                    <label className="text-sm font-semibold text-gray-700">
-                                        Tiempo de montaje previo <span className="text-red-500">*</span>
-                                    </label>
-                                    <select
-                                        name="tiempoMontajeHoras"
-                                        className={`w-full px-4 py-2.5 rounded-xl border outline-none transition-all bg-gray-50/50 hover:bg-white text-gray-700 focus:ring-2 ${errors.tiempoMontajeHoras ? 'border-red-500 focus:ring-red-200 focus:border-red-500' : 'border-gray-200 focus:ring-purple-500 focus:border-purple-500'}`}
-                                        value={formData.tiempoMontajeHoras}
-                                        onChange={handleChange}
-                                    >
-                                        <option value="" disabled hidden>Seleccionar tiempo...</option>
-                                        <option value="0">Sin montaje previo (0 horas)</option>
-                                        <option value="1">1 Hora</option>
-                                        <option value="2">2 Horas</option>
-                                        <option value="3">3 Horas</option>
-                                        <option value="4">Medio dia (4 Horas)</option>
-                                        <option value="8">Dia completo (8 Horas)</option>
-                                    </select>
-                                    {errors.tiempoMontajeHoras && <p className="text-red-500 text-[11px] font-semibold mt-1">{errors.tiempoMontajeHoras}</p>}
-                                </div> */}
                             </div>
 
                             <div className="space-y-1.5">
