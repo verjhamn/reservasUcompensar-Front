@@ -15,6 +15,7 @@ import QuotesFilterBar from './QuotesFilterBar';
 import QuotesGrid from './QuotesGrid';
 import QuoteSlideOver from './QuoteSlideOver';
 import { normalizeRequest, formatPayloadDate, toDateInputValue } from './utils';
+import { getApiErrorMessage } from '../../../utils/apiErrorHelper';
 
 const ExternalQuotesIndex = () => {
     const [filters, setFilters] = useState({
@@ -182,8 +183,12 @@ const ExternalQuotesIndex = () => {
             showSuccessToast('Solicitud actualizada correctamente');
             closeSlideOver();
             fetchQuotes();
-        } catch {
-            showErrorToast("No se pudo actualizar la solicitud");
+        } catch (error) {
+            const errorMessage = getApiErrorMessage(
+                error,
+                "No se pudo actualizar la solicitud"
+            );
+            showErrorToast(errorMessage);
         } finally {
             setIsSaving(false);
         }

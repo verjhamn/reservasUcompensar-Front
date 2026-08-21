@@ -59,6 +59,8 @@ export const showErrorToast = (message) => {
     style: {
       background: '#fee2e2',
       color: '#dc2626',
+      maxWidth: '500px',
+      whiteSpace: 'pre-line',
     },
   });
 };
