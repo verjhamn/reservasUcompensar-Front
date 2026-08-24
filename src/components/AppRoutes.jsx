@@ -13,16 +13,15 @@ const AppRoutes = ({ isLoggedIn, isAdmin, canViewReports }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const [filters, setFilters] = useState({
-        capacidad: "",
-        espacio: "",
-        ubicacion: "",
         fecha: "",
         horaInicio: "",
-        horaFinal: "",
+        horaFin: "",
         palabra: "",
         id: "",
         sede: "",
+        bloque: "",
         tipo: "",
+        agrupable: "",
         tiporecurso: "",
         piso: "",
     });

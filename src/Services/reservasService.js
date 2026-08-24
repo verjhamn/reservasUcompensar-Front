@@ -1,5 +1,5 @@
 import axios from "axios";
-import { getAuthToken, fetchAuthToken, setAuthToken } from "./authService";
+import { buildSpaceFilterPayload } from "../utils/filterPayload";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -19,20 +19,7 @@ export const fetchFilteredReservations = async (filters) => {
         console.log("Filtros procesados:", filters); // Debugging
 
         // Realizar solicitud al nuevo endpoint con el body adecuado
-        const body = {
-            palabra: filters.palabra || "",
-            tipo: filters.tipo || "",
-            sede: filters.sede || "",
-            piso: filters.piso || "",
-            agrupable: filters.agrupable || "",
-            espaciofisico: filters.espaciofisico || "",
-            tiporecurso: filters.tiporecurso || "",
-            capacidad: filters.capacidad || "",
-            fecha: filters.fecha || "",
-            horaInicio: filters.horaInicio || "",
-            horaFin: filters.horaFin || "",
-            id:filters.id || "",
-        };
+        const body = buildSpaceFilterPayload(filters);
         console.log("Body de la solicitud:", body); // Debugging
         
 

@@ -1,7 +1,6 @@
-import React, { useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSyncAlt } from "@fortawesome/free-solid-svg-icons";
-import { FunnelIcon, ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
+/* eslint-disable react/prop-types */
+import { useState } from "react";
+import { CalendarDays, ChevronDown, ChevronUp, Eraser, Filter } from "lucide-react";
 import FilterField from "./FilterField";
 import { getSedeLabel } from "../../utils/constants";
 
@@ -14,9 +13,8 @@ const coworkingPeriods = [
 
 const generateTimeOptions = (start, end) => {
   const times = [];
-  for (let i = parseInt(start); i <= parseInt(end); i++) {
-    const time = `${i.toString().padStart(2, '0')}:00`;
-    times.push(time);
+  for (let hour = start; hour <= end; hour += 1) {
+    times.push(`${hour.toString().padStart(2, "0")}:00`);
   }
   return times;
 };
@@ -27,41 +25,70 @@ const AdminSearchFilters = ({ filters, setFilters }) => {
   const staticOptions = {
     tipos: ["Coworking", "Espacio multipropósito", "Laboratorio", "Espacio de eventos", "Sala de clases"],
     estados: ["Creada", "Confirmada", "Completada", "Cancelada"],
-    pisos: ["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"],
+    pisos: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"],
+    bloques: ["I", "J", "H", "F", "E", "D", "C", "B", "A"].map((block) => ({
+      value: block,
+      label: `Bloque ${block}`,
+    })),
     sedes: [
       { value: "1", label: "Campus Av. 68" },
-      { value: "2", label: "Campus Teusaquillo" }
-    ]
+      { value: "2", label: "Campus Teusaquillo" },
+    ],
+    agrupable: [
+      { value: "SI", label: "Agrupable" },
+      { value: "NO", label: "No agrupable" },
+    ],
+    tiposRecurso: ["Personal", "Puesto en L"],
   };
 
-  // Contar filtros activos
-  const activeFiltersCount = Object.values(filters).filter(value => value && value.trim() !== "").length;
-
+  const isTeusaquilloCampus = filters.sede?.toString() === "2";
+  const activeFiltersCount = Object.entries(filters).filter(([key, value]) => {
+    if (key === "bloque" && !isTeusaquilloCampus) return false;
+    return value && value.toString().trim() !== "";
+  }).length;
   const startTimeOptions = generateTimeOptions(7, 21);
 
   const getEndTimeOptions = (startTime) => {
     if (!startTime) return generateTimeOptions(8, 22);
-    const startHour = parseInt(startTime.split(':')[0]);
+    const startHour = Number(startTime.split(":")[0]);
     return generateTimeOptions(startHour + 1, 22);
   };
 
   const handleChange = (name, value) => {
     if (name === "tipo") {
-      setFilters(prev => ({
+      setFilters((prev) => ({
         ...prev,
-        [name]: value,
+        tipo: value,
         horaInicio: "",
+        horaFin: "",
+        tiporecurso: "",
+      }));
+      return;
+    }
+
+    if (name === "sede") {
+      setFilters((prev) => ({
+        ...prev,
+        sede: value,
+        bloque: value === "2" ? prev.bloque : "",
+      }));
+      return;
+    }
+
+    if (name === "horaInicio") {
+      setFilters((prev) => ({
+        ...prev,
+        horaInicio: value,
         horaFin: "",
       }));
       return;
     }
 
     if (name === "periodo") {
-      // Extraer el nombre del período del string seleccionado
-      const periodName = value.split(' (')[0];
-      const period = coworkingPeriods.find(p => p.name === periodName);
+      const periodName = value.split(" (")[0];
+      const period = coworkingPeriods.find((item) => item.name === periodName);
       if (period) {
-        setFilters(prev => ({
+        setFilters((prev) => ({
           ...prev,
           horaInicio: period.start,
           horaFin: period.end,
@@ -70,120 +97,106 @@ const AdminSearchFilters = ({ filters, setFilters }) => {
       return;
     }
 
-    setFilters(prev => ({ ...prev, [name]: value }));
+    setFilters((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleClearFilters = () => {
     setFilters({
+      id: "",
       palabra: "",
       email: "",
+      sede: "",
+      bloque: "",
       tipo: "",
-      estado: "",
       piso: "",
-      sede_id: "",
+      agrupable: "",
+      tiporecurso: "",
+      fecha: "",
       horaInicio: "",
-      horaFin: ""
+      horaFin: "",
+      estado: "",
     });
-    // Cerrar el panel en móvil después de limpiar
+
     if (window.innerWidth < 768) {
       setIsOpen(false);
     }
   };
 
   return (
-    <div className="bg-white shadow-xl rounded-2xl overflow-hidden border border-neutral-100 transition-all hover:shadow-2xl">
-      {/* Header del panel - siempre visible */}
-      <div className="p-4 md:p-6">
-        {/* Botón colapsable para móvil */}
+    <aside className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+      <div className="p-4 md:p-5">
         <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="w-full flex items-center justify-between mb-4 md:mb-6 lg:cursor-default group"
+          type="button"
+          onClick={() => setIsOpen((current) => !current)}
+          className="flex w-full items-center justify-between gap-3 lg:cursor-default"
         >
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-50 rounded-lg group-hover:bg-purple-100 transition-colors">
-              <FunnelIcon className="h-5 w-5 text-purple-600" />
+            <div className="rounded-lg bg-purple-50 p-2">
+              <Filter className="h-5 w-5 text-purple-600" />
             </div>
-            <h3 className="text-base md:text-lg font-bold text-gray-800">Filtros de búsqueda</h3>
-            {activeFiltersCount > 0 && (
-              <span className="bg-purple-600 text-white text-xs font-bold rounded-full px-2 py-0.5 min-w-[20px] text-center shadow-sm">
-                {activeFiltersCount}
-              </span>
-            )}
+            <div className="text-left">
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-bold text-gray-900 md:text-lg">Filtros</h3>
+                {activeFiltersCount > 0 && (
+                  <span className="rounded-full bg-purple-600 px-2 py-0.5 text-xs font-bold text-white">
+                    {activeFiltersCount}
+                  </span>
+                )}
+              </div>
+              <p className="text-xs font-medium text-gray-500">Reservas internas</p>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             {activeFiltersCount > 0 && (
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
                   handleClearFilters();
                 }}
-                className="text-neutral-400 hover:text-purple-600 text-sm p-1.5 rounded-full hover:bg-purple-50 transition-all"
-                title="Limpiar Filtros"
+                className="rounded-lg p-2 text-gray-400 transition hover:bg-purple-50 hover:text-purple-600"
+                title="Limpiar filtros"
               >
-                <FontAwesomeIcon icon={faSyncAlt} className="w-4 h-4" />
+                <Eraser className="h-4 w-4" />
               </button>
             )}
             <div className="lg:hidden">
-              {isOpen ? (
-                <ChevronUpIcon className="h-5 w-5 text-gray-600" />
-              ) : (
-                <ChevronDownIcon className="h-5 w-5 text-gray-600" />
-              )}
+              {isOpen ? <ChevronUp className="h-5 w-5 text-gray-600" /> : <ChevronDown className="h-5 w-5 text-gray-600" />}
             </div>
           </div>
         </button>
 
-        {/* Resumen de filtros activos (solo visible cuando está cerrado en móvil) */}
         {!isOpen && activeFiltersCount > 0 && (
-          <div className="lg:hidden flex flex-wrap gap-2 mb-3">
-            {filters.palabra && (
-              <span className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded-full">
-                📝 {filters.palabra}
-              </span>
-            )}
-            {filters.email && (
-              <span className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded-full">
-                ✉️ {filters.email.substring(0, 15)}...
-              </span>
-            )}
-            {filters.tipo && (
-              <span className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded-full">
-                🏢 {filters.tipo}
-              </span>
-            )}
-            {filters.estado && (
-              <span className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded-full">
-                📊 {filters.estado}
-              </span>
-            )}
-            {filters.piso && (
-              <span className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded-full">
-                🏗️ Piso {filters.piso}
-              </span>
-            )}
-            {filters.sede_id && (
-              <span className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded-full">
-                📍 {getSedeLabel(filters.sede_id)}
-              </span>
-            )}
-            {filters.horaInicio && (
-              <span className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded-full">
-                🕐 {filters.horaInicio}-{filters.horaFin}
-              </span>
-            )}
+          <div className="mt-4 flex flex-wrap gap-2 lg:hidden">
+            {filters.palabra && <span className="rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-700">{filters.palabra}</span>}
+            {filters.email && <span className="rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-700">{filters.email}</span>}
+            {filters.sede && <span className="rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-700">{getSedeLabel(filters.sede)}</span>}
+            {isTeusaquilloCampus && filters.bloque && <span className="rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-700">Bloque {filters.bloque}</span>}
+            {filters.piso && <span className="rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-700">Piso {filters.piso}</span>}
+            {filters.tipo && <span className="rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-700">{filters.tipo}</span>}
+            {filters.estado && <span className="rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-700">{filters.estado}</span>}
+            {filters.fecha && <span className="rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-700">{filters.fecha}</span>}
           </div>
         )}
 
-        {/* Formulario de filtros - colapsable en móvil, siempre visible en desktop */}
-        <div className={`${isOpen ? 'block' : 'hidden'} lg:block`}>
-          <form className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3 md:gap-4">
+        <div className={`${isOpen ? "block" : "hidden"} mt-5 lg:block`}>
+          <form className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-1">
+            <FilterField
+              label="ID"
+              name="id"
+              value={filters.id || ""}
+              onChange={handleChange}
+              type="text"
+              placeholder="ID de reserva..."
+            />
+
             <FilterField
               label="Palabra clave"
               name="palabra"
               value={filters.palabra || ""}
               onChange={handleChange}
               type="text"
-              placeholder="Buscar por código o palabra clave..."
+              placeholder="Código, título o palabra..."
             />
 
             <FilterField
@@ -192,7 +205,17 @@ const AdminSearchFilters = ({ filters, setFilters }) => {
               value={filters.email || ""}
               onChange={handleChange}
               type="email"
-              placeholder="Buscar por correo del usuario..."
+              placeholder="Correo del usuario..."
+            />
+
+            <FilterField
+              label="Sede"
+              name="sede"
+              value={filters.sede || ""}
+              onChange={handleChange}
+              type="select"
+              placeholder="Todas las sedes"
+              options={staticOptions.sedes}
             />
 
             <FilterField
@@ -201,7 +224,7 @@ const AdminSearchFilters = ({ filters, setFilters }) => {
               value={filters.tipo || ""}
               onChange={handleChange}
               type="select"
-              placeholder="Seleccionar tipo de espacio..."
+              placeholder="Todos los tipos"
               options={staticOptions.tipos}
             />
 
@@ -211,9 +234,21 @@ const AdminSearchFilters = ({ filters, setFilters }) => {
               value={filters.estado || ""}
               onChange={handleChange}
               type="select"
-              placeholder="Seleccionar estado..."
+              placeholder="Todos los estados"
               options={staticOptions.estados}
             />
+
+            {isTeusaquilloCampus && (
+              <FilterField
+                label="Bloque"
+                name="bloque"
+                value={filters.bloque || ""}
+                onChange={handleChange}
+                type="select"
+                placeholder="Todos los bloques"
+                options={staticOptions.bloques}
+              />
+            )}
 
             <FilterField
               label="Piso"
@@ -221,32 +256,58 @@ const AdminSearchFilters = ({ filters, setFilters }) => {
               value={filters.piso || ""}
               onChange={handleChange}
               type="select"
-              placeholder="Seleccionar piso..."
+              placeholder="Todos los pisos"
               options={staticOptions.pisos}
             />
 
             <FilterField
-              label="Sede"
-              name="sede_id"
-              value={filters.sede_id || ""}
+              label="Agrupable"
+              name="agrupable"
+              value={filters.agrupable || ""}
               onChange={handleChange}
               type="select"
-              placeholder="Seleccionar sede..."
-              options={staticOptions.sedes}
+              placeholder="Todos"
+              options={staticOptions.agrupable}
             />
 
-            {filters.tipo === "Coworking" ? (
-              <FilterField
-                label="Franja horaria"
-                name="periodo"
-                value={filters.horaInicio ?
-                  coworkingPeriods.find(p => p.start === filters.horaInicio)?.name + ` (${filters.horaInicio} - ${filters.horaFin})` : ""
-                }
-                onChange={handleChange}
-                type="select"
-                placeholder="Seleccionar franja horaria..."
-                options={coworkingPeriods.map(period => `${period.name} (${period.start} - ${period.end})`)}
+            <div className="w-full">
+              <label className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-neutral-600 md:text-sm">
+                <CalendarDays className="h-4 w-4 text-purple-500" />
+                Fecha
+              </label>
+              <input
+                type="date"
+                value={filters.fecha || ""}
+                onChange={(event) => handleChange("fecha", event.target.value)}
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 transition hover:border-purple-300 focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 md:py-2.5 md:text-base"
               />
+            </div>
+
+            {filters.tipo === "Coworking" ? (
+              <>
+                <FilterField
+                  label="Tipo de coworking"
+                  name="tiporecurso"
+                  value={filters.tiporecurso || ""}
+                  onChange={handleChange}
+                  type="select"
+                  placeholder="Todos"
+                  options={staticOptions.tiposRecurso}
+                />
+                <FilterField
+                  label="Franja horaria"
+                  name="periodo"
+                  value={
+                    filters.horaInicio
+                      ? `${coworkingPeriods.find((period) => period.start === filters.horaInicio)?.name || ""} (${filters.horaInicio} - ${filters.horaFin})`
+                      : ""
+                  }
+                  onChange={handleChange}
+                  type="select"
+                  placeholder="Todas las franjas"
+                  options={coworkingPeriods.map((period) => `${period.name} (${period.start} - ${period.end})`)}
+                />
+              </>
             ) : (
               <>
                 <FilterField
@@ -255,7 +316,7 @@ const AdminSearchFilters = ({ filters, setFilters }) => {
                   value={filters.horaInicio || ""}
                   onChange={handleChange}
                   type="select"
-                  placeholder="Seleccionar hora de inicio..."
+                  placeholder="Inicio"
                   options={startTimeOptions}
                 />
                 <FilterField
@@ -264,7 +325,7 @@ const AdminSearchFilters = ({ filters, setFilters }) => {
                   value={filters.horaFin || ""}
                   onChange={handleChange}
                   type="select"
-                  placeholder="Seleccionar hora de fin..."
+                  placeholder="Fin"
                   options={getEndTimeOptions(filters.horaInicio)}
                 />
               </>
@@ -272,7 +333,7 @@ const AdminSearchFilters = ({ filters, setFilters }) => {
           </form>
         </div>
       </div>
-    </div>
+    </aside>
   );
 };
 

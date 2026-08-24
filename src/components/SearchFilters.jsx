@@ -1,12 +1,7 @@
 /* eslint-disable react/prop-types */
-import { useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSyncAlt } from "@fortawesome/free-solid-svg-icons";
-
-const ALL_SEDES = [
-    { value: "1", label: "Campus Av. 68" },
-    { value: "2", label: "Campus Teusaquillo" },
-];
+import { useMemo, useState } from "react";
+import { CalendarDays, ChevronDown, Clock, Eraser, Filter, Layers, MapPinned, Search } from "lucide-react";
+import { getSedeLabel } from "../utils/constants";
 
 const coworkingPeriods = [
   { id: 0, name: "Mañana", start: "07:00", end: "12:00" },
@@ -15,390 +10,331 @@ const coworkingPeriods = [
   { id: 3, name: "Tarde-Noche", start: "17:00", end: "22:00" },
 ];
 
+const SPACE_TYPES = ["Coworking", "Espacio multipropósito", "Laboratorio", "Espacio de eventos", "Sala de clases"];
+const RESOURCE_TYPES = ["Personal", "Puesto en L"];
+const TEUSAQUILLO_BLOCKS = ["I", "J", "H", "F", "E", "D", "C", "B", "A"].map((block) => ({
+  value: block,
+  label: `Bloque ${block}`,
+}));
+
 const generateTimeOptions = (start, end) => {
   const times = [];
-  for (let i = parseInt(start); i <= parseInt(end); i++) {
-    const time = `${i.toString().padStart(2, '0')}:00`;
-    times.push(time);
+  for (let hour = start; hour <= end; hour += 1) {
+    times.push(`${hour.toString().padStart(2, "0")}:00`);
   }
   return times;
 };
 
+const toInputDate = (value) => {
+  if (!value) return "";
+  if (value.includes("-")) return value;
+
+  const [day, month, year] = value.split("/");
+  return year && month && day ? `${year}-${month}-${day}` : "";
+};
+
+const formatFecha = (dateString) => {
+  if (!dateString) return "";
+  const [year, month, day] = dateString.split("-");
+  return `${day}/${month}/${year}`;
+};
+
+const getDefaultFilters = (currentFilters, isGuestMode) => ({
+  id: "",
+  palabra: "",
+  sede: currentFilters.sede || "",
+  bloque: "",
+  tipo: isGuestMode ? "Espacio de eventos" : "",
+  piso: "",
+  agrupable: "",
+  tiporecurso: "",
+  fecha: "",
+  horaInicio: "",
+  horaFin: "",
+});
+
+const FieldLabel = ({ icon: Icon, children }) => (
+  <label className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-gray-700">
+    <Icon className="h-4 w-4 text-purple-500" />
+    {children}
+  </label>
+);
+
+const SelectField = ({ label, name, value, onChange, options, placeholder, icon: Icon }) => (
+  <div>
+    <FieldLabel icon={Icon}>{label}</FieldLabel>
+    <div className="relative">
+      <select
+        name={name}
+        value={value || ""}
+        onChange={onChange}
+        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 pr-9 text-sm font-medium text-gray-700 outline-none transition hover:border-purple-300 focus:border-transparent focus:bg-white focus:ring-2 focus:ring-purple-500"
+      >
+        <option value="">{placeholder}</option>
+        {options.map((option) => {
+          const isObjectOption = option !== null && typeof option === "object";
+          const optionValue = isObjectOption ? option.value : option;
+          const optionLabel = isObjectOption ? option.label : option;
+
+          return (
+          <option key={optionValue} value={optionValue}>
+            {optionLabel}
+          </option>
+          );
+        })}
+      </select>
+      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+    </div>
+  </div>
+);
+
+const TextField = ({ label, name, value, onChange, placeholder, type = "text", icon: Icon, min }) => (
+  <div>
+    <FieldLabel icon={Icon}>{label}</FieldLabel>
+    <input
+      type={type}
+      name={name}
+      value={value || ""}
+      onChange={onChange}
+      placeholder={placeholder}
+      min={min}
+      className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-700 outline-none transition placeholder:text-gray-400 hover:border-purple-300 focus:border-transparent focus:bg-white focus:ring-2 focus:ring-purple-500"
+    />
+  </div>
+);
+
 const SearchFilters = ({ filters, setFilters, onFilterChange, isGuestMode, availableFloors = [] }) => {
-  // En modo invitado, mostrar filtros expandidos por defecto
   const [showMoreFilters, setShowMoreFilters] = useState(isGuestMode);
+  const startTimeOptions = useMemo(() => generateTimeOptions(7, 21), []);
+  const isTeusaquilloCampus = filters.sede?.toString() === "2";
 
-  const staticOptions = {
-    sedes: ALL_SEDES.map(s => s.label),
-    espaciosFisicos: ["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"],
-    tipo: ["Coworking", "Espacio multipropósito", "Laboratorio", "Espacio de eventos", "Sala de clases"],
-    tiposRecurso: ["Personal", "Puesto en L"],
-  };
+  const activeFiltersCount = [
+    filters.id,
+    filters.palabra,
+    isTeusaquilloCampus ? filters.bloque : "",
+    filters.tipo && !isGuestMode ? filters.tipo : "",
+    filters.piso,
+    filters.agrupable,
+    filters.tiporecurso,
+    filters.fecha,
+    filters.horaInicio,
+    filters.horaFin,
+  ].filter(Boolean).length;
 
-  const startTimeOptions = generateTimeOptions(7, 21);
-
-  // Generar opciones de hora fin basadas en la hora de inicio seleccionada
   const getEndTimeOptions = (startTime) => {
     if (!startTime) return generateTimeOptions(8, 22);
-    const startHour = parseInt(startTime.split(':')[0]);
+    const startHour = Number(startTime.split(":")[0]);
     return generateTimeOptions(startHour + 1, 22);
   };
 
-  const formatFecha = (dateString) => {
-    if (!dateString) return "";
-    const [year, month, day] = dateString.split("-");
-    return `${day}/${month}/${year}`;
+  const updateFilters = (updatedFilters) => {
+    setFilters(updatedFilters);
+    if (typeof onFilterChange === "function") {
+      onFilterChange(updatedFilters);
+    }
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    let formattedValue = value;
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    const formattedValue = name === "fecha" ? formatFecha(value) : value;
 
-    if (name === "fecha") {
-      formattedValue = formatFecha(value);
-    }
-
-    // Reset time-related filters when changing tipo
     if (name === "tipo") {
-      const updatedFilters = {
+      updateFilters({
         ...filters,
-        [name]: formattedValue,
+        tipo: formattedValue,
         horaInicio: "",
         horaFin: "",
         tiporecurso: "",
         piso: "",
-      };
-      setFilters(updatedFilters);
+      });
+      return;
     }
-    // Reset hora fin when hora inicio changes
-    else if (name === "horaInicio") {
-      const updatedFilters = {
+
+    if (name === "horaInicio") {
+      updateFilters({
         ...filters,
-        [name]: formattedValue,
-        horaFin: "", // Reset hora fin when hora inicio changes
-      };
-      setFilters(updatedFilters);
+        horaInicio: formattedValue,
+        horaFin: "",
+      });
+      return;
     }
-    else {
-      const updatedFilters = { ...filters, [name]: formattedValue };
-      setFilters(updatedFilters);
-    }
+
+    updateFilters({ ...filters, [name]: formattedValue });
   };
 
-  const handlePeriodSelect = (e) => {
-    const period = coworkingPeriods.find(p => p.id === parseInt(e.target.value));
-    if (period) {
-      const updatedFilters = {
-        ...filters,
-        horaInicio: period.start,
-        horaFin: period.end,
-      };
-      setFilters(updatedFilters);
-    }
+  const handlePeriodSelect = (event) => {
+    const period = coworkingPeriods.find((item) => item.id === Number(event.target.value));
+    if (!period) return;
+
+    updateFilters({
+      ...filters,
+      horaInicio: period.start,
+      horaFin: period.end,
+    });
   };
 
   const handleClearFilters = () => {
-    if (isGuestMode) {
-      // En modo invitado, reseteamos pero manteniendo las restricciones
-      const guestDefaults = {
-        capacidad: "",
-        espacio: "",
-        ubicacion: "",
-        fecha: "",
-        horaInicio: "",
-        horaFinal: "",
-        palabra: "",
-        id: "",
-        sede: "1",
-        tipo: "Espacio de eventos",
-        tiporecurso: "",
-        piso: "",
-      };
-      setFilters(guestDefaults);
-      onFilterChange(guestDefaults);
-    } else {
-      // Modo normal: reseteo total
-      const defaultFilters = {
-        capacidad: "",
-        espacio: "",
-        ubicacion: "",
-        fecha: "",
-        horaInicio: "",
-        horaFinal: "",
-        palabra: "",
-        id: "",
-        sede: "",
-        tipo: "",
-        tiporecurso: "",
-        piso: "",
-      };
-      setFilters(defaultFilters);
-      onFilterChange(defaultFilters);
-    }
+    updateFilters(getDefaultFilters(filters, isGuestMode));
   };
 
   return (
-    <div className="bg-white shadow-xl p-6 md:p-8 rounded-2xl border border-neutral-100 transition-all hover:shadow-2xl">
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-bold text-gray-800 tracking-tight">Filtros de búsqueda</h3>
-        <button
-          onClick={handleClearFilters}
-          className="text-neutral-400 hover:text-purple-600 transition-colors p-2 rounded-full hover:bg-purple-50"
-          title="Limpiar Filtros"
-        >
-          <FontAwesomeIcon icon={faSyncAlt} className="text-lg" />
-        </button>
+    <aside className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+      <div className="border-b border-gray-100 bg-gray-50 px-5 py-4">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <Filter className="h-5 w-5 text-purple-600" />
+              <h3 className="text-lg font-bold text-gray-900">Filtros</h3>
+              {activeFiltersCount > 0 && (
+                <span className="rounded-full bg-purple-600 px-2 py-0.5 text-xs font-bold text-white">
+                  {activeFiltersCount}
+                </span>
+              )}
+            </div>
+            <p className="mt-1 text-xs font-medium text-gray-500">
+              Sede seleccionada: {getSedeLabel(filters.sede) || "Sin sede"}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleClearFilters}
+            className="rounded-lg p-2 text-gray-400 transition hover:bg-white hover:text-purple-600"
+            title="Limpiar filtros"
+          >
+            <Eraser className="h-5 w-5" />
+          </button>
+        </div>
       </div>
-      <form className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
-        {/* Sede - Visible only if NOT guest mode */}
-        {!isGuestMode && (
-          <div>
-            <label className="block text-sm font-medium text-neutral-600 mb-1.5 ml-1">Sede</label>
-            <div className="relative">
-              <select
-                name="sede"
-                value={filters.sede || ""}
-                onChange={handleChange}
-                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all duration-200 appearance-none text-gray-700 font-medium cursor-pointer hover:border-purple-300"
-              >
-                {ALL_SEDES.map(s => (
-                                    <option key={s.value} value={s.value}>{s.label}</option>
-                                ))}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
-                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
-              </div>
-            </div>
-          </div>
-        )}
 
-        {/* Tipo de espacio - Visible only if NOT guest mode */}
-        {!isGuestMode && (
-          <div>
-            <label className="block text-sm font-medium text-neutral-600 mb-1.5 ml-1">Tipo de espacio</label>
-            <div className="relative">
-              <select
-                name="tipo"
-                value={filters.tipo || ""}
-                onChange={handleChange}
-                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all duration-200 appearance-none text-gray-700 font-medium cursor-pointer hover:border-purple-300"
-              >
-                <option value="">Seleccionar tipo...</option>
-                {staticOptions.tipo.map((tipo, index) => (
-                  <option key={index} value={tipo}>{tipo}</option>
-                ))}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
-                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
-              </div>
-            </div>
-          </div>
-        )}
+      <form className="space-y-5 p-5">
+        <div className="space-y-4">
+          <TextField
+            label="Código o palabra"
+            name="palabra"
+            value={filters.palabra}
+            onChange={handleChange}
+            placeholder="Ej: P3C01L"
+            icon={Search}
+          />
 
-        {/* Botón para mostrar más filtros - Solo visible en modo normal */}
-        {!isGuestMode && (
-          <div className="col-span-1 sm:col-span-2 lg:col-span-1">
-            <button
-              type="button"
-              onClick={() => setShowMoreFilters(!showMoreFilters)}
-              className="text-purple-600 font-semibold hover:text-purple-800 transition-colors flex items-center gap-2 group py-2"
-            >
-              <span>{showMoreFilters ? "Menos filtros" : "Más filtros"}</span>
-              <svg
-                className={`w-4 h-4 transition-transform duration-300 ${showMoreFilters ? 'rotate-180' : ''}`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-          </div>
-        )}
+          {!isGuestMode && (
+            <SelectField
+              label="Tipo de espacio"
+              name="tipo"
+              value={filters.tipo}
+              onChange={handleChange}
+              options={SPACE_TYPES}
+              placeholder="Todos los tipos"
+              icon={Layers}
+            />
+          )}
+        </div>
 
-        {/* Filtros adicionales */}
+        <button
+          type="button"
+          onClick={() => setShowMoreFilters((current) => !current)}
+          className="flex w-full items-center justify-between rounded-lg border border-purple-100 bg-purple-50 px-3 py-2 text-sm font-bold text-purple-700 transition hover:border-purple-200 hover:bg-purple-100"
+        >
+          <span>{showMoreFilters ? "Ocultar filtros avanzados" : "Mostrar filtros avanzados"}</span>
+          <ChevronDown className={`h-4 w-4 transition ${showMoreFilters ? "rotate-180" : ""}`} />
+        </button>
+
         {showMoreFilters && (
-          <>
-            {/* Conditional filters based on tipo === "Coworking" */}
-            {filters.tipo === "Coworking" && (
-              <>
-                {/* Tipo de Coworking */}
-                <div>
-                  <label className="block text-sm font-medium text-neutral-600 mb-1.5 ml-1">Tipo de Coworking</label>
-                  <div className="relative">
-                    <select
-                      name="tiporecurso"
-                      value={filters.tiporecurso || ""}
-                      onChange={handleChange}
-                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all duration-200 appearance-none text-gray-700 font-medium cursor-pointer hover:border-purple-300"
-                    >
-                      <option value="">Seleccionar</option>
-                      {staticOptions.tiposRecurso.map((tipo, index) => (
-                        <option key={index} value={tipo}>{tipo}</option>
-                      ))}
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
-                      <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
-                    </div>
-                  </div>
-                </div>
+          <div className="space-y-5 border-t border-gray-100 pt-5">
+            <div className="space-y-4">
+              <p className="text-xs font-bold uppercase tracking-wide text-gray-400">Ubicación</p>
+              {isTeusaquilloCampus && (
+                <SelectField
+                  label="Bloque"
+                  name="bloque"
+                  value={filters.bloque}
+                  onChange={handleChange}
+                  options={TEUSAQUILLO_BLOCKS}
+                  placeholder="Todos los bloques"
+                  icon={MapPinned}
+                />
+              )}
+              <SelectField
+                label="Piso"
+                name="piso"
+                value={filters.piso}
+                onChange={handleChange}
+                options={availableFloors}
+                placeholder="Todos los pisos"
+                icon={Layers}
+              />
+            </div>
 
-                {/* Piso */}
-                <div>
-                  <label className="block text-sm font-medium text-neutral-600 mb-1.5 ml-1">Piso</label>
-                  <div className="relative">
-                    <select
-                      name="piso"
-                      value={filters.piso || ""}
-                      onChange={handleChange}
-                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all duration-200 appearance-none text-gray-700 font-medium cursor-pointer hover:border-purple-300"
-                    >
-                      <option value="">Seleccionar</option>
-                      {availableFloors?.map((espacio, index) => (
-                        <option key={index} value={espacio}>{espacio}</option>
-                      ))}
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
-                      <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
-                    </div>
-                  </div>
-                </div>
+            <div className="space-y-4">
+              <p className="text-xs font-bold uppercase tracking-wide text-gray-400">Disponibilidad</p>
+              <TextField
+                label="Fecha"
+                name="fecha"
+                value={toInputDate(filters.fecha)}
+                onChange={handleChange}
+                type="date"
+                min={new Date().toISOString().split("T")[0]}
+                icon={CalendarDays}
+              />
 
-                {/* Fecha */}
-                <div>
-                  <label className="block text-gray-700 mb-1">Fecha</label>
-                  <input
-                    type="date"
-                    name="fecha"
-                    value={filters.fecha ? filters.fecha.split("/").reverse().join("-") : ""}
+              {filters.tipo === "Coworking" ? (
+                <>
+                  <SelectField
+                    label="Tipo de coworking"
+                    name="tiporecurso"
+                    value={filters.tiporecurso}
                     onChange={handleChange}
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-turquesa focus:border-turquesa"
-                    min={new Date().toISOString().split("T")[0]}
+                    options={RESOURCE_TYPES}
+                    placeholder="Todos"
+                    icon={Layers}
+                  />
+                  <div>
+                    <FieldLabel icon={Clock}>Franja horaria</FieldLabel>
+                    <div className="relative">
+                      <select
+                        name="periodo"
+                        value={filters.horaInicio ? coworkingPeriods.find((period) => period.start === filters.horaInicio)?.id ?? "" : ""}
+                        onChange={handlePeriodSelect}
+                        className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 pr-9 text-sm font-medium text-gray-700 outline-none transition hover:border-purple-300 focus:border-transparent focus:bg-white focus:ring-2 focus:ring-purple-500"
+                      >
+                        <option value="">Todas las franjas</option>
+                        {coworkingPeriods.map((period) => (
+                          <option key={period.id} value={period.id}>
+                            {period.name} ({period.start} - {period.end})
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-1">
+                  <SelectField
+                    label="Hora inicio"
+                    name="horaInicio"
+                    value={filters.horaInicio}
+                    onChange={handleChange}
+                    options={startTimeOptions}
+                    placeholder="Inicio"
+                    icon={Clock}
+                  />
+                  <SelectField
+                    label="Hora fin"
+                    name="horaFin"
+                    value={filters.horaFin}
+                    onChange={handleChange}
+                    options={getEndTimeOptions(filters.horaInicio)}
+                    placeholder="Fin"
+                    icon={Clock}
                   />
                 </div>
-
-                {/* Franja horaria for Coworking */}
-                <div>
-                  <label className="block text-sm font-medium text-neutral-600 mb-1.5 ml-1">Franja horaria</label>
-                  <div className="relative">
-                    <select
-                      name="periodo"
-                      value={filters.horaInicio ? coworkingPeriods.find(p => p.start === filters.horaInicio)?.id : ""}
-                      onChange={handlePeriodSelect}
-                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all duration-200 appearance-none text-gray-700 font-medium cursor-pointer hover:border-purple-300"
-                    >
-                      <option value="">Seleccionar</option>
-                      {coworkingPeriods.map((period) => (
-                        <option key={period.id} value={period.id}>
-                          {period.name} ({period.start} - {period.end})
-                        </option>
-                      ))}
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
-                      <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Código */}
-                <div>
-                  <label className="block text-sm font-medium text-neutral-600 mb-1.5 ml-1">Código</label>
-                  <input
-                    type="search"
-                    name="palabra"
-                    value={filters.palabra || ""}
-                    onChange={handleChange}
-                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all duration-200 text-gray-700 font-medium placeholder-gray-400 focus:placeholder-gray-300 hover:border-purple-300"
-                    placeholder="Ej: P3C01L"
-                  />
-                </div>
-              </>
-            )}
-
-            {/* Filters for non-Coworking spaces */}
-            {filters.tipo && filters.tipo !== "Coworking" && (
-              <>
-                {/* Piso */}
-                <div>
-                  <label className="block text-sm font-medium text-neutral-600 mb-1.5 ml-1">Piso</label>
-                  <div className="relative">
-                    <select
-                      name="piso"
-                      value={filters.piso || ""}
-                      onChange={handleChange}
-                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all duration-200 appearance-none text-gray-700 font-medium cursor-pointer hover:border-purple-300"
-                    >
-                      <option value="">Seleccionar</option>
-                      {availableFloors?.map((espacio, index) => (
-                        <option key={index} value={espacio}>{espacio}</option>
-                      ))}
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
-                      <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Fecha */}
-                <div>
-                  <label className="block text-gray-700 mb-1">Fecha</label>
-                  <input
-                    type="date"
-                    name="fecha"
-                    value={filters.fecha ? filters.fecha.split("/").reverse().join("-") : ""}
-                    onChange={handleChange}
-                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all duration-200 text-gray-700 font-medium hover:border-purple-300"
-                    min={new Date().toISOString().split("T")[0]}
-                  />
-                </div>
-
-                {/* Hora inicio */}
-                <div>
-                  <label className="block text-sm font-medium text-neutral-600 mb-1.5 ml-1">Hora inicio</label>
-                  <div className="relative">
-                    <select
-                      name="horaInicio"
-                      value={filters.horaInicio || ""}
-                      onChange={handleChange}
-                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all duration-200 appearance-none text-gray-700 font-medium cursor-pointer hover:border-purple-300"
-                    >
-                      <option value="">Seleccionar</option>
-                      {startTimeOptions.map((time) => (
-                        <option key={time} value={time}>{time}</option>
-                      ))}
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
-                      <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Hora fin */}
-                <div>
-                  <label className="block text-sm font-medium text-neutral-600 mb-1.5 ml-1">Hora fin</label>
-                  <div className="relative">
-                    <select
-                      name="horaFin"
-                      value={filters.horaFin || ""}
-                      onChange={handleChange}
-                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all duration-200 appearance-none text-gray-700 font-medium cursor-pointer hover:border-purple-300"
-                    >
-                      <option value="">Seleccionar</option>
-                      {getEndTimeOptions(filters.horaInicio).map((time) => (
-                        <option key={time} value={time}>{time}</option>
-                      ))}
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
-                      <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
-          </>
+              )}
+            </div>
+          </div>
         )}
       </form>
-    </div>
+    </aside>
   );
 };
 

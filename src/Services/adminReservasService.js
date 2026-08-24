@@ -1,4 +1,5 @@
 import { axiosInstance } from "./authService";
+import { buildSpaceFilterPayload } from "../utils/filterPayload";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -10,17 +11,7 @@ const getRequestBaseEndpoint = (origin = "") => (
 
 export const getAllReservations = async (filters = {}) => {
     try {
-        const response = await axiosInstance.post(`${API_URL}/reservas/filtrar`, {
-            palabra: filters.palabra || "",
-            fecha: filters.fecha || "",
-            horaInicio: filters.horaInicio || "",
-            horaFin: filters.horaFin || "",
-            tipo: filters.tipo || "",
-            piso: filters.piso || "",
-            email: filters.email || "",
-            estado: filters.estado || "",
-            sede_id: filters.sede_id || ""
-        });
+        const response = await axiosInstance.post(`${API_URL}/reservas/filtrar`, buildSpaceFilterPayload(filters));
 
         if (response.data.success) {
             return response.data.data;

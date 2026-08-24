@@ -59,7 +59,7 @@ const CatalogoView = ({ isLoggedIn, filters, setFilters, handleFilterChange, goT
             return;
         }
 
-        const newFilters = { ...filters, sede: campus };
+        const newFilters = { ...filters, sede: campus, bloque: "" };
         setFilters(newFilters);
         handleFilterChange(newFilters);
     };
@@ -68,7 +68,7 @@ const CatalogoView = ({ isLoggedIn, filters, setFilters, handleFilterChange, goT
 
     // handleBackToCampus resets everything
     const handleBackToCampus = () => {
-        const newFilters = { ...filters, sede: '', tipo: isGuestMode ? 'Espacio de eventos' : '' };
+        const newFilters = { ...filters, sede: '', bloque: '', tipo: isGuestMode ? 'Espacio de eventos' : '' };
         setFilters(newFilters);
         handleFilterChange(newFilters);
     };

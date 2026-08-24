@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
 import AdminSearchFilters from '../AdminFilters/AdminSearchFilters';
 import ReservationCalendar from '../Calendar/ReservationCalendar';
@@ -14,12 +14,19 @@ import { getSedeLabel } from '../../utils/constants';
 
 const AdminReservationsView = () => {
     const [filters, setFilters] = useState({
+        id: "",
         palabra: "",
         email: "",
+        sede: "",
+        bloque: "",
         tipo: "",
-        estado: "",
         piso: "",
-        sede_id: ""
+        agrupable: "",
+        tiporecurso: "",
+        fecha: "",
+        horaInicio: "",
+        horaFin: "",
+        estado: "",
     });
     const [reservations, setReservations] = useState([]);
     const [selectedDate, setSelectedDate] = useState(new Date());
@@ -64,11 +71,19 @@ const AdminReservationsView = () => {
                     espacio_type: reservation.espacio_type, // ✅ Incluir espacio_type en el objeto transformado
                     sede_id: sedeId,
                     sede_nombre: getSedeLabel(sedeId),
+                    bloque: reservation.bloque ?? reservation.espacio?.bloque,
+                    piso: reservation.piso ?? reservation.espacio?.piso,
+                    agrupable: reservation.agrupable ?? reservation.espacio?.agrupable,
+                    tiporecurso: reservation.tiporecurso ?? reservation.espacio?.tiporecurso ?? reservation.espacio?.tipo_recurso,
                     espacio: {
                         codigo: reservation.espacio?.codigo,
                         key: espacioKey,
                         tipo: espacioType || reservation.espacio?.tipo,
                         nombre: reservation.espacio?.nombre,
+                        bloque: reservation.bloque ?? reservation.espacio?.bloque,
+                        piso: reservation.piso ?? reservation.espacio?.piso,
+                        agrupable: reservation.agrupable ?? reservation.espacio?.agrupable,
+                        tiporecurso: reservation.tiporecurso ?? reservation.espacio?.tiporecurso ?? reservation.espacio?.tipo_recurso,
                         sede_id: sedeId,
                         sede_nombre: getSedeLabel(sedeId)
                     },
@@ -99,6 +114,7 @@ const AdminReservationsView = () => {
                 showSuccessToast('Reserva cancelada con éxito');
             }
         } catch (error) {
+            console.error('Error al cancelar reserva:', error);
             showErrorToast('Error al cancelar la reserva');
         }
     };
@@ -135,6 +151,12 @@ const AdminReservationsView = () => {
             );
         }
 
+        if (filters.id) {
+            baseReservations = baseReservations.filter(reservation =>
+                reservation.id?.toString() === filters.id
+            );
+        }
+
         if (filters.email) {
             baseReservations = baseReservations.filter(reservation => 
                 reservation.usuario?.email?.toLowerCase().includes(filters.email.toLowerCase())
@@ -160,9 +182,33 @@ const AdminReservationsView = () => {
             );
         }
 
-        if (filters.sede_id) {
+        if (filters.bloque) {
             baseReservations = baseReservations.filter(reservation =>
-                (reservation.sede_id ?? reservation.espacio?.sede_id)?.toString() === filters.sede_id
+                reservation.espacio?.bloque?.toString().toUpperCase() === filters.bloque
+            );
+        }
+
+        if (filters.tiporecurso) {
+            baseReservations = baseReservations.filter(reservation =>
+                reservation.espacio?.tiporecurso?.toString() === filters.tiporecurso
+            );
+        }
+
+        if (filters.agrupable) {
+            baseReservations = baseReservations.filter(reservation =>
+                reservation.espacio?.agrupable?.toString().toUpperCase() === filters.agrupable
+            );
+        }
+
+        if (filters.fecha) {
+            baseReservations = baseReservations.filter(reservation =>
+                format(new Date(reservation.start), "yyyy-MM-dd") === filters.fecha
+            );
+        }
+
+        if (filters.sede) {
+            baseReservations = baseReservations.filter(reservation =>
+                (reservation.sede_id ?? reservation.espacio?.sede_id)?.toString() === filters.sede
             );
         }
 
@@ -234,12 +280,13 @@ const AdminReservationsView = () => {
                                 switch (viewMode) {
                                     case 'day':
                                         return format(new Date(event.start), "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd");
-                                    case 'month':
+                                    case 'month': {
                                         const selectedMonth = selectedDate.getMonth();
                                         const selectedYear = selectedDate.getFullYear();
                                         const eventDate = new Date(event.start);
                                         return eventDate.getMonth() === selectedMonth && 
                                                eventDate.getFullYear() === selectedYear;
+                                    }
                                     case 'all':
                                     default:
                                         return true;
@@ -274,7 +321,7 @@ const AdminReservationsView = () => {
                                                             </strong>, pero no hay resultados.
                                                         </p>
                                                         <p className="mt-1">
-                                                            💡 <strong>Sugerencia:</strong> Cambia el toggle a <strong>"Todas"</strong> para ver todos los {filters.tipo} sin filtro de fecha.
+                                                            💡 <strong>Sugerencia:</strong> Cambia el toggle a <strong>&quot;Todas&quot;</strong> para ver todos los {filters.tipo} sin filtro de fecha.
                                                         </p>
                                                     </div>
                                                 </div>
