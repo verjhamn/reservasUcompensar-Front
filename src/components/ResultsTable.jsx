@@ -50,7 +50,7 @@ const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode, onSpaceLo
               ...item,
               imagenes: item.imagenes,
               coworking_contenedor: "NO",
-              /* Titulo: "Espacio", */
+              Titulo: undefined,
               tipo: item.key
             }];
           } else {
@@ -167,6 +167,7 @@ const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode, onSpaceLo
             : usesInternalRequestFlow
               ? "Solicitar"
               : "Reservar Ahora";
+          const spaceTitle = typeof item.Titulo === "string" ? item.Titulo.trim() : "";
 
           return (
           <div
@@ -204,14 +205,22 @@ const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode, onSpaceLo
 
             <div className="p-5 flex flex-col flex-grow">
               <div className="flex-grow space-y-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <h3 className="text-lg font-bold text-gray-800 leading-tight group-hover:text-purple-700 transition-colors">
-                    {item.Titulo}
-                  </h3>
-                  <span className="text-purple-600 text-sm font-bold bg-purple-50 px-2 py-0.5 rounded-md">
-                    {item.codigo || "N/A"}
-                  </span>
-                </div>
+                {spaceTitle ? (
+                  <div className="flex items-center gap-2 mb-1 min-w-0">
+                    <h3 className="text-lg font-bold text-gray-800 leading-tight group-hover:text-purple-700 transition-colors truncate min-w-0">
+                      {spaceTitle}
+                    </h3>
+                    <span className="text-purple-600 text-sm font-bold bg-purple-50 px-2 py-0.5 rounded-md whitespace-nowrap shrink-0">
+                      {item.codigo || "N/A"}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="mb-1">
+                    <span className="inline-block max-w-full text-purple-600 text-sm font-bold bg-purple-50 px-2 py-0.5 rounded-md">
+                      {item.codigo || "N/A"}
+                    </span>
+                  </div>
+                )}
 
                 <div className="flex flex-col gap-0.5 text-sm text-neutral-500">
                   <p>
