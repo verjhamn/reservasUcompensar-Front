@@ -1,5 +1,6 @@
 /* eslint-disable react/prop-types */
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Toaster, toast } from 'react-hot-toast';
 import { addHours, startOfDay, isBefore, format } from "date-fns";
 
@@ -487,7 +488,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
         ? `Selecciona la fecha y hora de tu interes. En el siguiente paso podras ingresar tus datos de contacto para la ${requestFlowLabel.toLowerCase()}.`
         : 'Selecciona la fecha y hora de tu interes. Luego podras completar los datos de la reserva.';
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <Toaster />
             <div className="bg-white rounded-2xl p-6 lg:p-8 max-w-7xl w-full max-h-[95vh] flex flex-col shadow-2xl overflow-hidden">
@@ -740,7 +741,8 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
             </div>
 
             <LoadingSpinner loading={loadingAvailability || reservationLoading} />
-        </div>
+        </div>,
+        document.body
     );
 };
 
