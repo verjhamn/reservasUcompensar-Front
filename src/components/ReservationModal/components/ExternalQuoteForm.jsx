@@ -706,7 +706,7 @@ const ExternalQuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                                                 />
                                             </div>
                                             <span className="text-base text-gray-700 group-hover:text-gray-900 transition-colors leading-relaxed">
-                                                Autorizo el <a href="https://ucompensar.edu.co/pdf/documentos/POL-PAJ-02-V08-Tratamiento-de-datos-personales.pdf" target="_blank" rel="noopener noreferrer" className="text-purple-600 font-bold hover:underline hover:text-purple-800 transition-colors" onClick={(e) => e.stopPropagation()}>Tratamiento de mis datos personales</a> conforme a las políticas corporativas.
+                                                Autorizo el <a href="https://ucompensar.edu.co/pdf/documentos/Tratamiento-de-datos-personales.pdf" target="_blank" rel="noopener noreferrer" className="text-purple-600 font-bold hover:underline hover:text-purple-800 transition-colors" onClick={(e) => e.stopPropagation()}>Tratamiento de mis datos personales</a> conforme a las políticas corporativas.
                                             </span>
                                         </label>
                                     </div>
