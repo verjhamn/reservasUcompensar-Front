@@ -17,6 +17,12 @@ import QuoteSlideOver from './QuoteSlideOver';
 import { normalizeRequest, formatPayloadDate, toDateInputValue } from './utils';
 import { getApiErrorMessage } from '../../../utils/apiErrorHelper';
 
+const normalizePagination = (metadata, itemCount) => ({
+    current_page: Number(metadata?.current_page) || 1,
+    last_page: Number(metadata?.last_page) || 1,
+    total: Number(metadata?.total_records ?? metadata?.total) || itemCount
+});
+
 const ExternalQuotesIndex = () => {
     const [filters, setFilters] = useState({
         id: "",
@@ -70,24 +76,26 @@ const ExternalQuotesIndex = () => {
 
         try {
             const response = await getExternalQuotes(filters);
-            const payload = response?.data || response;
+            // El servicio ya retorna el cuerpo de la respuesta. No se debe tomar
+            // response.data porque eso elimina la metadata de `pagination`.
+            const payload = response?.success !== undefined
+                ? response
+                : response?.data || response;
             let items = [];
             let pagMeta = { current_page: 1, last_page: 1, total: 0 };
 
             if (Array.isArray(payload?.data)) {
                 items = payload.data;
-                pagMeta = {
-                    current_page: payload.current_page || 1,
-                    last_page: payload.last_page || 1,
-                    total: payload.total || payload.data.length
-                };
+                pagMeta = normalizePagination(
+                    payload.pagination || payload,
+                    items.length
+                );
             } else if (Array.isArray(payload?.data?.data)) {
                 items = payload.data.data;
-                pagMeta = {
-                    current_page: payload.data.current_page || 1,
-                    last_page: payload.data.last_page || 1,
-                    total: payload.data.total || payload.data.data.length
-                };
+                pagMeta = normalizePagination(
+                    payload.data.pagination || payload.data,
+                    items.length
+                );
             } else if (Array.isArray(payload)) {
                 items = payload;
                 pagMeta.total = items.length;

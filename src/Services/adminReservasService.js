@@ -3,6 +3,16 @@ import { buildSpaceFilterPayload } from "../utils/filterPayload";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+const formatFilterDate = (value) => {
+    if (!value) return "";
+
+    const isoDate = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+    if (!isoDate) return value;
+
+    const [, year, month, day] = isoDate;
+    return `${day}/${month}/${year}`;
+};
+
 const getRequestBaseEndpoint = (origin = "") => (
     origin === 'interna'
         ? `${API_URL}/solicitudes`
@@ -32,7 +42,7 @@ export const getExternalQuotes = async (filters = {}) => {
             espacio_id: filters.espacio_id || "",
             palabra: filters.palabra || "",
             email: filters.email || "",
-            fecha: filters.fecha || "",
+            fecha: formatFilterDate(filters.fecha),
             horaInicio: filters.horaInicio || "",
             horaFin: filters.horaFin || "",
             tipo: filters.tipo || "",
@@ -40,7 +50,7 @@ export const getExternalQuotes = async (filters = {}) => {
             estado: filters.estado || "",
             origen: filters.origen || "",
             sede_id: filters.sede_id || "",
-            fecha_creacion: filters.fecha_creacion || "",
+            fecha_creacion: formatFilterDate(filters.fecha_creacion),
             page: filters.page || 1,
             per_page: filters.per_page || 10,
             include_timeline: true
