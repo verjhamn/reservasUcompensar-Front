@@ -1,0 +1,107 @@
+/* Theming institucional para FullCalendar (v6) vía sus CSS custom properties,
+   scopeado a .uc-fullcalendar para no afectar otros usos de calendarios en el proyecto. */
+.uc-fullcalendar {
+  --fc-border-color: #e5e7eb;
+  --fc-neutral-bg-color: #f9fafb;
+  --fc-page-bg-color: transparent;
+  --fc-today-bg-color: #e6f9fb;
+  --fc-now-indicator-color: #ff6600;
+  --fc-highlight-color: #fff4e6;
+
+  --fc-button-bg-color: #ffffff;
+  --fc-button-border-color: #d1d5db;
+  --fc-button-text-color: #243455;
+  --fc-button-hover-bg-color: #f3f4f6;
+  --fc-button-hover-border-color: #9ca3af;
+  --fc-button-active-bg-color: #243455;
+  --fc-button-active-border-color: #243455;
+
+  font-family: inherit;
+}
+
+.uc-fullcalendar .fc-toolbar-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #243455;
+  text-transform: capitalize;
+}
+
+.uc-fullcalendar .fc-button {
+  border-radius: 0.5rem;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  box-shadow: none;
+  text-transform: capitalize;
+}
+
+.uc-fullcalendar .fc-button:focus,
+.uc-fullcalendar .fc-button-primary:not(:disabled).fc-button-active:focus {
+  box-shadow: 0 0 0 2px rgba(0, 170, 183, 0.35);
+}
+
+.uc-fullcalendar .fc-button-primary:disabled {
+  opacity: 0.5;
+}
+
+.uc-fullcalendar .fc-col-header-cell-cushion {
+  padding: 0.5rem 0;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.uc-fullcalendar .fc-daygrid-day-number {
+  padding: 0.35rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.uc-fullcalendar .fc-day-today .fc-daygrid-day-number {
+  font-weight: 700;
+  color: #cc5200;
+}
+
+.uc-fullcalendar .fc-daygrid-more-link {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #008892;
+}
+
+.uc-fullcalendar .fc-timegrid-slot-label-cushion {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.uc-fullcalendar .fc-event {
+  border-radius: 0.375rem;
+  border-width: 1px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 1px 4px;
+}
+
+.uc-fullcalendar .fc-daygrid-event {
+  margin-top: 2px;
+}
+
+.uc-fullcalendar .uc-event-cancelled {
+  opacity: 0.6;
+}
+
+.uc-fullcalendar .uc-event-cancelled .fc-event-title {
+  text-decoration: line-through;
+}
+
+.uc-fullcalendar .fc-scrollgrid {
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.uc-fullcalendar a {
+  text-decoration: none;
+}

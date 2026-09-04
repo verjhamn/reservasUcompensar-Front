@@ -15,6 +15,7 @@ import {
 import { getGeneralDashboardReport, getGeneralReport } from "../../Services/reportsService";
 import { downloadReport } from "../../Services/DownloadReport";
 import ReportsDashboard from "./ReportsDashboard";
+import ReportsCalendar from "./calendar/ReportsCalendar";
 import {
   isEventReservation,
   isFutureActiveReservation,
@@ -355,10 +356,11 @@ const ReportsView = () => {
     ? Math.min((currentPage - 1) * perPage + 1, tableTotalRecords)
     : 0;
   const lastVisibleRecord = Math.min(currentPage * perPage, tableTotalRecords);
-  const activeLoading = activeSection === "dashboard" ? dashboardLoading : tableLoading;
-  const activeError = activeSection === "dashboard" ? dashboardError : tableError;
-  const activeLastUpdated = activeSection === "dashboard" ? dashboardLastUpdated : tableLastUpdated;
-  const refreshActiveSection = activeSection === "dashboard" ? fetchDashboardData : fetchTableData;
+  const usesDashboardData = activeSection === "dashboard" || activeSection === "calendar";
+  const activeLoading = usesDashboardData ? dashboardLoading : tableLoading;
+  const activeError = usesDashboardData ? dashboardError : tableError;
+  const activeLastUpdated = usesDashboardData ? dashboardLastUpdated : tableLastUpdated;
+  const refreshActiveSection = usesDashboardData ? fetchDashboardData : fetchTableData;
 
   return (
     <div className="px-4 py-6 sm:px-6 lg:px-8">
@@ -391,6 +393,7 @@ const ReportsView = () => {
       <nav className="mb-6 flex w-full gap-1 rounded-xl border border-gray-200 bg-white p-1 shadow-sm sm:w-fit" aria-label="Secciones de reportes">
         {[
           { id: "dashboard", label: "Dashboard", icon: ChartBarSquareIcon },
+          { id: "calendar", label: "Calendario", icon: CalendarIcon },
           { id: "detail", label: "Detalle y exportación", icon: TableCellsIcon },
         ].map(({ id, label, icon: Icon }) => (
           <button
@@ -520,6 +523,8 @@ const ReportsView = () => {
             isFiltered={dashboardFilterCount > 0}
           />
         </>
+      ) : activeSection === "calendar" ? (
+        <ReportsCalendar data={dashboardData} loading={dashboardLoading} />
       ) : (
         <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm" aria-label="Detalle del reporte">
           <div className="flex flex-col gap-4 border-b border-gray-200 px-5 py-5 lg:flex-row lg:items-center lg:justify-between">
