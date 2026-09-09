@@ -26,7 +26,6 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
     const [guestAvailabilityByDate, setGuestAvailabilityByDate] = useState({});
     const [guestAvailabilityLoading, setGuestAvailabilityLoading] = useState(false);
     const [dateSelectionMode, setDateSelectionMode] = useState('single');
-    const [conflictWarning, setConflictWarning] = useState(null);
 
     const isCoworking = spaceData?.coworking_contenedor === "SI";
     const isInternalRequestMode = !isGuestMode && !isCoworking && !canReserveAnySpace();
@@ -76,7 +75,6 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
         }
 
         if (usesRequestFlow) {
-            setConflictWarning(null);
             setSelectedHours([]);
 
             if (dateSelectionMode === 'single') {
@@ -322,7 +320,6 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
 
     const handleModeChange = (mode) => {
         setDateSelectionMode(mode);
-        setConflictWarning(null);
         setSelectedHours([]);
         setGuestRange(prev => ({
             startDate: prev.startDate,
@@ -366,7 +363,6 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
             hours: selectedHours,
         };
         setQuoteData(data);
-        setConflictWarning(null);
         setActiveTab("quote");
     };
 
@@ -404,11 +400,6 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
 
         fetchGuestAvailability();
     }, [usesRequestFlow, spaceData?.id, guestRange.startDate, guestRange.endDate, guestAvailabilityByDate]);
-
-    // Clear conflict warning whenever the selection changes
-    useEffect(() => {
-        setConflictWarning(null);
-    }, [guestRange.startDate, guestRange.endDate, selectedHours.length]);
 
     if (!isOpen || !spaceData) return null;
 
@@ -451,7 +442,11 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
 
         const conflicts = getConflictDetails();
         if (conflicts.length > 0) {
-            setConflictWarning({ conflicts });
+            toast.error('El espacio ya cuenta con una reserva en la fecha y horario seleccionados. Por favor elige otra fecha u horario.', {
+                duration: 5000,
+                position: 'top-right',
+                style: { background: '#fee2e2', color: '#dc2626' },
+            });
             return;
         }
 
@@ -687,28 +682,14 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
                                                 El horario seleccionado está disponible para {dateSelectionMode === 'single' ? 'el día seleccionado' : 'todos los días del rango'}.
                                             </p>
                                         </div>
-                                    ) : liveConflicts !== null && liveConflicts.length > 0 && !conflictWarning ? (
+                                    ) : liveConflicts !== null && liveConflicts.length > 0 ? (
                                         <div className="mb-3">
                                             <ConflictWarningPanel
                                                 conflicts={liveConflicts}
                                                 isSingleDay={dateSelectionMode === 'single'}
-                                                showActions={false}
                                             />
                                         </div>
                                     ) : null
-                                )}
-
-                                {/* Conflict confirmation panel (shown after submit attempt) */}
-                                {conflictWarning && (
-                                    <div className="mb-3">
-                                        <ConflictWarningPanel
-                                            conflicts={conflictWarning.conflicts}
-                                            isSingleDay={dateSelectionMode === 'single'}
-                                            showActions={true}
-                                            onContinue={proceedToQuote}
-                                            onBack={() => setConflictWarning(null)}
-                                        />
-                                    </div>
                                 )}
 
                                 <ReservationForm
@@ -720,7 +701,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
                                     onSubmit={usesRequestFlow ? handleGuestSubmit : handleConfirmReservation}
                                     isGuestMode={usesRequestFlow}
                                     requestFlowLabel={requestFlowLabel}
-                                    submitDisabled={!!conflictWarning}
+                                    submitDisabled={usesRequestFlow && liveConflicts !== null && liveConflicts.length > 0}
                                 />
                             </div>
                         </div>
