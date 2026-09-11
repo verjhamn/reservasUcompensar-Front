@@ -4,8 +4,13 @@ import { CheckCircle, Calendar } from 'lucide-react';
 
 import { crearReservaExterna } from '../../../Services/externalReservationService';
 import { toast, Toaster } from 'react-hot-toast';
+import { EVENT_SPACE_TYPE } from '../../../utils/spaceContactEmail';
+
+const TIPOS_ALIMENTOS = ['Estación de café', 'Refrigerios', 'Desayuno', 'Almuerzo'];
 
 const ExternalQuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
+    const isEventSpace = spaceData?.tipo === EVENT_SPACE_TYPE;
+
     const [formData, setFormData] = useState({
         nombre: '',
         tipoDocumento: '',
@@ -27,7 +32,10 @@ const ExternalQuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
         tipoEvento: '',
         tiempoMontajeHoras: '',
         cantidadPersonas: '',
-        detalles: ''
+        detalles: '',
+        tieneAlimentos: '',
+        tiposAlimentos: [],
+        proveedorAlimentos: ''
     });
     const [showSuccess, setShowSuccess] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -44,6 +52,27 @@ const ExternalQuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
         setFormData(prev => ({ ...prev, [name]: value }));
         if (errors[name]) {
             setErrors(prev => ({ ...prev, [name]: null }));
+        }
+    };
+
+    const handleTieneAlimentosChange = (value) => {
+        setFormData(prev => ({
+            ...prev,
+            tieneAlimentos: value,
+            ...(value === 'No' ? { tiposAlimentos: [], proveedorAlimentos: '' } : {})
+        }));
+        setErrors(prev => ({ ...prev, tieneAlimentos: null, tiposAlimentos: null, proveedorAlimentos: null }));
+    };
+
+    const handleTipoAlimentoToggle = (tipo) => {
+        setFormData(prev => ({
+            ...prev,
+            tiposAlimentos: prev.tiposAlimentos.includes(tipo)
+                ? prev.tiposAlimentos.filter(t => t !== tipo)
+                : [...prev.tiposAlimentos, tipo]
+        }));
+        if (errors.tiposAlimentos) {
+            setErrors(prev => ({ ...prev, tiposAlimentos: null }));
         }
     };
 
@@ -121,6 +150,14 @@ const ExternalQuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
             if (!formData.nombreEvento) newErrors.nombreEvento = 'Requerido';
             if (!formData.tipoEvento) newErrors.tipoEvento = 'Requerido';
             if (!formData.cantidadPersonas || formData.cantidadPersonas < 1) newErrors.cantidadPersonas = 'Mínimo 1 persona';
+
+            if (isEventSpace) {
+                if (!formData.tieneAlimentos) newErrors.tieneAlimentos = 'Requerido';
+                if (formData.tieneAlimentos === 'Si') {
+                    if (formData.tiposAlimentos.length === 0) newErrors.tiposAlimentos = 'Selecciona al menos una opción';
+                    if (!formData.proveedorAlimentos.trim()) newErrors.proveedorAlimentos = 'Requerido';
+                }
+            }
 
             if (Object.keys(newErrors).length > 0) isValid = false;
         }
@@ -218,7 +255,14 @@ const ExternalQuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                 nombre: formData.nombreEvento,
                 tipo: formData.tipoEvento,
                 detalles: formData.detalles,
-                fecha_solicitud: new Date().toISOString()
+                fecha_solicitud: new Date().toISOString(),
+                ...(isEventSpace ? {
+                    Alimentos: {
+                        tiene_alimentos: formData.tieneAlimentos,
+                        Tipo: formData.tieneAlimentos === 'Si' ? formData.tiposAlimentos : [],
+                        proveedor: formData.tieneAlimentos === 'Si' ? formData.proveedorAlimentos.trim() : ''
+                    }
+                } : {})
             }
         };
 
@@ -653,6 +697,81 @@ const ExternalQuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
                                             onChange={handleChange}
                                         ></textarea>
                                     </div>
+
+                                    {isEventSpace && (
+                                        <div className="space-y-5 pt-2 border-t border-gray-100">
+                                            <div className="space-y-1.5">
+                                                <label className="text-sm font-semibold text-gray-700">
+                                                    ¿Se contará con alimentos? <span className="text-red-500">*</span>
+                                                </label>
+                                                <div className="flex gap-3">
+                                                    {['Si', 'No'].map((opcion) => (
+                                                        <button
+                                                            key={opcion}
+                                                            type="button"
+                                                            onClick={() => handleTieneAlimentosChange(opcion)}
+                                                            className={`px-6 py-2 rounded-xl border text-sm font-semibold transition-all ${formData.tieneAlimentos === opcion
+                                                                ? 'bg-purple-600 text-white border-purple-600 shadow-sm'
+                                                                : 'bg-white text-gray-600 border-gray-200 hover:border-purple-300 hover:text-purple-700'
+                                                                }`}
+                                                        >
+                                                            {opcion === 'Si' ? 'Sí' : 'No'}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                                {errors.tieneAlimentos && <p className="text-red-500 text-[11px] font-semibold mt-1">{errors.tieneAlimentos}</p>}
+                                            </div>
+
+                                            {formData.tieneAlimentos === 'Si' && (
+                                                <div className="space-y-5 animate-fade-in">
+                                                    <div className="space-y-1.5">
+                                                        <label className="text-sm font-semibold text-gray-700">
+                                                            ¿Qué tipo de alimentos se brindarán? <span className="text-red-500">*</span>
+                                                        </label>
+                                                        <div className="grid grid-cols-2 gap-2">
+                                                            {TIPOS_ALIMENTOS.map((tipo) => (
+                                                                <label
+                                                                    key={tipo}
+                                                                    className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border cursor-pointer transition-all ${formData.tiposAlimentos.includes(tipo)
+                                                                        ? 'bg-purple-50 border-purple-300'
+                                                                        : 'bg-gray-50/50 border-gray-200 hover:bg-white'
+                                                                        }`}
+                                                                >
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        className="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 focus:ring-2 cursor-pointer"
+                                                                        checked={formData.tiposAlimentos.includes(tipo)}
+                                                                        onChange={() => handleTipoAlimentoToggle(tipo)}
+                                                                    />
+                                                                    <span className="text-sm text-gray-700">{tipo}</span>
+                                                                </label>
+                                                            ))}
+                                                        </div>
+                                                        {errors.tiposAlimentos && <p className="text-red-500 text-[11px] font-semibold mt-1">{errors.tiposAlimentos}</p>}
+                                                    </div>
+
+                                                    <div className="space-y-1.5">
+                                                        <label className="text-sm font-semibold text-gray-700">
+                                                            Nombre del proveedor <span className="text-red-500">*</span>
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            name="proveedorAlimentos"
+                                                            className={`w-full px-4 py-2.5 rounded-xl border outline-none transition-all bg-gray-50/50 hover:bg-white focus:ring-2 ${errors.proveedorAlimentos ? 'border-red-500 focus:ring-red-200 focus:border-red-500' : 'border-gray-200 focus:ring-purple-500 focus:border-purple-500'}`}
+                                                            value={formData.proveedorAlimentos}
+                                                            onChange={handleChange}
+                                                            placeholder="Razón social del proveedor"
+                                                        />
+                                                        <p className="text-xs text-gray-500">Debe registrar la razón social del proveedor, no el nombre comercial.</p>
+                                                        {errors.proveedorAlimentos && <p className="text-red-500 text-[11px] font-semibold mt-1">{errors.proveedorAlimentos}</p>}
+                                                        <p className="text-xs text-purple-700 bg-purple-50 border border-purple-100 rounded-lg p-2.5 mt-2">
+                                                            Tener presente que todos los proveedores que presten algún servicio durante el evento deberán diligenciar previamente el enlace de SST. Este requisito es necesario para permitir su ingreso a la sede sin novedades.
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
