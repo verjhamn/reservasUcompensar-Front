@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Toaster } from 'react-hot-toast';
+import { useLocation } from 'react-router-dom';
 import { getMisReservas } from "../Services/getMisReservas";
 import { deleteReserva } from "../Services/deleteReservaService";
 import { realizarCheckOut } from "../Services/checkInService";
@@ -9,9 +10,39 @@ import ReservationCalendar from './Calendar/ReservationCalendar';
 import CheckOutModal from './CheckOutModal';
 import { format } from 'date-fns';
 
+const parseSelectedDate = (value) => {
+  if (!value) return null;
+
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value;
+  }
+
+  if (typeof value !== "string") return null;
+
+  const trimmedValue = value.trim();
+  const isoMatch = trimmedValue.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoMatch) {
+    return new Date(Number(isoMatch[1]), Number(isoMatch[2]) - 1, Number(isoMatch[3]));
+  }
+
+  const slashMatch = trimmedValue.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (slashMatch) {
+    return new Date(Number(slashMatch[3]), Number(slashMatch[2]) - 1, Number(slashMatch[1]));
+  }
+
+  const parsedDate = new Date(trimmedValue);
+  return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
+};
+
+const getSelectedDateFromLocation = (location) => {
+  const params = new URLSearchParams(location.search);
+  return parseSelectedDate(params.get("fecha") || location.state?.selectedDate);
+};
+
 const BigCalendarView = () => {
+  const location = useLocation();
   const [events, setEvents] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(() => getSelectedDateFromLocation(location) || new Date());
   const [showCheckOutModal, setShowCheckOutModal] = useState(false);
   const [reservaCheckOut, setReservaCheckOut] = useState(null);
 
@@ -51,6 +82,13 @@ const BigCalendarView = () => {
 
     fetchReservations();
   }, []);
+
+  useEffect(() => {
+    const navigationDate = getSelectedDateFromLocation(location);
+    if (navigationDate) {
+      setSelectedDate(navigationDate);
+    }
+  }, [location]);
 
   const handleCancel = async (eventId) => {
     try {

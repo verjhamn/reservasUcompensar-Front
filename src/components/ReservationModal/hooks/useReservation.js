@@ -105,7 +105,7 @@ export const useReservation = ({
                         }
                     );
                     onClose();
-                    goToMyReservations();
+                    goToMyReservations(format(selectedDate, "yyyy-MM-dd"));
                 } else {
                     throw new Error(response.message || 'Error al crear la reserva');
                 }

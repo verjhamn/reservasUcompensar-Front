@@ -11,8 +11,8 @@ import {
   startOfWeek,
   subMonths,
 } from "date-fns";
-import es from "date-fns/locale/es";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
+import { formatCalendarMonthHeader } from "../../../utils/calendarLocale";
 
 const WEEKDAY_LABELS = ["L", "M", "X", "J", "V", "S", "D"];
 
@@ -34,8 +34,8 @@ const MiniMonthNavigator = ({ visibleMonth, onMonthChange, focusedDate, onSelect
         >
           <ChevronLeftIcon className="h-4 w-4" />
         </button>
-        <p className="text-sm font-bold capitalize text-blue-dark-500">
-          {format(visibleMonth, "MMMM yyyy", { locale: es })}
+        <p className="text-sm font-bold text-blue-dark-500">
+          {formatCalendarMonthHeader(visibleMonth)}
         </p>
         <button
           type="button"

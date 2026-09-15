@@ -401,6 +401,23 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
         fetchGuestAvailability();
     }, [usesRequestFlow, spaceData?.id, guestRange.startDate, guestRange.endDate, guestAvailabilityByDate]);
 
+    useEffect(() => {
+        if (!isOpen) return undefined;
+
+        const handleKeyDown = (event) => {
+            if (event.key === "Escape") {
+                event.preventDefault();
+                onClose();
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [isOpen, onClose]);
+
     if (!isOpen || !spaceData) return null;
 
     const handleGuestSubmit = () => {

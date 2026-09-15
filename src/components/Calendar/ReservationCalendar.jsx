@@ -1,16 +1,12 @@
 import React from 'react';
-import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
-import { format, parse, startOfWeek, getDay } from 'date-fns';
-import es from 'date-fns/locale/es';
-
-const locales = { es: es };
-const localizer = dateFnsLocalizer({
-    format,
-    parse,
-    startOfWeek: () => startOfWeek(new Date(), { weekStartsOn: 1 }),
-    getDay,
-    locales,
-});
+import { Calendar } from 'react-big-calendar';
+import { format } from 'date-fns';
+import {
+    calendarCulture,
+    calendarFormats,
+    calendarLocalizer,
+    calendarMessages
+} from '../../utils/calendarLocale';
 
 const ReservationCalendar = ({
     events,
@@ -55,7 +51,8 @@ const ReservationCalendar = ({
     return (
         <div className="p-4 bg-white rounded-2xl shadow-xl border border-neutral-100">
             <Calendar
-                localizer={localizer}
+                localizer={calendarLocalizer}
+                culture={calendarCulture}
                 events={[]}
                 selectable
                 onSelectSlot={(slotInfo) => onSelectDate(slotInfo.start)}
@@ -64,24 +61,8 @@ const ReservationCalendar = ({
                 views={["month"]}
                 style={{ height: 300 }}
                 dayPropGetter={dayPropGetter}
-                messages={{
-                    next: "Siguiente",
-                    previous: "Anterior",
-                    today: "Hoy",
-                    month: "Mes",
-                    week: "Semana",
-                    day: "Día",
-                    agenda: "Agenda",
-                    date: "Fecha",
-                    time: "Hora",
-                    event: "Evento",
-                    noEventsInRange: "No hay eventos en este rango.",
-                }}
-                formats={{
-                    monthHeaderFormat: "MMMM yyyy",
-                    weekdayFormat: (date) => format(date, "EE", { locale: es }).toUpperCase(),
-                    dayFormat: "d",
-                }}
+                messages={calendarMessages}
+                formats={calendarFormats}
             />
         </div>
     );

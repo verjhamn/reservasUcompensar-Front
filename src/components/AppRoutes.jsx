@@ -30,7 +30,41 @@ const AppRoutes = ({ isLoggedIn, isAdmin, canViewReports }) => {
         setFilters(newFilters);
     };
 
-    const goToMyReservations = () => {
+    const normalizeDateParam = (value) => {
+        if (!value) return "";
+
+        if (value instanceof Date && !Number.isNaN(value.getTime())) {
+            const year = value.getFullYear();
+            const month = String(value.getMonth() + 1).padStart(2, "0");
+            const day = String(value.getDate()).padStart(2, "0");
+            return `${year}-${month}-${day}`;
+        }
+
+        if (typeof value !== "string") return "";
+
+        const trimmedValue = value.trim();
+        const isoMatch = trimmedValue.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (isoMatch) return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+
+        const slashMatch = trimmedValue.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+        if (slashMatch) return `${slashMatch[3]}-${slashMatch[2]}-${slashMatch[1]}`;
+
+        return "";
+    };
+
+    const goToMyReservations = (reservationDate) => {
+        const selectedDate = normalizeDateParam(reservationDate);
+
+        if (selectedDate) {
+            navigate({
+                pathname: '/mis-reservas',
+                search: `?fecha=${encodeURIComponent(selectedDate)}`,
+            }, {
+                state: { selectedDate },
+            });
+            return;
+        }
+
         navigate('/mis-reservas');
     };
 

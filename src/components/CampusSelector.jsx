@@ -7,15 +7,15 @@ const campuses = [
     {
         id: 'av68',
         name: 'Campus Av. 68',
-        address: 'Av Carrera 68 No. 68 B - 45',
-        description: 'Sede administrativa y academica',
+        address: 'Avenida Carrera 68 No. 68B - 45',
+        description: 'Sede administrativa y académica',
         value: '1',
     },
     {
         id: 'teusaquillo',
         name: 'Campus Teusaquillo',
-        address: 'Avenida (Calle) 32 No. 17 - 30',
-        description: 'Sede administrativa y academica',
+        address: 'Avenida Calle 32 No. 17 - 30',
+        description: 'Sede administrativa y académica',
         value: '2',
     },
 ];

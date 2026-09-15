@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Toaster } from 'react-hot-toast';
 import AdminSearchFilters from '../AdminFilters/AdminSearchFilters';
 import ReservationCalendar from '../Calendar/ReservationCalendar';
@@ -11,6 +11,14 @@ import ReservationList from '../Calendar/ReservationList';
 import { format } from 'date-fns';
 import es from 'date-fns/locale/es';
 import { getSedeLabel } from '../../utils/constants';
+
+const AdminReservationsLoading = () => (
+    <div className="bg-white rounded-xl shadow-md p-6 text-center border border-gray-100">
+        <div className="mx-auto mb-3 h-10 w-10 animate-spin rounded-full border-4 border-turquesa/20 border-t-turquesa" />
+        <p className="text-sm font-semibold text-gray-700">Cargando reservas...</p>
+        <p className="mt-1 text-xs text-gray-500">Estamos obteniendo la información de la base de datos.</p>
+    </div>
+);
 
 const AdminReservationsView = () => {
     const [filters, setFilters] = useState({
@@ -29,15 +37,13 @@ const AdminReservationsView = () => {
         estado: "",
     });
     const [reservations, setReservations] = useState([]);
+    const [isLoadingReservations, setIsLoadingReservations] = useState(true);
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [viewMode, setViewMode] = useState('day');
+    const [statFilter, setStatFilter] = useState(''); // Filtro interno de las tarjetas
 
-    // Cambiar la dependencia del useEffect para que solo se ejecute con filters
-    useEffect(() => {
-        fetchReservations();
-    }, [filters]); // Remover selectedDate de las dependencias
-
-    const fetchReservations = async () => {
+    const fetchReservations = useCallback(async () => {
+        setIsLoadingReservations(true);
         try {
             const data = await getAllReservations(filters); // No incluir fecha en los filtros
             
@@ -98,8 +104,15 @@ const AdminReservationsView = () => {
         } catch (error) {
             console.error('Error al cargar reservas:', error);
             showErrorToast('Error al cargar las reservas');
+        } finally {
+            setIsLoadingReservations(false);
         }
-    };
+    }, [filters]);
+
+    // Cambiar la dependencia del useEffect para que solo se ejecute con filters
+    useEffect(() => {
+        fetchReservations();
+    }, [fetchReservations]); // Remover selectedDate de las dependencias
 
     const handleCancelReservation = async (reservationId) => {
         try {
@@ -216,7 +229,37 @@ const AdminReservationsView = () => {
     };
 
     const baseReservations = getBaseReservations();
-    const [statFilter, setStatFilter] = useState(''); // Filtro interno de las tarjetas
+
+    const finalEvents = baseReservations.filter(event => {
+        // Aplicar filtro de estado del panel si está activo
+        if (filters.estado && event.estado !== filters.estado) {
+            return false;
+        }
+
+        // Aplicar filtro de estado de las tarjetas si está activo
+        if (statFilter && event.estado !== statFilter) {
+            return false;
+        }
+
+        // Aplicar filtro de fecha según el modo de vista
+        switch (viewMode) {
+            case 'day':
+                return format(new Date(event.start), "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd");
+            case 'month': {
+                const selectedMonth = selectedDate.getMonth();
+                const selectedYear = selectedDate.getFullYear();
+                const eventDate = new Date(event.start);
+                return eventDate.getMonth() === selectedMonth &&
+                    eventDate.getFullYear() === selectedYear;
+            }
+            case 'all':
+            default:
+                return true;
+        }
+    });
+    const hasTypeFilter = filters.tipo && filters.tipo !== "";
+    const hasDateFilter = viewMode !== 'all';
+    const noResults = finalEvents.length === 0;
 
     return (
         <div className="container mx-auto">
@@ -245,62 +288,29 @@ const AdminReservationsView = () => {
                 
                 {/* Columna derecha: Estadísticas y Listado */}
                 <div className="w-full lg:flex-1 flex flex-col gap-4">
-                    {/* Dashboard de estadísticas generales */}
-                    <ReservationStats 
-                        allReservations={baseReservations}
-                        dayReservations={baseReservations.filter(event =>
-                            format(new Date(event.start), "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd")
-                        )}
-                        selectedDate={selectedDate}
-                        filters={filters}
-                        setFilters={setFilters}
-                        onViewModeChange={(newMode) => {
-                            setViewMode(newMode);
-                        }}
-                        onStatFilterChange={(filter) => {
-                            setStatFilter(filter);
-                        }}
-                        viewMode={viewMode}
-                    />
-                    
-                    <div className="w-full">
-                        {(() => {
-                            const finalEvents = baseReservations.filter(event => {
-                                // Aplicar filtro de estado del panel si está activo
-                                if (filters.estado && event.estado !== filters.estado) {
-                                    return false;
-                                }
-                                
-                                // Aplicar filtro de estado de las tarjetas si está activo
-                                if (statFilter && event.estado !== statFilter) {
-                                    return false;
-                                }
-                                
-                                // Aplicar filtro de fecha según el modo de vista
-                                switch (viewMode) {
-                                    case 'day':
-                                        return format(new Date(event.start), "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd");
-                                    case 'month': {
-                                        const selectedMonth = selectedDate.getMonth();
-                                        const selectedYear = selectedDate.getFullYear();
-                                        const eventDate = new Date(event.start);
-                                        return eventDate.getMonth() === selectedMonth && 
-                                               eventDate.getFullYear() === selectedYear;
-                                    }
-                                    case 'all':
-                                    default:
-                                        return true;
-                                }
-                            });
+                    {isLoadingReservations ? (
+                        <AdminReservationsLoading />
+                    ) : (
+                        <>
+                            {/* Dashboard de estadísticas generales */}
+                            <ReservationStats
+                                allReservations={baseReservations}
+                                dayReservations={baseReservations.filter(event =>
+                                    format(new Date(event.start), "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd")
+                                )}
+                                selectedDate={selectedDate}
+                                filters={filters}
+                                setFilters={setFilters}
+                                onViewModeChange={(newMode) => {
+                                    setViewMode(newMode);
+                                }}
+                                onStatFilterChange={(filter) => {
+                                    setStatFilter(filter);
+                                }}
+                                viewMode={viewMode}
+                            />
 
-
-                            // Mostrar mensaje informativo si hay filtros de tipo pero no hay resultados por fecha
-                            const hasTypeFilter = filters.tipo && filters.tipo !== "";
-                            const hasDateFilter = viewMode !== 'all';
-                            const noResults = finalEvents.length === 0;
-                            
-                            return (
-                                <>
+                            <div className="w-full">
                                     {hasTypeFilter && hasDateFilter && noResults && (
                                         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
                                             <div className="flex items-center">
@@ -337,10 +347,9 @@ const AdminReservationsView = () => {
                                         showStatus={true}
                                         isAdminView={true}
                                     />
-                                </>
-                            );
-                        })()}
-                    </div>
+                            </div>
+                        </>
+                    )}
                 </div>
             </div>
         </div>

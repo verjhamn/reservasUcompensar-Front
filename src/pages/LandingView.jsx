@@ -92,7 +92,7 @@ const LandingView = ({ isLoggedIn }) => {
                                 </span>
                             ) : (
                                 <>
-                                    <span>Iniciar Sesión</span>
+                                    <span>Iniciar sesión</span>
                                     <ArrowRight className="h-5 w-5 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all" />
                                 </>
                             )}
@@ -118,7 +118,7 @@ const LandingView = ({ isLoggedIn }) => {
                         </p>
 
                         <div className="flex items-center justify-center text-purple-600 font-semibold group-hover:gap-2 transition-all">
-                            <span>Ver Espacios de Eventos</span>
+                            <span>Ver espacios para eventos</span>
                             <ArrowRight className="h-5 w-5 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all" />
                         </div>
                     </div>

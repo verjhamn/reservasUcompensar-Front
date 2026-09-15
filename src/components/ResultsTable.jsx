@@ -166,7 +166,7 @@ const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode, onSpaceLo
             ? "Solicitar Cotizacion"
             : usesInternalRequestFlow
               ? "Solicitar"
-              : "Reservar Ahora";
+              : "Reservar ahora";
           const spaceTitle = typeof item.Titulo === "string" ? item.Titulo.trim() : "";
 
           return (

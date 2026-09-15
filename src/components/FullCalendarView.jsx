@@ -1,19 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { Calendar, dateFnsLocalizer } from "react-big-calendar";
+import { Calendar } from "react-big-calendar";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import { format, parse, startOfWeek, getDay } from "date-fns";
+import { format } from "date-fns";
 import es from "date-fns/locale/es";
+import {
+  calendarCulture,
+  calendarFormats,
+  calendarLocalizer,
+  calendarMessages
+} from "../utils/calendarLocale";
 /* import { generateRandomEvents } from "../services/eventGenerator"; */
-
-// Configuración de localización en español
-const locales = { es: es };
-const localizer = dateFnsLocalizer({
-  format,
-  parse,
-  startOfWeek: () => startOfWeek(new Date(), { weekStartsOn: 1 }), // La semana comienza el lunes
-  getDay,
-  locales,
-});
 
 const MobileCalendarView = () => {
   const [events, setEvents] = useState([]);
@@ -63,31 +59,16 @@ const MobileCalendarView = () => {
       {/* Selector de fecha (calendario reducido) */}
       <div className="bg-white rounded-lg shadow-md mb-4">
         <Calendar
-          localizer={localizer}
+          localizer={calendarLocalizer}
+          culture={calendarCulture}
           events={[]} // Sin mostrar eventos en el calendario
           date={selectedDate}
           onNavigate={(date) => setSelectedDate(date)} // Cambiar la fecha seleccionada
           views={["month"]}
           style={{ height: 300 }}
           dayPropGetter={dayPropGetter}
-          messages={{
-            next: "Siguiente",
-            previous: "Anterior",
-            today: "Hoy",
-            month: "Mes",
-            week: "Semana",
-            day: "Día",
-            agenda: "Agenda",
-            date: "Fecha",
-            time: "Hora",
-            event: "Evento",
-            noEventsInRange: "No hay eventos en este rango.",
-          }}
-          formats={{
-            monthHeaderFormat: "MMMM yyyy", // Nombre del mes y año en español
-            weekdayFormat: (date) => format(date, "EE", { locale: es }).toUpperCase(), // Días abreviados (LU, MA...)
-            dayFormat: "d", // Día del mes
-          }}
+          messages={calendarMessages}
+          formats={calendarFormats}
         />
       </div>
 

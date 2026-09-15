@@ -23,7 +23,11 @@
   font-size: 1rem;
   font-weight: 700;
   color: #243455;
-  text-transform: capitalize;
+  text-transform: none;
+}
+
+.uc-fullcalendar .fc-toolbar-title::first-letter {
+  text-transform: uppercase;
 }
 
 .uc-fullcalendar .fc-button {

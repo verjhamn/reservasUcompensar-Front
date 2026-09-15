@@ -1,22 +1,18 @@
 import React from 'react';
-import { Calendar, dateFnsLocalizer } from "react-big-calendar";
+import { Calendar } from "react-big-calendar";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import { format, parse, startOfWeek, getDay } from "date-fns";
-import es from "date-fns/locale/es";
-
-const locales = { es: es };
-const localizer = dateFnsLocalizer({
-    format,
-    parse,
-    startOfWeek: () => startOfWeek(new Date(), { weekStartsOn: 1 }),
-    getDay,
-    locales,
-});
+import {
+    calendarCulture,
+    calendarFormats,
+    calendarLocalizer,
+    calendarMessages
+} from "../../../utils/calendarLocale";
 
 const AvailabilityCalendar = ({ events, date, onNavigate, onSelectSlot, dayPropGetter, slotPropGetter }) => {
     return (
         <Calendar
-            localizer={localizer}
+            localizer={calendarLocalizer}
+            culture={calendarCulture}
             events={events}
             selectable="ignoreEvents"
             onSelectSlot={onSelectSlot}
@@ -26,24 +22,8 @@ const AvailabilityCalendar = ({ events, date, onNavigate, onSelectSlot, dayPropG
             style={{ height: 300 }}
             dayPropGetter={dayPropGetter}
             slotPropGetter={slotPropGetter}
-            messages={{
-                next: "Siguiente",
-                previous: "Anterior",
-                today: "Hoy",
-                month: "Mes",
-                week: "Semana",
-                day: "Día",
-                agenda: "Agenda",
-                date: "Fecha",
-                time: "Hora",
-                event: "Evento",
-                noEventsInRange: "No hay eventos en este rango.",
-            }}
-            formats={{
-                monthHeaderFormat: "MMMM yyyy",
-                weekdayFormat: (date) => format(date, "EE", { locale: es }).toUpperCase(),
-                dayFormat: "d",
-            }}
+            messages={calendarMessages}
+            formats={calendarFormats}
         />
     );
 };

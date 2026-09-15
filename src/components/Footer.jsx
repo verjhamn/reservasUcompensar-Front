@@ -31,18 +31,18 @@ const Footer = () => {
         <div className="min-w-0 flex flex-col items-center text-center md:items-start md:text-left">
           <h3 className="text-xl font-semibold mb-4 text-orange-500">Bogotá</h3>
           <p>Bogotá Sede Principal</p>
-          <p>Avenida (Calle) 32 No. 17 - 30</p>
+          <p>Avenida Calle 32 No. 17 - 30</p>
           <p className="mb-4">Teléfono: 338 06 66</p>
         </div>
 
         <div className="min-w-0 flex flex-col items-center text-center md:items-start md:text-left">
           <div className="mb-6 w-full">
-            <h3 className="text-xl font-semibold mb-4 text-orange-500">Campus Av 68</h3>
-            <p>Av Carrera 68 No. 68 B – 45</p>
+            <h3 className="text-xl font-semibold mb-4 text-orange-500">Campus Av. 68</h3>
+            <p>Avenida Carrera 68 No. 68B – 45</p>
           </div>
           <div className="mb-6 w-full">
             <h3 className="text-xl font-semibold mb-4 text-orange-500">Villavicencio</h3>
-            <p>Cra. 33 No. 39-55</p>
+            <p>Carrera 33 No. 39 - 55</p>
           </div>
         </div>
 
