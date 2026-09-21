@@ -41,6 +41,7 @@ const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode, onSpaceLo
     const fetchData = async () => {
       setIsLoading(true);
       setError(null);
+      setPage(0);
       try {
         const response = await fetchFilteredReservations(filters);
 
@@ -242,6 +243,7 @@ const ResultsTable = ({ filters = {}, goToMyReservations, isGuestMode, onSpaceLo
       <div className="mt-4 md:mt-6">
         <ReactPaginate
           pageCount={Math.ceil(data.length / itemsPerPage)}
+          forcePage={page}
           onPageChange={({ selected }) => setPage(selected)}
           containerClassName="flex flex-wrap justify-center space-x-2"
           activeClassName="text-blue-500 font-bold"

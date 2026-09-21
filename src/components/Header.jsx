@@ -1,13 +1,13 @@
-import React, { useEffect, useState } from "react";
-import { useMsal } from "@azure/msal-react";
+/* eslint-disable react/prop-types */
+import { useEffect, useState } from "react";
 import { Menu, X, User } from "lucide-react";
 import SignInButton from "./SSOComponents/SignInButton";
 import SignOutButton from "./SSOComponents/SignOutButton";
+import { fetchAuthToken } from "../Services/authService";
 import { getUserRoleFromBackend } from "../utils/userHelper";
 import { ADMIN_ROLES } from "../config/adminRoles";
 
-const Header = ({ onLoginSuccess, onLogout }) => {
-  const { accounts } = useMsal();
+const Header = ({ onLogout }) => {
   const [user, setUser] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 

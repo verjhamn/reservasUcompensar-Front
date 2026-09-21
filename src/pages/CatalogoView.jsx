@@ -11,7 +11,7 @@ import { isSuperAdmin } from '../utils/userHelper';
 
 const CatalogoView = ({ isLoggedIn, filters, setFilters, handleFilterChange, goToMyReservations }) => {
     const location = useLocation();
-    const isGuestMode = location.state?.guestMode;
+    const isGuestMode = Boolean(location.state?.guestMode || !isLoggedIn);
     const [availableFloors, setAvailableFloors] = useState([]);
     const isInternalUser = Boolean(isLoggedIn);
 

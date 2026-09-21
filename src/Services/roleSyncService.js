@@ -1,6 +1,7 @@
 import { fetchAuthToken, getUserRoles } from './authService';
 import { getUserData } from './SSOServices/graphService';
 import { EVENTS } from '../config/events';
+import { isLocalAuthBypassEnabled } from '#local-auth';
 
 // Configuración de sincronización
 const SYNC_CONFIG = {
@@ -17,6 +18,10 @@ class RoleSyncService {
 
   // Iniciar sincronización (solo por visibilidad)
   startAutoSync() {
+    if (isLocalAuthBypassEnabled()) {
+      return;
+    }
+
     if (this.isActive) {
       return;
     }
@@ -57,6 +62,10 @@ class RoleSyncService {
 
   // Sincronizar roles manualmente
   async syncRoles(force = false) {
+    if (isLocalAuthBypassEnabled()) {
+      return;
+    }
+
     if (this.isSyncing && !force) {
       console.log('[RoleSync] Sincronización ya en progreso, omitiendo...');
       return;

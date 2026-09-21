@@ -310,8 +310,8 @@ const ExternalQuoteForm = ({ spaceData, quoteData, onBack, onSuccess }) => {
         );
     }
 
-    const formattedStartDate = startDate ? new Date(startDate).toLocaleDateString() : '';
-    const formattedEndDate = endDate ? new Date(endDate).toLocaleDateString() : formattedStartDate;
+    const formattedStartDate = startDate ? new Date(startDate).toLocaleDateString('es-CO') : '';
+    const formattedEndDate = endDate ? new Date(endDate).toLocaleDateString('es-CO') : formattedStartDate;
 
     return (
         <div className="flex flex-col h-full bg-white animate-fade-in relative z-10 w-full max-w-5xl mx-auto rounded-xl">

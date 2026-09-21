@@ -1,5 +1,6 @@
 import axios from "axios";
 import { STORAGE_KEYS, EVENTS } from "../config/events";
+import { ensureLocalAuthBypassSession, isLocalAuthBypassEnabled } from "#local-auth";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -47,6 +48,11 @@ const getUserData = () => {
 
 // Solicitar un nuevo token o registrar al usuario si no está autenticado
 export const fetchAuthToken = async () => {
+    if (isLocalAuthBypassEnabled()) {
+        ensureLocalAuthBypassSession({ notify: true });
+        return getAuthToken();
+    }
+
     const userData = getUserData();
 
     if (!userData) {
@@ -160,6 +166,10 @@ axiosInstance.interceptors.request.use(async (config) => {
 axiosInstance.interceptors.response.use(
     response => response,
     async (error) => {
+        if (isLocalAuthBypassEnabled()) {
+            return Promise.reject(error);
+        }
+
         if (error.response?.status === 401) {
             try {
                 const newToken = await fetchAuthToken();

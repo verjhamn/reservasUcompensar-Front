@@ -599,7 +599,7 @@ const ReservationModal = ({ isOpen, onClose, spaceData, goToMyReservations, isGu
 
                                 {/* Date summary cards */}
                                 {dateSelectionMode === 'single' ? (
-                                    <div className="bg-white border border-purple-100 rounded-xl px-4 py-2.5 flex items-center justify-between">
+                                    <div className="bg-white border border-purple-100 rounded-xl px-4 py-2.5 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                                         <span className="text-xs font-bold text-purple-700 uppercase tracking-wide">Día seleccionado</span>
                                         <span className="text-sm font-semibold text-gray-800">
                                             {guestRange.startDate

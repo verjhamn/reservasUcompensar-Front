@@ -82,10 +82,24 @@ const AppRoutes = ({ isLoggedIn, isAdmin, canViewReports }) => {
         ] : [])
     ];
 
-    // Strict Landing Redirect: If on /catalogo, not logged in, and not guest mode -> Redirect to Landing
-    if (location.pathname === '/catalogo' && !isLoggedIn && !location.state?.guestMode) {
-        return <Navigate to="/" replace />;
-    }
+    const AccessDenied = () => (
+        <div className="container mx-auto px-4 py-12">
+            <div className="mx-auto max-w-lg rounded-lg border border-gray-200 bg-white p-6 text-center shadow-sm">
+                <h1 className="text-xl font-bold text-gray-900">Acceso restringido</h1>
+                <p className="mt-2 text-sm text-gray-500">
+                    Tu usuario no tiene permisos para abrir esta ruta.
+                </p>
+            </div>
+        </div>
+    );
+
+    const ProtectedRoute = ({ hasAccess, children }) => {
+        if (!isLoggedIn) {
+            return <Navigate to="/" replace />;
+        }
+
+        return hasAccess ? children : <AccessDenied />;
+    };
 
     return (
         <>
@@ -140,26 +154,30 @@ const AppRoutes = ({ isLoggedIn, isAdmin, canViewReports }) => {
                         />
                     }
                 />
-                {isLoggedIn && (
-                    <>
-                        <Route
-                            path="/mis-reservas"
-                            element={<MisReservasView />}
-                        />
-                        {isAdmin && (
-                            <Route
-                                path="/admin-reservas"
-                                element={<AdminView />}
-                            />
-                        )}
-                        {(isAdmin || canViewReports) && (
-                            <Route
-                                path="/reportes"
-                                element={<ReportesView />}
-                            />
-                        )}
-                    </>
-                )}
+                <Route
+                    path="/mis-reservas"
+                    element={
+                        <ProtectedRoute hasAccess={isLoggedIn}>
+                            <MisReservasView />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin-reservas"
+                    element={
+                        <ProtectedRoute hasAccess={isLoggedIn && isAdmin}>
+                            <AdminView />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/reportes"
+                    element={
+                        <ProtectedRoute hasAccess={isLoggedIn && (isAdmin || canViewReports)}>
+                            <ReportesView />
+                        </ProtectedRoute>
+                    }
+                />
                 {/* Temporary: Color Palette Demo */}
                 <Route path="/colores" element={<ColorPaletteDemo />} />
                 {/* Redirect to landing if trying to access protected routes without auth */}

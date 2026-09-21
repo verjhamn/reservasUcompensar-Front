@@ -5,8 +5,8 @@ import { getRequestDates, safeRender } from './requestFormUtils';
 
 const RequestSummary = ({ spaceData, quoteData }) => {
     const { startDate, endDate } = getRequestDates(quoteData);
-    const formattedStartDate = startDate ? new Date(startDate).toLocaleDateString() : '';
-    const formattedEndDate = endDate ? new Date(endDate).toLocaleDateString() : formattedStartDate;
+    const formattedStartDate = startDate ? new Date(startDate).toLocaleDateString('es-CO') : '';
+    const formattedEndDate = endDate ? new Date(endDate).toLocaleDateString('es-CO') : formattedStartDate;
 
     return (
         <div className="w-full lg:w-1/3 shrink-0 flex flex-col">

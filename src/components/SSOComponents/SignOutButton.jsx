@@ -1,18 +1,25 @@
-import React from "react";
+/* eslint-disable react/prop-types */
 import { useMsal } from "@azure/msal-react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSignOutAlt } from "@fortawesome/free-solid-svg-icons";
+import { clearLocalAuthBypassSession, isLocalAuthBypassEnabled } from "#local-auth";
 
 const SignOutButton = ({ onLogout }) => {
     const { instance } = useMsal();
 
     const handleLogout = () => {
+        if (isLocalAuthBypassEnabled()) {
+            clearLocalAuthBypassSession();
+            onLogout();
+            return;
+        }
+
         instance.logoutPopup({
             postLogoutRedirectUri: "/",
             mainWindowRedirectUri: "/"
         });
         localStorage.removeItem("userData");
-        modalShown.removeItem("modalShown");
+        localStorage.removeItem("modalShown");
         onLogout();
     };
 

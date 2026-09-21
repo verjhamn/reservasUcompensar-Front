@@ -1,0 +1,150 @@
+.local-auth-background {
+  min-height: 100vh;
+  background: #f3f4f6;
+}
+
+.local-auth-dialog {
+  width: min(420px, calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  padding: 28px;
+  overflow-y: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  color: #111827;
+  box-shadow: 0 20px 60px #0003;
+  letter-spacing: 0;
+}
+
+.local-auth-dialog::backdrop {
+  background: #11182766;
+}
+
+.local-auth-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 32px;
+}
+
+.local-auth-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #047857;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.local-auth-dialog h1 {
+  margin: 12px 0 24px;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.local-auth-dialog label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.local-auth-dialog select,
+.local-auth-dialog input {
+  display: block;
+  width: 100%;
+  height: 44px;
+  margin-bottom: 20px;
+  padding: 0 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background-color: #fff;
+  color: #111827;
+  font-size: 16px;
+}
+
+.local-auth-dialog :focus-visible,
+.local-auth-trigger:focus-visible {
+  outline: 2px solid #059669;
+  outline-offset: 3px;
+}
+
+.local-auth-submit {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  margin-top: 8px;
+  border-radius: 6px;
+  background: #047857;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.local-auth-submit:hover {
+  background: #065f46;
+}
+
+.local-auth-close {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  color: #6b7280;
+}
+
+.local-auth-close:hover {
+  background: #f3f4f6;
+}
+
+.local-auth-error {
+  margin: 0 0 16px;
+  color: #b91c1c;
+  font-size: 14px;
+}
+
+.local-auth-trigger {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  color: #047857;
+  box-shadow: 0 2px 8px #0002;
+}
+
+.local-auth-trigger:hover {
+  background: #ecfdf5;
+}
+
+.local-auth-tooltip {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  padding: 6px 10px;
+  border-radius: 4px;
+  background: #111827;
+  color: #fff;
+  font-size: 12px;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.local-auth-trigger:hover .local-auth-tooltip,
+.local-auth-trigger:focus-visible .local-auth-tooltip {
+  visibility: visible;
+}
